@@ -36,182 +36,181 @@
 <body>
     <div class="container">
         <h1>Connect Your Wallet</h1>
-
-        <div class="button-group">
-            <button id="connectXverse" class="xverse-btn">Connect Xverse</button>
-            <button id="connectUnisat" class="unisat-btn">Connect Unisat</button>
-            <button id="connectMagicEden" class="magiceden-btn">Connect Magic Eden (Bitcoin)</button>
-        </div>
-
-        <div id="wallet-info">
-            <p>Status: <span id="status">Not Connected</span></p>
-            <p>Address: <span id="address">N/A</span></p>
-            <p>Wallet: <span id="wallet-name">N/A</span></p>
-        </div>
-        <div id="error-message"></div>
-        <div class="provider-debug">
-            <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
-            <p class="critical-note">Note: Magic Eden connection REQUIRES the 'jsontokens' library to be correctly loaded (see &lt;head&gt; of this HTML).</p>
-        </div>
+<div class="button-group">
+        <button id="connectXverse" class="xverse-btn">Connect Xverse</button>
+        <button id="connectUnisat" class="unisat-btn">Connect Unisat</button>
+        <button id="connectMagicEden" class="magiceden-btn">Connect Magic Eden (Bitcoin)</button>
     </div>
 
-    <script>
-        const statusEl = document.getElementById('status');
-        const addressEl = document.getElementById('address');
-        const walletNameEl = document.getElementById('wallet-name');
-        const errorEl = document.getElementById('error-message');
-        
-        // Helper to ensure jsontokens is loaded.
-        function getJsonTokensLib() {
-            if (typeof jsontokens !== 'undefined' && typeof jsontokens.createUnsecuredToken === 'function') {
-                return jsontokens;
+    <div id="wallet-info">
+        <p>Status: <span id="status">Not Connected</span></p>
+        <p>Address: <span id="address">N/A</span></p>
+        <p>Wallet: <span id="wallet-name">N/A</span></p>
+    </div>
+    <div id="error-message"></div>
+    <div class="provider-debug">
+        <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
+        <p class="critical-note">Note: Magic Eden connection REQUIRES the 'jsontokens' library to be correctly loaded (see <head> of this HTML).</p>
+    </div>
+</div>
+
+<script>
+    const statusEl = document.getElementById('status');
+    const addressEl = document.getElementById('address');
+    const walletNameEl = document.getElementById('wallet-name');
+    const errorEl = document.getElementById('error-message');
+    
+    // Helper to ensure jsontokens is loaded.
+    function getJsonTokensLib() {
+        if (typeof jsontokens !== 'undefined' && typeof jsontokens.createUnsecuredToken === 'function') {
+            return jsontokens;
+        }
+        console.error("CRITICAL: jsontokens library not found. Magic Eden connection will fail. Please ensure it's included in your HTML.");
+        // Fallback to a dummy object to prevent immediate crash, but operations will fail.
+        return {
+            createUnsecuredToken: function(payload) {
+                console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing.");
+                return null; // Returning null will cause token creation to fail clearly.
             }
-            console.error("CRITICAL: jsontokens library not found. Magic Eden connection will fail. Please ensure it's included in your HTML.");
-            // Fallback to a dummy object to prevent immediate crash, but operations will fail.
-            return {
-                createUnsecuredToken: function(payload) {
-                    console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing.");
-                    return null; // Returning null will cause token creation to fail clearly.
+        };
+    }
+
+
+    function updateWalletInfo(walletFriendlyName, address) {
+        statusEl.textContent = `Connected`;
+        statusEl.className = 'connected';
+        addressEl.textContent = address;
+        walletNameEl.textContent = walletFriendlyName;
+        errorEl.textContent = '';
+        console.log(`${walletFriendlyName} Connected: Address - ${address}`);
+    }
+
+    function handleError(walletFriendlyName, errorMsg, errorObj) {
+        statusEl.textContent = 'Connection Failed';
+        statusEl.className = 'failed';
+        addressEl.textContent = 'N/A';
+        walletNameEl.textContent = walletFriendlyName || 'N/A';
+        let fullErrorMsg = `${walletFriendlyName} Error: ${errorMsg}`;
+        if (errorObj && errorObj.message && errorObj.message !== errorMsg) {
+            fullErrorMsg += `\nInternal: ${errorObj.message}`;
+        } else if (typeof errorObj === 'string' && errorObj !== errorMsg && errorObj.trim() !== '') {
+            fullErrorMsg += `\nDetails: ${errorObj}`;
+        } else if (typeof errorObj === 'object') { // Log the object if it's not just the message
+             try {
+                const prettyError = JSON.stringify(errorObj, null, 2);
+                if (prettyError !== '{}') { // Avoid empty object strings
+                    fullErrorMsg += `\nDetails: ${prettyError}`;
                 }
+            } catch (e) { /* ignore stringify error */ }
+        }
+
+        errorEl.textContent = fullErrorMsg;
+        console.error(`${walletFriendlyName} Error: ${errorMsg}`, errorObj || '');
+         if (errorObj && typeof errorObj === 'object') console.dir(errorObj); // Detailed console log
+    }
+
+    // --- Xverse Connection ---
+    document.getElementById('connectXverse').addEventListener('click', async () => {
+        console.log("Attempting to connect Xverse (Sats Connect method)...");
+        let xverseBitcoinProvider; 
+
+        if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
+            xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
+        } else if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.connect === 'function') { 
+            xverseBitcoinProvider = window.BitcoinProvider;
+        }
+
+        if (xverseBitcoinProvider && typeof xverseBitcoinProvider.connect === 'function') {
+            const getAddressOptions = {
+                payload: { purposes: ['payment'], message: 'Sign in to connect your Bitcoin payment address.', network: { type: 'Mainnet' } },
+                onFinish: (response) => {
+                    if (response.addresses && response.addresses.length > 0) {
+                        const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh') || response.addresses[0];
+                        if (paymentAddress && paymentAddress.address) updateWalletInfo('Xverse', paymentAddress.address);
+                        else handleError('Xverse', 'Payment address not found in Xverse response.', response);
+                    } else handleError('Xverse', 'No addresses returned in Xverse onFinish response.', response);
+                },
+                onCancel: () => handleError('Xverse', 'Xverse request cancelled or failed. Check Xverse Wallet for details (internal JSON error previously observed).'),
             };
-        }
+            try { await xverseBitcoinProvider.connect('getAccounts', getAddressOptions); }
+            catch (error) { handleError('Xverse', error.message || 'Error during Xverse connect call.', error); }
+        } else handleError('Xverse', 'Xverse wallet provider with .connect method not found.');
+    });
 
+    // --- Unisat Connection ---
+    document.getElementById('connectUnisat').addEventListener('click', async () => {
+        if (typeof window.unisat !== 'undefined' && typeof window.unisat.requestAccounts === 'function') {
+            try {
+                const accounts = await window.unisat.requestAccounts();
+                if (accounts && accounts.length > 0) updateWalletInfo('Unisat', accounts[0]);
+                else handleError('Unisat', 'No accounts found or permission denied by Unisat.');
+            } catch (error) { handleError('Unisat', error.message || 'Error during Unisat requestAccounts.', error); }
+        } else handleError('Unisat', 'Unisat wallet (window.unisat with .requestAccounts) not found.');
+    });
 
-        function updateWalletInfo(walletFriendlyName, address) {
-            statusEl.textContent = `Connected`;
-            statusEl.className = 'connected';
-            addressEl.textContent = address;
-            walletNameEl.textContent = walletFriendlyName;
-            errorEl.textContent = '';
-            console.log(`${walletFriendlyName} Connected: Address - ${address}`);
-        }
+    // --- Magic Eden (Bitcoin) Connection ---
+    document.getElementById('connectMagicEden').addEventListener('click', async () => {
+        console.log("Attempting to connect Magic Eden (Bitcoin)...");
+        const effectiveJsonTokens = getJsonTokensLib(); // Get the actual or dummy jsontokens
 
-        function handleError(walletFriendlyName, errorMsg, errorObj) {
-            statusEl.textContent = 'Connection Failed';
-            statusEl.className = 'failed';
-            addressEl.textContent = 'N/A';
-            walletNameEl.textContent = walletFriendlyName || 'N/A';
-            let fullErrorMsg = `${walletFriendlyName} Error: ${errorMsg}`;
-            if (errorObj && errorObj.message && errorObj.message !== errorMsg) {
-                fullErrorMsg += `\nInternal: ${errorObj.message}`;
-            } else if (typeof errorObj === 'string' && errorObj !== errorMsg && errorObj.trim() !== '') {
-                fullErrorMsg += `\nDetails: ${errorObj}`;
-            } else if (typeof errorObj === 'object') { // Log the object if it's not just the message
-                 try {
-                    const prettyError = JSON.stringify(errorObj, null, 2);
-                    if (prettyError !== '{}') { // Avoid empty object strings
-                        fullErrorMsg += `\nDetails: ${prettyError}`;
-                    }
-                } catch (e) { /* ignore stringify error */ }
-            }
+        if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect === 'function') {
+            const meBitcoinProvider = window.magicEden.bitcoin;
+            console.log('Using Magic Eden Bitcoin provider (window.magicEden.bitcoin.connect).');
 
-            errorEl.textContent = fullErrorMsg;
-            console.error(`${walletFriendlyName} Error: ${errorMsg}`, errorObj || '');
-             if (errorObj && typeof errorObj === 'object') console.dir(errorObj); // Detailed console log
-        }
-
-        // --- Xverse Connection ---
-        document.getElementById('connectXverse').addEventListener('click', async () => {
-            console.log("Attempting to connect Xverse (Sats Connect method)...");
-            let xverseBitcoinProvider; 
-
-            if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
-                xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
-            } else if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.connect === 'function') { 
-                xverseBitcoinProvider = window.BitcoinProvider;
-            }
-
-            if (xverseBitcoinProvider && typeof xverseBitcoinProvider.connect === 'function') {
-                const getAddressOptions = {
-                    payload: { purposes: ['payment'], message: 'Sign in to connect your Bitcoin payment address.', network: { type: 'Mainnet' } },
-                    onFinish: (response) => {
-                        if (response.addresses && response.addresses.length > 0) {
-                            const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh') || response.addresses[0];
-                            if (paymentAddress && paymentAddress.address) updateWalletInfo('Xverse', paymentAddress.address);
-                            else handleError('Xverse', 'Payment address not found in Xverse response.', response);
-                        } else handleError('Xverse', 'No addresses returned in Xverse onFinish response.', response);
-                    },
-                    onCancel: () => handleError('Xverse', 'Xverse request cancelled or failed. Check Xverse Wallet for details (internal JSON error previously observed).'),
+            try {
+                const payload = {
+                    purposes: ['payment', 'ordinals'],
+                    message: 'Connect to Magic Eden Wallet for Bitcoin.',
+                    network: { type: 'Mainnet' },
                 };
-                try { await xverseBitcoinProvider.connect('getAccounts', getAddressOptions); }
-                catch (error) { handleError('Xverse', error.message || 'Error during Xverse connect call.', error); }
-            } else handleError('Xverse', 'Xverse wallet provider with .connect method not found.');
-        });
+                const requestToken = effectiveJsonTokens.createUnsecuredToken(payload);
 
-        // --- Unisat Connection ---
-        document.getElementById('connectUnisat').addEventListener('click', async () => {
-            if (typeof window.unisat !== 'undefined' && typeof window.unisat.requestAccounts === 'function') {
-                try {
-                    const accounts = await window.unisat.requestAccounts();
-                    if (accounts && accounts.length > 0) updateWalletInfo('Unisat', accounts[0]);
-                    else handleError('Unisat', 'No accounts found or permission denied by Unisat.');
-                } catch (error) { handleError('Unisat', error.message || 'Error during Unisat requestAccounts.', error); }
-            } else handleError('Unisat', 'Unisat wallet (window.unisat with .requestAccounts) not found.');
-        });
+                if (!requestToken) {
+                    handleError('Magic Eden (Bitcoin)', 'Failed to create request token. jsontokens library might be missing or failed.');
+                    return;
+                }
+                
+                console.log("Magic Eden: Calling provider.connect(requestToken). Token (prefix):", typeof requestToken === 'string' ? requestToken.substring(0, 60) + "..." : "[Invalid Token]");
+                const response = await meBitcoinProvider.connect(requestToken);
+                console.log('Magic Eden connect response object:', response); // Log the raw response object
 
-        // --- Magic Eden (Bitcoin) Connection ---
-        document.getElementById('connectMagicEden').addEventListener('click', async () => {
-            console.log("Attempting to connect Magic Eden (Bitcoin)...");
-            const effectiveJsonTokens = getJsonTokensLib(); // Get the actual or dummy jsontokens
-
-            if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect === 'function') {
-                const meBitcoinProvider = window.magicEden.bitcoin;
-                console.log('Using Magic Eden Bitcoin provider (window.magicEden.bitcoin.connect).');
-
-                try {
-                    const payload = {
-                        purposes: ['payment', 'ordinals'],
-                        message: 'Connect to Magic Eden Wallet for Bitcoin.',
-                        network: { type: 'Mainnet' },
-                    };
-                    const requestToken = effectiveJsonTokens.createUnsecuredToken(payload);
-
-                    if (!requestToken) {
-                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. jsontokens library might be missing or failed.');
-                        return;
-                    }
-                    
-                    console.log("Magic Eden: Calling provider.connect(requestToken). Token (prefix):", typeof requestToken === 'string' ? requestToken.substring(0, 60) + "..." : "[Invalid Token]");
-                    const response = await meBitcoinProvider.connect(requestToken);
-                    console.log('Magic Eden connect response object:', response); // Log the raw response object
-
-                    // CORRECTED RESPONSE HANDLING:
-                    // The response is an object like { addresses: [...] }
-                    if (response && response.addresses && Array.isArray(response.addresses) && response.addresses.length > 0) {
-                        const addressesArray = response.addresses;
-                        const paymentAddressObj = addressesArray.find(addr => addr.purpose === 'payment') || addressesArray[0];
-                        if (paymentAddressObj && paymentAddressObj.address) {
-                            updateWalletInfo('Magic Eden (Bitcoin)', paymentAddressObj.address);
-                        } else {
-                             handleError('Magic Eden (Bitcoin)', 'Address not found in response.addresses structure.', response);
-                        }
+                // CORRECTED RESPONSE HANDLING:
+                // The response is an object like { addresses: [...] }
+                if (response && response.addresses && Array.isArray(response.addresses) && response.addresses.length > 0) {
+                    const addressesArray = response.addresses;
+                    const paymentAddressObj = addressesArray.find(addr => addr.purpose === 'payment') || addressesArray[0];
+                    if (paymentAddressObj && paymentAddressObj.address) {
+                        updateWalletInfo('Magic Eden (Bitcoin)', paymentAddressObj.address);
                     } else {
-                        // This will be hit if response is null, response.addresses is not an array, or response.addresses is empty.
-                        // The "permission denied" part of your error msg suggests the wallet might be actively denying due to the bad token.
-                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned or permission denied. Ensure jsontokens library is correctly loaded and the token is valid.', response);
+                         handleError('Magic Eden (Bitcoin)', 'Address not found in response.addresses structure.', response);
                     }
-                } catch (error) {
-                    handleError('Magic Eden (Bitcoin)', error.message || 'Error during Magic Eden connect call.', error);
-                }
-            } else {
-                let specificMeIssue = "Magic Eden provider (window.magicEden.bitcoin) not found or its .connect method is missing.";
-                if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect !== 'function') {
-                    specificMeIssue = "window.magicEden.bitcoin was found, but it does not have the documented .connect() method.";
-                }
-                console.warn(specificMeIssue);
-                // Optional: Fallback (kept for completeness, but less ideal if ME is the explicit target)
-                if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.request === 'function') {
-                    console.warn('Attempting generic window.BitcoinProvider.request as fallback.');
-                    try {
-                        const accounts = await window.BitcoinProvider.request({ method: 'getAccounts', params: [] });
-                        if (accounts && accounts.length > 0) updateWalletInfo('Magic Eden (Generic Fallback)', accounts[0]);
-                        else handleError('Magic Eden (Generic Fallback)', 'No accounts from generic provider.', accounts);
-                    } catch (error) { handleError('Magic Eden (Generic Fallback)', `Error with generic fallback: ${error.message || 'Unknown error.'}`, error); }
                 } else {
-                     handleError('Magic Eden (Bitcoin)', `${specificMeIssue} No suitable provider found.`);
+                    // This will be hit if response is null, response.addresses is not an array, or response.addresses is empty.
+                    // The "permission denied" part of your error msg suggests the wallet might be actively denying due to the bad token.
+                    handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned or permission denied. Ensure jsontokens library is correctly loaded and the token is valid.', response);
                 }
+            } catch (error) {
+                handleError('Magic Eden (Bitcoin)', error.message || 'Error during Magic Eden connect call.', error);
             }
-        });
-    </script>
+        } else {
+            let specificMeIssue = "Magic Eden provider (window.magicEden.bitcoin) not found or its .connect method is missing.";
+            if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect !== 'function') {
+                specificMeIssue = "window.magicEden.bitcoin was found, but it does not have the documented .connect() method.";
+            }
+            console.warn(specificMeIssue);
+            // Optional: Fallback (kept for completeness, but less ideal if ME is the explicit target)
+            if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.request === 'function') {
+                console.warn('Attempting generic window.BitcoinProvider.request as fallback.');
+                try {
+                    const accounts = await window.BitcoinProvider.request({ method: 'getAccounts', params: [] });
+                    if (accounts && accounts.length > 0) updateWalletInfo('Magic Eden (Generic Fallback)', accounts[0]);
+                    else handleError('Magic Eden (Generic Fallback)', 'No accounts from generic provider.', accounts);
+                } catch (error) { handleError('Magic Eden (Generic Fallback)', `Error with generic fallback: ${error.message || 'Unknown error.'}`, error); }
+            } else {
+                 handleError('Magic Eden (Bitcoin)', `${specificMeIssue} No suitable provider found.`);
+            }
+        }
+    });
+</script>
 </body>
 </html>
