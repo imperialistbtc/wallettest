@@ -3,169 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Connect Example</title>
+    <title>Wallet Connect Example - Debugging</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        button { padding: 10px 15px; margin: 10px 5px; cursor: pointer; border: none; border-radius: 5px; font-size: 16px; }
-        .xverse-btn { background-color: #5630ff; color: white; }
-        .unisat-btn { background-color: #ff9900; color: white; }
-        .magiceden-btn { background-color: #00c2ff; color: white; }
-        #wallet-info { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #e9ecef; }
-        #error-message { margin-top: 10px; color: red; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 20px; background-color: #f0f2f5; color: #1c1e21; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 100%; max-width: 450px; text-align: center; }
+        h1 { margin-bottom: 25px; font-size: 24px; color: #1c1e21; }
+        .button-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        button:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        button:active { transform: translateY(1px); }
+        .xverse-btn { background-color: #5630FF; color: white; }
+        .xverse-btn:hover { background-color: #4520d9; }
+        .unisat-btn { background-color: #FF9900; color: white; }
+        .unisat-btn:hover { background-color: #e08600; }
+        .magiceden-btn { background-color: #00C2FF; color: white; }
+        .magiceden-btn:hover { background-color: #00a8e0; }
+        #wallet-info { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background-color: #f7f7f7; text-align: left; }
+        #wallet-info p { margin: 8px 0; font-size: 14px; word-wrap: break-word; }
+        #wallet-info span { font-weight: 500; }
+        #status.connected { color: #28a745; }
+        #status.failed { color: #dc3545; }
+        #error-message { margin-top: 15px; color: #dc3545; font-size: 14px; font-weight: 500; white-space: pre-wrap; } /* Allow multi-line errors */
+        .provider-debug { font-size: 12px; color: #666; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Connect Your Wallet</h1>
 
-        <button id="connectXverse" class="xverse-btn">Connect Xverse</button>
-        <button id="connectUnisat" class="unisat-btn">Connect Unisat</button>
-        <button id="connectMagicEden" class="magiceden-btn">Connect Magic Eden (Bitcoin)</button>
+        <div class="button-group">
+            <button id="connectXverse" class="xverse-btn">Connect Xverse</button>
+            <button id="connectUnisat" class="unisat-btn">Connect Unisat</button>
+            <button id="connectMagicEden" class="magiceden-btn">Connect Magic Eden (Bitcoin)</button>
+        </div>
 
         <div id="wallet-info">
             <p>Status: <span id="status">Not Connected</span></p>
             <p>Address: <span id="address">N/A</span></p>
+            <p>Wallet: <span id="wallet-name">N/A</span></p>
         </div>
         <div id="error-message"></div>
+        <div class="provider-debug">
+            <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
+        </div>
     </div>
-
-    <!-- For Xverse (Sats Connect) - you would typically install this via npm and bundle it -->
-    <!-- <script src="https://unpkg.com/sats-connect/dist/sats-connect.js"></script> -->
-    <!-- For this basic example, we'll rely on the injected providers -->
 
     <script>
         const statusEl = document.getElementById('status');
         const addressEl = document.getElementById('address');
+        const walletNameEl = document.getElementById('wallet-name');
         const errorEl = document.getElementById('error-message');
 
-        function updateWalletInfo(walletName, address) {
-            statusEl.textContent = `Connected to ${walletName}`;
+        function updateWalletInfo(walletFriendlyName, address) {
+            statusEl.textContent = `Connected`;
+            statusEl.className = 'connected';
             addressEl.textContent = address;
+            walletNameEl.textContent = walletFriendlyName;
             errorEl.textContent = '';
+            console.log(`${walletFriendlyName} Connected:`, address);
         }
 
-        function handleError(errorMsg) {
+        function handleError(walletFriendlyName, errorMsg, errorObj) {
             statusEl.textContent = 'Connection Failed';
+            statusEl.className = 'failed';
             addressEl.textContent = 'N/A';
-            errorEl.textContent = errorMsg;
-            console.error(errorMsg);
+            walletNameEl.textContent = walletFriendlyName || 'N/A';
+            let fullErrorMsg = `${walletFriendlyName} Error: ${errorMsg}`;
+            if (errorObj && errorObj.message && errorObj.message !== errorMsg) {
+                fullErrorMsg += `\nInternal: ${errorObj.message}`;
+            }
+            errorEl.textContent = fullErrorMsg;
+            console.error(`${walletFriendlyName} Error: ${errorMsg}`, errorObj || '');
+            if (errorObj) console.dir(errorObj); // Log the full error object for more details
         }
 
-        // Xverse Connection
+        // --- Xverse Connection ---
         document.getElementById('connectXverse').addEventListener('click', async () => {
-            if (typeof window.BitcoinProvider !== 'undefined' || (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined')) {
+            console.log("Attempting to connect Xverse...");
+            let xverseProvider;
+            let providerSource = "None";
+
+            if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
+                console.log('Found window.XverseProviders.BitcoinProvider object:', window.XverseProviders.BitcoinProvider);
+                if (typeof window.XverseProviders.BitcoinProvider.request === 'function') {
+                    xverseProvider = window.XverseProviders.BitcoinProvider;
+                    providerSource = "window.XverseProviders.BitcoinProvider";
+                } else {
+                    console.warn('window.XverseProviders.BitcoinProvider found, but it does not have a .request() method.');
+                }
+            }
+
+            if (!xverseProvider && typeof window.BitcoinProvider !== 'undefined') {
+                console.log('Xverse specific provider not suitable or not found. Checking generic window.BitcoinProvider object:', window.BitcoinProvider);
+                 if (typeof window.BitcoinProvider.request === 'function') {
+                    xverseProvider = window.BitcoinProvider;
+                    providerSource = "window.BitcoinProvider (generic fallback)";
+                    console.warn('Using generic window.BitcoinProvider for Xverse. This might be another wallet if Xverse is not the default Bitcoin provider.');
+                } else {
+                    console.warn('Generic window.BitcoinProvider found, but it does not have a .request() method (when checking for Xverse).');
+                }
+            }
+            console.log(`Xverse: Using provider from: ${providerSource}`);
+
+            if (xverseProvider) {
                 try {
-                    // Prefer XverseProviders.BitcoinProvider if available
-                    const provider = window.XverseProviders ? window.XverseProviders.BitcoinProvider : window.BitcoinProvider;
-                    if (!provider) {
-                         handleError('Xverse provider not found. Make sure Xverse wallet is installed and enabled.');
-                         return;
+                    console.log("Xverse: Attempting provider.request({ method: 'getAccounts', params: [] })");
+                    const response = await xverseProvider.request({ method: 'getAccounts', params: [] });
+                    console.log('Xverse getAccounts (method call) response:', response);
+
+                    let userAddress;
+                    if (response && response.result && Array.isArray(response.result) && response.result.length > 0) {
+                        const firstAccount = response.result[0];
+                        if (typeof firstAccount === 'object' && firstAccount.address) {
+                            userAddress = firstAccount.address;
+                        } else if (typeof firstAccount === 'string') {
+                            userAddress = firstAccount;
+                        }
+                    } else if (Array.isArray(response) && response.length > 0 && typeof response[0] === 'string') {
+                         userAddress = response[0];
                     }
 
-                    // Using a common method often available for requesting accounts.
-                    // For full Xverse functionality, refer to Sats Connect documentation. [1, 6]
-                    // This is a simplified approach.
-                    const resp = await provider.request('getAccounts');
-                    if (resp && resp.result && resp.result.length > 0) {
-                         // Structure of response can vary, this is a common pattern.
-                         // Xverse using Sats Connect returns an array of address objects.
-                         // For simplicity, we'll assume the first address is the payment address.
-                         // Actual Sats Connect usage for 'getAccounts' is more like:
-                         // const getAddressOptions = {
-                         //     payload: {
-                         //         purposes: ['payment'],
-                         //         message: 'Address for receiving payments',
-                         //         network: { type: 'Mainnet' },
-                         //     },
-                         //     onFinish: (response) => updateWalletInfo('Xverse', response.addresses[0].address),
-                         //     onCancel: () => handleError('Xverse connection cancelled by user.'),
-                         // };
-                         // await BitcoinProvider.connect('getAccounts', getAddressOptions);
-                         // The direct request below is a simplification and might need adjustment based on provider specifics.
-                        let userAddress;
-                        if (Array.isArray(resp.result) && resp.result.length > 0 && typeof resp.result[0] === 'object' && resp.result[0].address) {
-                            userAddress = resp.result[0].address; // Common for Sats Connect style
-                        } else if (Array.isArray(resp.result) && resp.result.length > 0 && typeof resp.result[0] === 'string') {
-                            userAddress = resp.result[0]; // Simpler array of addresses
-                        } else {
-                            handleError('Xverse: Could not retrieve a valid address from the wallet response.');
-                            return;
-                        }
+                    if (userAddress) {
                         updateWalletInfo('Xverse', userAddress);
                     } else {
-                        // Fallback for providers that might return accounts directly in a different format
-                        const accounts = await provider.request({ method: 'getAccounts', params: [] });
-                        if (accounts && accounts.length > 0) {
-                            updateWalletInfo('Xverse', accounts[0]);
+                        console.warn("Xverse: 'getAccounts' (method call) did not yield a clear address. Trying string call 'getAccounts' as fallback.");
+                        const responseStringCall = await xverseProvider.request('getAccounts'); // Fallback, less standard
+                        console.log('Xverse getAccounts (string call) response:', responseStringCall);
+                        if (responseStringCall && responseStringCall.result && Array.isArray(responseStringCall.result) && responseStringCall.result.length > 0) {
+                            const firstAccountString = responseStringCall.result[0];
+                             if (typeof firstAccountString === 'object' && firstAccountString.address) {
+                                userAddress = firstAccountString.address;
+                            } else if (typeof firstAccountString === 'string') {
+                                userAddress = firstAccountString;
+                            }
+                        } else if (Array.isArray(responseStringCall) && responseStringCall.length > 0 && typeof responseStringCall[0] === 'string') {
+                            userAddress = responseStringCall[0];
+                        }
+
+                        if (userAddress) {
+                            updateWalletInfo('Xverse', userAddress);
                         } else {
-                             handleError('Xverse: No accounts found or permission denied.');
+                            handleError('Xverse', 'No accounts found or permission denied after both request attempts. Response structure might be unexpected.', responseStringCall || response);
                         }
                     }
                 } catch (error) {
-                    handleError(`Xverse Connection Error: ${error.message}`);
+                    handleError('Xverse', error.message || 'An unknown error occurred during request.', error);
                 }
             } else {
-                handleError('Xverse wallet extension not found. Please install Xverse and ensure it is enabled.');
+                handleError('Xverse', 'Compatible Xverse wallet provider not found or it lacks a .request() method. Ensure it is installed, enabled, and has permissions.');
             }
         });
 
-        // Unisat Connection
+        // --- Unisat Connection ---
         document.getElementById('connectUnisat').addEventListener('click', async () => {
+            console.log("Attempting to connect Unisat...");
             if (typeof window.unisat !== 'undefined') {
+                console.log('Found Unisat provider at window.unisat:', window.unisat);
                 try {
+                    console.log("Unisat: Attempting window.unisat.requestAccounts()");
                     const accounts = await window.unisat.requestAccounts();
+                    console.log('Unisat requestAccounts response:', accounts);
                     if (accounts && accounts.length > 0) {
                         updateWalletInfo('Unisat', accounts[0]);
-                        // You can also get public key
-                        // const publicKey = await window.unisat.getPublicKey();
-                        // console.log('Unisat Public Key:', publicKey);
                     } else {
-                        handleError('Unisat: No accounts found or permission denied.');
+                        handleError('Unisat', 'No accounts found or permission denied.');
                     }
                 } catch (error) {
-                    handleError(`Unisat Connection Error: ${error.message}`);
+                    handleError('Unisat', error.message || 'An unknown error occurred.', error);
                 }
             } else {
-                handleError('Unisat wallet extension not found. Please install Unisat and ensure it is enabled.');
+                handleError('Unisat', 'Unisat wallet extension not found. Please ensure it is installed, enabled, and has permissions for this page.');
             }
         });
 
-        // Magic Eden (Bitcoin) Connection
+        // --- Magic Eden (Bitcoin) Connection ---
         document.getElementById('connectMagicEden').addEventListener('click', async () => {
-            // Magic Eden injects its Bitcoin provider at window.magicEden.bitcoin [4]
-            // It also tries window.BitcoinProvider which might conflict. We'll prioritize the specific one.
-            const meBitcoinProvider = window.magicEden && window.magicEden.bitcoin;
+            console.log("Attempting to connect Magic Eden (Bitcoin)...");
+            let meProvider;
+            let providerSource = "None";
 
-            if (typeof meBitcoinProvider !== 'undefined') {
+            if (window.magicEden && window.magicEden.bitcoin) {
+                console.log('Found window.magicEden.bitcoin object:', window.magicEden.bitcoin);
+                if (typeof window.magicEden.bitcoin.request === 'function') {
+                    meProvider = window.magicEden.bitcoin;
+                    providerSource = "window.magicEden.bitcoin";
+                } else {
+                    console.warn('window.magicEden.bitcoin was found, but it does not have a .request() method. Logging object properties below.');
+                    console.dir(window.magicEden.bitcoin); // Log the object to see its structure
+                }
+            }
+
+            if (!meProvider && typeof window.BitcoinProvider !== 'undefined') {
+                console.log('Magic Eden specific provider not suitable or not found. Checking generic window.BitcoinProvider object:', window.BitcoinProvider);
+                if (typeof window.BitcoinProvider.request === 'function') {
+                    meProvider = window.BitcoinProvider;
+                    providerSource = "window.BitcoinProvider (generic fallback)";
+                     console.warn('Using generic window.BitcoinProvider for Magic Eden. This might be another wallet if Magic Eden is not the default Bitcoin provider.');
+                } else {
+                    console.warn('Generic window.BitcoinProvider found, but it does not have a .request() method (when checking for Magic Eden). Logging object properties below.');
+                    console.dir(window.BitcoinProvider); // Log the object
+                }
+            }
+            console.log(`Magic Eden: Using provider from: ${providerSource}`);
+
+            if (meProvider) {
                 try {
-                    // The Magic Eden provider might follow a similar pattern to others
-                    // or use specific methods outlined in their developer docs. [4]
-                    // The `request` method with `getAccounts` is a common standard.
-                    const result = await meBitcoinProvider.request({ method: 'getAccounts', params: [] });
+                    console.log("Magic Eden: Attempting provider.request({ method: 'getAccounts', params: [] })");
+                    const response = await meProvider.request({ method: 'getAccounts', params: [] });
+                    console.log('Magic Eden getAccounts response:', response);
 
-                    // Response structure can vary. It might be an array directly, or an object with a result field.
                     let accounts;
-                    if (Array.isArray(result)) {
-                        accounts = result;
-                    } else if (result && Array.isArray(result.result)) {
-                        accounts = result.result;
+                    if (Array.isArray(response) && response.length > 0) {
+                        accounts = response;
+                    } else if (response && Array.isArray(response.result) && response.result.length > 0) {
+                        accounts = response.result;
                     }
-
 
                     if (accounts && accounts.length > 0) {
                         updateWalletInfo('Magic Eden (Bitcoin)', accounts[0]);
                     } else {
-                        handleError('Magic Eden: No accounts found or permission denied.');
+                        handleError('Magic Eden (Bitcoin)', 'No accounts found or permission denied. Response structure might be unexpected.', response);
                     }
                 } catch (error) {
-                    handleError(`Magic Eden Connection Error: ${error.message}`);
+                    handleError('Magic Eden (Bitcoin)', error.message || 'An unknown error occurred during request.', error);
                 }
             } else {
-                handleError('Magic Eden Bitcoin wallet provider (window.magicEden.bitcoin) not found. Please install Magic Eden wallet and ensure it is enabled.');
+                handleError('Magic Eden (Bitcoin)', 'Compatible Magic Eden Bitcoin wallet provider not found or it lacks a .request() method.');
             }
         });
-
     </script>
 </body>
 </html>
