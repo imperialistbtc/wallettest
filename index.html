@@ -29,7 +29,9 @@
     </style>
     <!-- 
         CRITICAL: Include the jsontokens library for Magic Eden Wallet connection.
-        Using version 0.4.0 to attempt to avoid the "BigInt" error seen with @latest.
+        Using version 0.4.0 from unpkg.com. If this version also shows internal errors
+        (like "Cannot convert BigInt to number" from jsontokens.js on page load),
+        the library itself is not working correctly in your environment from this CDN source.
     -->
     <script src="https://unpkg.com/jsontokens@0.4.0/dist/jsontokens.js"></script>
 </head>
@@ -51,7 +53,7 @@
         <div id="error-message"></div>
         <div class="provider-debug">
             <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
-            <p class="critical-note">Note: Magic Eden connection REQUIRES the 'jsontokens' library to be correctly loaded (see &lt;head&gt; of this HTML).</p>
+            <p class="critical-note">Note: Magic Eden connection REQUIRES the 'jsontokens' library to be correctly loaded (see &lt;head&gt; of this HTML). If 'jsontokens.js' itself has errors on load (like 'BigInt' issues), connection will fail.</p>
         </div>
     </div>
 
@@ -63,15 +65,13 @@
         
         function getJsonTokensLib() {
             if (typeof jsontokens !== 'undefined' && typeof jsontokens.createUnsecuredToken === 'function') {
-                console.log("jsontokens library appears to be loaded and createUnsecuredToken is a function. Version should be 0.4.0.");
+                console.log("jsontokens library appears to be loaded and jsontokens.createUnsecuredToken is a function.");
                 return jsontokens;
             }
-            // This block will be hit if jsontokens.js itself had a fatal error during load (like the BigInt issue)
-            // or if the script tag failed to load the library.
-            console.error("CRITICAL: jsontokens library not found OR jsontokens.createUnsecuredToken is not a function. This could be due to an error WITHIN jsontokens.js during page load (e.g., the 'BigInt' error previously seen). Magic Eden connection will fail.");
+            console.error("CRITICAL: jsontokens library not found OR jsontokens.createUnsecuredToken is not a function. This is likely due to an error WITHIN the jsontokens.js script itself during page load (e.g., 'Cannot convert BigInt to number'). Magic Eden connection will fail. Ensure the library from the CDN loads and initializes without errors in your browser environment.");
             return {
                 createUnsecuredToken: function(payload) {
-                    console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing or faulty.");
+                    console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing or failed to initialize properly.");
                     return null; 
                 }
             };
@@ -107,7 +107,6 @@
         document.getElementById('connectXverse').addEventListener('click', async () => {
             console.log("Attempting to connect Xverse (Sats Connect method)...");
             let xverseBitcoinProvider; 
-
             if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
                 xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
             } else if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.connect === 'function') { 
@@ -124,7 +123,7 @@
                             else handleError('Xverse', 'Payment address not found in Xverse response.', response);
                         } else handleError('Xverse', 'No addresses returned in Xverse onFinish response.', response);
                     },
-                    onCancel: () => handleError('Xverse', 'Xverse request cancelled or failed. This may be due to an internal Xverse Wallet error (JSON parsing issue observed in extension v0.54.1 Beta).'),
+                    onCancel: () => handleError('Xverse', 'Xverse request cancelled or failed. This may be due to an internal Xverse Wallet error (JSON parsing issue observed in extension v0.54.1 Beta). Please report this to Xverse support.'),
                 };
                 try { await xverseBitcoinProvider.connect('getAccounts', getAddressOptions); }
                 catch (error) { handleError('Xverse', error.message || 'Error during Xverse connect call.', error); }
@@ -157,13 +156,10 @@
                         message: 'Connect to Magic Eden Wallet for Bitcoin.',
                         network: { type: 'Mainnet' },
                     };
-                    // Attempt to create the token. This is where jsontokens library is crucial.
                     const requestToken = effectiveJsonTokens.createUnsecuredToken(payload);
 
                     if (!requestToken) {
-                        // This error is shown if getJsonTokensLib determined the library was faulty (e.g., due to BigInt error on load)
-                        // or if createUnsecuredToken itself explicitly returned null.
-                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. The jsontokens library may be missing, not loaded correctly due to an internal error (like a "BigInt" issue), or createUnsecuredToken failed. Check console for errors from jsontokens.js.', null);
+                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. The jsontokens library (from unpkg.com) failed to load or initialize correctly, possibly due to an internal error like "Cannot convert BigInt to number". Check browser console for errors from jsontokens.js on page load.', null);
                         return;
                     }
                     
@@ -180,15 +176,12 @@
                              handleError('Magic Eden (Bitcoin)', 'Address not found in response.addresses structure.', response);
                         }
                     } else {
-                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned from Magic Eden or permission denied. This can occur if the token was invalid (due to jsontokens library issues) or the user denied the request in the wallet.', response);
+                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned from Magic Eden or permission denied. This usually happens if the token was invalid (due to jsontokens library issues) or the user denied the request in the wallet.', response);
                     }
                 } catch (error) {
-                    // This catch block will grab errors from await meBitcoinProvider.connect(requestToken)
-                    // OR if effectiveJsonTokens.createUnsecuredToken(payload) itself throws an unhandled error
-                    // (though the BigInt error seemed to happen at library load time).
                     let detailedErrorMessage = error.message || 'Error during Magic Eden connect call.';
                     if ( (error.message && error.message.toLowerCase().includes("bigint")) || (error.stack && error.stack.toLowerCase().includes("jsontokens")) ) {
-                         detailedErrorMessage += " This might be related to an internal error in the jsontokens library (e.g., 'BigInt' conversion error).";
+                         detailedErrorMessage += " This indicates an internal error in the jsontokens library.";
                     }
                     handleError('Magic Eden (Bitcoin)', detailedErrorMessage, error);
                 }
@@ -198,7 +191,6 @@
                     specificMeIssue = "window.magicEden.bitcoin was found, but it does not have the documented .connect() method.";
                 }
                 console.warn(specificMeIssue);
-                // Fallback (optional, if you want to try a generic provider if ME's specific one fails)
                 if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.request === 'function') {
                     console.warn('Attempting generic window.BitcoinProvider.request as fallback for Magic Eden.');
                     try {
