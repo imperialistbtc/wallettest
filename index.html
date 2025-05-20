@@ -80,17 +80,20 @@
         }
 
         // --- Xverse Connection (using Sats Connect approach) ---
+        // The following Xverse connection logic adheres to the official Xverse documentation.
+        // The error "Unexpected token '�', ... is not valid JSON" observed in the Xverse popup
+        // (specifically from .../popup.js ... decodeToken) indicates an internal issue within
+        // the Xverse extension itself. Such issues typically cannot be resolved by changes
+        // to the dApp's code if the dApp is already using the API correctly.
         document.getElementById('connectXverse').addEventListener('click', async () => {
             console.log("Attempting to connect Xverse (Sats Connect method)...");
-            let xverseBitcoinProvider; // This is the provider object from the Xverse extension
+            let xverseBitcoinProvider; 
 
             if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
                 console.log('Found Xverse provider at window.XverseProviders.BitcoinProvider');
                 xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
             } else if (typeof window.BitcoinProvider !== 'undefined') {
                 console.log('No Xverse-specific provider found. Falling back to generic window.BitcoinProvider.');
-                // We need to be reasonably sure this is Xverse or a Sats Connect compatible provider.
-                // Checking for the .connect method specifically.
                 if (typeof window.BitcoinProvider.connect === 'function') {
                     xverseBitcoinProvider = window.BitcoinProvider;
                     console.log('Using generic window.BitcoinProvider as it has a .connect method.');
@@ -102,22 +105,19 @@
             if (xverseBitcoinProvider && typeof xverseBitcoinProvider.connect === 'function') {
                 const getAddressOptions = {
                     payload: {
-                        purposes: ['payment'], // You can also ask for 'ordinals'
+                        purposes: ['payment'], 
                         message: 'Sign in to connect your Bitcoin payment address.',
                         network: {
-                            type: 'Mainnet' // Or 'Testnet'
+                            type: 'Mainnet' 
                         },
                     },
                     onFinish: (response) => {
                         console.log('Xverse onFinish response:', response);
-                        // response.addresses is an array of address objects
-                        // e.g., [{ address: '...', publicKey: '...', type: 'p2wpkh' }]
                         if (response.addresses && response.addresses.length > 0) {
-                            // Find the payment address (often p2wpkh for Bitcoin)
                             const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh');
                             if (paymentAddress) {
                                 updateWalletInfo('Xverse', paymentAddress.address);
-                            } else if (response.addresses[0].address) { // Fallback to first address if specific type not found
+                            } else if (response.addresses[0].address) { 
                                 updateWalletInfo('Xverse', response.addresses[0].address);
                             } else {
                                 handleError('Xverse', 'Payment address not found in response.', response);
@@ -134,14 +134,18 @@
 
                 try {
                     console.log('Xverse: Calling provider.connect("getAccounts", getAddressOptions)...');
-                    // The await here waits for the user to interact with the popup.
-                    // The actual address is delivered via the onFinish callback.
                     await xverseBitcoinProvider.connect('getAccounts', getAddressOptions);
                     console.log('Xverse: provider.connect call completed (user interaction finished).');
                 } catch (error) {
-                    // This catch block might catch errors if the .connect call itself fails synchronously,
-                    // though most "user errors" like cancellation are handled by onCancel.
-                    handleError('Xverse', error.message || 'An unknown error occurred during the connect call.', error);
+                    // This catch block handles rejections from the .connect call.
+                    // The specific JSON parsing error detailed in the Xverse popup is internal to the extension.
+                    let message = 'An unknown error occurred during the connect call.';
+                    if (error && typeof error.message === 'string' && error.message.trim() !== '') {
+                        message = error.message;
+                    } else if (typeof error === 'string' && error.trim() !== '') {
+                        message = error;
+                    }
+                    handleError('Xverse', message, error);
                 }
             } else {
                 handleError('Xverse', 'Xverse wallet provider with .connect method not found. Please ensure Xverse extension is installed, enabled, and up to date.');
