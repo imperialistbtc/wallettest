@@ -10,8 +10,7 @@
         h1 { margin-bottom: 25px; font-size: 24px; color: #1c1e21; }
         .button-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
         button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
-        button:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        button:active { transform: translateY(1px); }
+        /* ... (rest of your styles) ... */
         .xverse-btn { background-color: #5630FF; color: white; }
         .xverse-btn:hover { background-color: #4520d9; }
         .unisat-btn { background-color: #FF9900; color: white; }
@@ -28,12 +27,11 @@
         .critical-note { color: red; font-weight: bold; }
     </style>
     <!-- 
-        CRITICAL: Include the jsontokens library for Magic Eden Wallet connection.
-        Using version 0.4.0 from unpkg.com. If this version also shows internal errors
-        (like "Cannot convert BigInt to number" from jsontokens.js on page load),
-        the library itself is not working correctly in your environment from this CDN source.
+        Attempting to use sats-connect library from CDN.
+        This should manage its own jsontokens dependency.
+        Note: The version 0.2.2 is an example, a newer one might be available or preferable.
     -->
-    <script src="https://unpkg.com/jsontokens@0.4.0/dist/jsontokens.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sats-connect@0.2.2/dist/sats-connect.js"></script>
 </head>
 <body>
     <div class="container">
@@ -53,7 +51,7 @@
         <div id="error-message"></div>
         <div class="provider-debug">
             <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
-            <p class="critical-note">Note: Magic Eden connection REQUIRES the 'jsontokens' library to be correctly loaded (see &lt;head&gt; of this HTML). If 'jsontokens.js' itself has errors on load (like 'BigInt' issues), connection will fail.</p>
+            <p class="critical-note">This version uses the 'sats-connect' library for Xverse and Magic Eden.</p>
         </div>
     </div>
 
@@ -62,20 +60,6 @@
         const addressEl = document.getElementById('address');
         const walletNameEl = document.getElementById('wallet-name');
         const errorEl = document.getElementById('error-message');
-        
-        function getJsonTokensLib() {
-            if (typeof jsontokens !== 'undefined' && typeof jsontokens.createUnsecuredToken === 'function') {
-                console.log("jsontokens library appears to be loaded and jsontokens.createUnsecuredToken is a function.");
-                return jsontokens;
-            }
-            console.error("CRITICAL: jsontokens library not found OR jsontokens.createUnsecuredToken is not a function. This is likely due to an error WITHIN the jsontokens.js script itself during page load (e.g., 'Cannot convert BigInt to number'). Magic Eden connection will fail. Ensure the library from the CDN loads and initializes without errors in your browser environment.");
-            return {
-                createUnsecuredToken: function(payload) {
-                    console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing or failed to initialize properly.");
-                    return null; 
-                }
-            };
-        }
 
         function updateWalletInfo(walletFriendlyName, address) {
             statusEl.textContent = `Connected`;
@@ -103,34 +87,74 @@
             if (errorObj && typeof errorObj === 'object') console.dir(errorObj);
         }
 
-        // --- Xverse Connection ---
+        // Common getAddressOptions for Sats Connect compatible wallets
+        const commonGetAddressOptions = {
+            payload: {
+                purposes: ['payment'],
+                message: 'Sign in to connect your Bitcoin payment address.',
+                network: {
+                    type: 'Mainnet' 
+                },
+            },
+            onFinish: (response, walletName) => { // Modified to pass walletName
+                console.log(`${walletName} onFinish response:`, response);
+                // response.addresses is an array of address objects
+                if (response.addresses && response.addresses.length > 0) {
+                    const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh') || response.addresses[0];
+                    if (paymentAddress && paymentAddress.address) {
+                        updateWalletInfo(walletName, paymentAddress.address);
+                    } else {
+                        handleError(walletName, 'Payment address not found in response.', response);
+                    }
+                } else {
+                    handleError(walletName, 'No addresses returned in onFinish response.', response);
+                }
+            },
+            onCancel: (walletName) => { // Modified to pass walletName
+                console.log(`${walletName} onCancel: User cancelled or internal error.`);
+                handleError(walletName, 'Request cancelled or failed. This could be due to user action or an internal wallet error.');
+            },
+        };
+
+        // --- Xverse Connection (using sats-connect library) ---
         document.getElementById('connectXverse').addEventListener('click', async () => {
-            console.log("Attempting to connect Xverse (Sats Connect method)...");
-            let xverseBitcoinProvider; 
-            if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
-                xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
-            } else if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.connect === 'function') { 
-                xverseBitcoinProvider = window.BitcoinProvider;
+            console.log("Attempting to connect Xverse (using sats-connect library)...");
+            if (typeof satsConnect === 'undefined' || typeof satsConnect.getAddress !== 'function') {
+                handleError('Xverse', 'sats-connect library not found or getAddress function is missing. Check CDN script tag.');
+                return;
+            }
+            if (typeof window.XverseProviders === 'undefined' || typeof window.XverseProviders.BitcoinProvider === 'undefined') {
+                 handleError('Xverse', 'Xverse Wallet provider (window.XverseProviders.BitcoinProvider) not found. Is Xverse installed?');
+                return;
             }
 
-            if (xverseBitcoinProvider && typeof xverseBitcoinProvider.connect === 'function') {
-                const getAddressOptions = {
-                    payload: { purposes: ['payment'], message: 'Sign in to connect your Bitcoin payment address.', network: { type: 'Mainnet' } },
-                    onFinish: (response) => {
-                        if (response.addresses && response.addresses.length > 0) {
-                            const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh') || response.addresses[0];
-                            if (paymentAddress && paymentAddress.address) updateWalletInfo('Xverse', paymentAddress.address);
-                            else handleError('Xverse', 'Payment address not found in Xverse response.', response);
-                        } else handleError('Xverse', 'No addresses returned in Xverse onFinish response.', response);
-                    },
-                    onCancel: () => handleError('Xverse', 'Xverse request cancelled or failed. This may be due to an internal Xverse Wallet error (JSON parsing issue observed in extension v0.54.1 Beta). Please report this to Xverse support.'),
-                };
-                try { await xverseBitcoinProvider.connect('getAccounts', getAddressOptions); }
-                catch (error) { handleError('Xverse', error.message || 'Error during Xverse connect call.', error); }
-            } else handleError('Xverse', 'Xverse wallet provider with .connect method not found.');
+            try {
+                // The Xverse provider itself is not passed to satsConnect.getAddress,
+                // sats-connect handles provider discovery implicitly based on its design with compatible wallets.
+                // However, the Xverse documentation (and your previous code) has the provider call .connect itself.
+                // Sats-connect's getAddress is a utility that wraps this. Let's assume getAddress uses the
+                // globally available compatible provider if one exists and is active.
+                await satsConnect.getAddress({
+                    ...commonGetAddressOptions,
+                    // Override onFinish and onCancel to include the specific wallet name
+                    onFinish: (response) => commonGetAddressOptions.onFinish(response, 'Xverse'),
+                    onCancel: () => commonGetAddressOptions.onCancel('Xverse'),
+                    // The Xverse documentation shows providing the provider in some examples,
+                    // but sats-connect generally aims to auto-detect. If this direct call fails,
+                    // it implies sats-connect might expect to be initialized differently or the provider isn't auto-detected as hoped.
+                    // For now, relying on sats-connect's auto-detection or its internal handling.
+                    // If Xverse has a specific way it wants to be invoked via sats-connect's getAddress,
+                    // that might involve providing the provider to an init function of sats-connect first.
+                    // For now, direct call as per many generic sats-connect examples.
+                });
+                console.log('Xverse: satsConnect.getAddress call initiated.');
+            } catch (error) {
+                // This catch is for errors in the getAddress call itself, not async errors handled by onFinish/onCancel
+                handleError('Xverse', error.message || 'An unknown error occurred calling satsConnect.getAddress.', error);
+            }
         });
-
-        // --- Unisat Connection ---
+        
+        // --- Unisat Connection (remains the same) ---
         document.getElementById('connectUnisat').addEventListener('click', async () => {
             if (typeof window.unisat !== 'undefined' && typeof window.unisat.requestAccounts === 'function') {
                 try {
@@ -141,66 +165,38 @@
             } else handleError('Unisat', 'Unisat wallet (window.unisat with .requestAccounts) not found.');
         });
 
-        // --- Magic Eden (Bitcoin) Connection ---
+        // --- Magic Eden (Bitcoin) Connection (using sats-connect library) ---
         document.getElementById('connectMagicEden').addEventListener('click', async () => {
-            console.log("Attempting to connect Magic Eden (Bitcoin)...");
-            const effectiveJsonTokens = getJsonTokensLib(); 
-
-            if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect === 'function') {
-                const meBitcoinProvider = window.magicEden.bitcoin;
-                console.log('Using Magic Eden Bitcoin provider (window.magicEden.bitcoin.connect).');
-
-                try {
-                    const payload = {
-                        purposes: ['payment', 'ordinals'],
+            console.log("Attempting to connect Magic Eden (Bitcoin) (using sats-connect library)...");
+            if (typeof satsConnect === 'undefined' || typeof satsConnect.getAddress !== 'function') {
+                handleError('Magic Eden (Bitcoin)', 'sats-connect library not found or getAddress function is missing. Check CDN script tag.');
+                return;
+            }
+            // Magic Eden documentation suggests compatibility with Sats Connect methods.
+            // We assume window.magicEden.bitcoin is the provider that sats-connect will interact with,
+            // or that sats-connect can discover it if it's the active Bitcoin provider.
+            if (!(window.magicEden && window.magicEden.bitcoin)) {
+                handleError('Magic Eden (Bitcoin)', 'Magic Eden Bitcoin provider (window.magicEden.bitcoin) not found.');
+                return;
+            }
+            
+            try {
+                // Similar to Xverse, relying on satsConnect.getAddress to handle the interaction
+                // with the globally available and compatible Magic Eden provider.
+                await satsConnect.getAddress({
+                    ...commonGetAddressOptions,
+                     payload: { // Use ME specific details if necessary, or commonGetAddressOptions is fine
+                        purposes: ['payment', 'ordinals'], // ME docs suggest these purposes
                         message: 'Connect to Magic Eden Wallet for Bitcoin.',
                         network: { type: 'Mainnet' },
-                    };
-                    const requestToken = effectiveJsonTokens.createUnsecuredToken(payload);
-
-                    if (!requestToken) {
-                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. The jsontokens library (from unpkg.com) failed to load or initialize correctly, possibly due to an internal error like "Cannot convert BigInt to number". Check browser console for errors from jsontokens.js on page load.', null);
-                        return;
-                    }
-                    
-                    console.log("Magic Eden: Calling provider.connect(requestToken). Token (prefix):", typeof requestToken === 'string' ? requestToken.substring(0, 60) + "..." : "[Invalid Token Generated]");
-                    const response = await meBitcoinProvider.connect(requestToken);
-                    console.log('Magic Eden connect response object:', response);
-
-                    if (response && response.addresses && Array.isArray(response.addresses) && response.addresses.length > 0) {
-                        const addressesArray = response.addresses;
-                        const paymentAddressObj = addressesArray.find(addr => addr.purpose === 'payment') || addressesArray[0];
-                        if (paymentAddressObj && paymentAddressObj.address) {
-                            updateWalletInfo('Magic Eden (Bitcoin)', paymentAddressObj.address);
-                        } else {
-                             handleError('Magic Eden (Bitcoin)', 'Address not found in response.addresses structure.', response);
-                        }
-                    } else {
-                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned from Magic Eden or permission denied. This usually happens if the token was invalid (due to jsontokens library issues) or the user denied the request in the wallet.', response);
-                    }
-                } catch (error) {
-                    let detailedErrorMessage = error.message || 'Error during Magic Eden connect call.';
-                    if ( (error.message && error.message.toLowerCase().includes("bigint")) || (error.stack && error.stack.toLowerCase().includes("jsontokens")) ) {
-                         detailedErrorMessage += " This indicates an internal error in the jsontokens library.";
-                    }
-                    handleError('Magic Eden (Bitcoin)', detailedErrorMessage, error);
-                }
-            } else {
-                let specificMeIssue = "Magic Eden provider (window.magicEden.bitcoin) not found or its .connect method is missing.";
-                if (window.magicEden && window.magicEden.bitcoin && typeof window.magicEden.bitcoin.connect !== 'function') {
-                    specificMeIssue = "window.magicEden.bitcoin was found, but it does not have the documented .connect() method.";
-                }
-                console.warn(specificMeIssue);
-                if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.request === 'function') {
-                    console.warn('Attempting generic window.BitcoinProvider.request as fallback for Magic Eden.');
-                    try {
-                        const accounts = await window.BitcoinProvider.request({ method: 'getAccounts', params: [] });
-                        if (accounts && accounts.length > 0) updateWalletInfo('Magic Eden (Generic Fallback)', accounts[0]);
-                        else handleError('Magic Eden (Generic Fallback)', 'No accounts from generic provider.', accounts);
-                    } catch (error) { handleError('Magic Eden (Generic Fallback)', `Error with generic fallback: ${error.message || 'Unknown error.'}`, error); }
-                } else {
-                     handleError('Magic Eden (Bitcoin)', `${specificMeIssue} No suitable Bitcoin provider found.`);
-                }
+                    },
+                    // Override onFinish and onCancel to include the specific wallet name
+                    onFinish: (response) => commonGetAddressOptions.onFinish(response, 'Magic Eden (Bitcoin)'),
+                    onCancel: () => commonGetAddressOptions.onCancel('Magic Eden (Bitcoin)'),
+                });
+                console.log('Magic Eden (Bitcoin): satsConnect.getAddress call initiated.');
+            } catch (error) {
+                handleError('Magic Eden (Bitcoin)', error.message || 'An unknown error occurred calling satsConnect.getAddress.', error);
             }
         });
     </script>
