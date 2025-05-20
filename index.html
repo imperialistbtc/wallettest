@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Connect Example - Debugging</title>
+    <title>Wallet Connect Example - Sats Connect</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 20px; background-color: #f0f2f5; color: #1c1e21; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
         .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 100%; max-width: 450px; text-align: center; }
@@ -23,7 +23,7 @@
         #wallet-info span { font-weight: 500; }
         #status.connected { color: #28a745; }
         #status.failed { color: #dc3545; }
-        #error-message { margin-top: 15px; color: #dc3545; font-size: 14px; font-weight: 500; white-space: pre-wrap; } /* Allow multi-line errors */
+        #error-message { margin-top: 15px; color: #dc3545; font-size: 14px; font-weight: 500; white-space: pre-wrap; }
         .provider-debug { font-size: 12px; color: #666; margin-top: 10px; }
     </style>
 </head>
@@ -60,7 +60,7 @@
             addressEl.textContent = address;
             walletNameEl.textContent = walletFriendlyName;
             errorEl.textContent = '';
-            console.log(`${walletFriendlyName} Connected:`, address);
+            console.log(`${walletFriendlyName} Connected: Address - ${address}`);
         }
 
         function handleError(walletFriendlyName, errorMsg, errorObj) {
@@ -71,90 +71,84 @@
             let fullErrorMsg = `${walletFriendlyName} Error: ${errorMsg}`;
             if (errorObj && errorObj.message && errorObj.message !== errorMsg) {
                 fullErrorMsg += `\nInternal: ${errorObj.message}`;
+            } else if (typeof errorObj === 'string' && errorObj !== errorMsg) {
+                fullErrorMsg += `\nDetails: ${errorObj}`;
             }
             errorEl.textContent = fullErrorMsg;
             console.error(`${walletFriendlyName} Error: ${errorMsg}`, errorObj || '');
-            if (errorObj) console.dir(errorObj); // Log the full error object for more details
+            if (errorObj && typeof errorObj === 'object') console.dir(errorObj);
         }
 
-        // --- Xverse Connection ---
+        // --- Xverse Connection (using Sats Connect approach) ---
         document.getElementById('connectXverse').addEventListener('click', async () => {
-            console.log("Attempting to connect Xverse...");
-            let xverseProvider;
-            let providerSource = "None";
+            console.log("Attempting to connect Xverse (Sats Connect method)...");
+            let xverseBitcoinProvider; // This is the provider object from the Xverse extension
 
             if (typeof window.XverseProviders !== 'undefined' && typeof window.XverseProviders.BitcoinProvider !== 'undefined') {
-                console.log('Found window.XverseProviders.BitcoinProvider object:', window.XverseProviders.BitcoinProvider);
-                if (typeof window.XverseProviders.BitcoinProvider.request === 'function') {
-                    xverseProvider = window.XverseProviders.BitcoinProvider;
-                    providerSource = "window.XverseProviders.BitcoinProvider";
+                console.log('Found Xverse provider at window.XverseProviders.BitcoinProvider');
+                xverseBitcoinProvider = window.XverseProviders.BitcoinProvider;
+            } else if (typeof window.BitcoinProvider !== 'undefined') {
+                console.log('No Xverse-specific provider found. Falling back to generic window.BitcoinProvider.');
+                // We need to be reasonably sure this is Xverse or a Sats Connect compatible provider.
+                // Checking for the .connect method specifically.
+                if (typeof window.BitcoinProvider.connect === 'function') {
+                    xverseBitcoinProvider = window.BitcoinProvider;
+                    console.log('Using generic window.BitcoinProvider as it has a .connect method.');
                 } else {
-                    console.warn('window.XverseProviders.BitcoinProvider found, but it does not have a .request() method.');
+                     console.warn('Generic window.BitcoinProvider does not have the required .connect method for Sats Connect.');
                 }
             }
 
-            if (!xverseProvider && typeof window.BitcoinProvider !== 'undefined') {
-                console.log('Xverse specific provider not suitable or not found. Checking generic window.BitcoinProvider object:', window.BitcoinProvider);
-                 if (typeof window.BitcoinProvider.request === 'function') {
-                    xverseProvider = window.BitcoinProvider;
-                    providerSource = "window.BitcoinProvider (generic fallback)";
-                    console.warn('Using generic window.BitcoinProvider for Xverse. This might be another wallet if Xverse is not the default Bitcoin provider.');
-                } else {
-                    console.warn('Generic window.BitcoinProvider found, but it does not have a .request() method (when checking for Xverse).');
-                }
-            }
-            console.log(`Xverse: Using provider from: ${providerSource}`);
-
-            if (xverseProvider) {
-                try {
-                    console.log("Xverse: Attempting provider.request({ method: 'getAccounts', params: [] })");
-                    const response = await xverseProvider.request({ method: 'getAccounts', params: [] });
-                    console.log('Xverse getAccounts (method call) response:', response);
-
-                    let userAddress;
-                    if (response && response.result && Array.isArray(response.result) && response.result.length > 0) {
-                        const firstAccount = response.result[0];
-                        if (typeof firstAccount === 'object' && firstAccount.address) {
-                            userAddress = firstAccount.address;
-                        } else if (typeof firstAccount === 'string') {
-                            userAddress = firstAccount;
-                        }
-                    } else if (Array.isArray(response) && response.length > 0 && typeof response[0] === 'string') {
-                         userAddress = response[0];
-                    }
-
-                    if (userAddress) {
-                        updateWalletInfo('Xverse', userAddress);
-                    } else {
-                        console.warn("Xverse: 'getAccounts' (method call) did not yield a clear address. Trying string call 'getAccounts' as fallback.");
-                        const responseStringCall = await xverseProvider.request('getAccounts'); // Fallback, less standard
-                        console.log('Xverse getAccounts (string call) response:', responseStringCall);
-                        if (responseStringCall && responseStringCall.result && Array.isArray(responseStringCall.result) && responseStringCall.result.length > 0) {
-                            const firstAccountString = responseStringCall.result[0];
-                             if (typeof firstAccountString === 'object' && firstAccountString.address) {
-                                userAddress = firstAccountString.address;
-                            } else if (typeof firstAccountString === 'string') {
-                                userAddress = firstAccountString;
+            if (xverseBitcoinProvider && typeof xverseBitcoinProvider.connect === 'function') {
+                const getAddressOptions = {
+                    payload: {
+                        purposes: ['payment'], // You can also ask for 'ordinals'
+                        message: 'Sign in to connect your Bitcoin payment address.',
+                        network: {
+                            type: 'Mainnet' // Or 'Testnet'
+                        },
+                    },
+                    onFinish: (response) => {
+                        console.log('Xverse onFinish response:', response);
+                        // response.addresses is an array of address objects
+                        // e.g., [{ address: '...', publicKey: '...', type: 'p2wpkh' }]
+                        if (response.addresses && response.addresses.length > 0) {
+                            // Find the payment address (often p2wpkh for Bitcoin)
+                            const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh');
+                            if (paymentAddress) {
+                                updateWalletInfo('Xverse', paymentAddress.address);
+                            } else if (response.addresses[0].address) { // Fallback to first address if specific type not found
+                                updateWalletInfo('Xverse', response.addresses[0].address);
+                            } else {
+                                handleError('Xverse', 'Payment address not found in response.', response);
                             }
-                        } else if (Array.isArray(responseStringCall) && responseStringCall.length > 0 && typeof responseStringCall[0] === 'string') {
-                            userAddress = responseStringCall[0];
-                        }
-
-                        if (userAddress) {
-                            updateWalletInfo('Xverse', userAddress);
                         } else {
-                            handleError('Xverse', 'No accounts found or permission denied after both request attempts. Response structure might be unexpected.', responseStringCall || response);
+                            handleError('Xverse', 'No addresses returned in onFinish response.', response);
                         }
-                    }
+                    },
+                    onCancel: () => {
+                        console.log('Xverse onCancel: User cancelled the request.');
+                        handleError('Xverse', 'User cancelled connection request.');
+                    },
+                };
+
+                try {
+                    console.log('Xverse: Calling provider.connect("getAccounts", getAddressOptions)...');
+                    // The await here waits for the user to interact with the popup.
+                    // The actual address is delivered via the onFinish callback.
+                    await xverseBitcoinProvider.connect('getAccounts', getAddressOptions);
+                    console.log('Xverse: provider.connect call completed (user interaction finished).');
                 } catch (error) {
-                    handleError('Xverse', error.message || 'An unknown error occurred during request.', error);
+                    // This catch block might catch errors if the .connect call itself fails synchronously,
+                    // though most "user errors" like cancellation are handled by onCancel.
+                    handleError('Xverse', error.message || 'An unknown error occurred during the connect call.', error);
                 }
             } else {
-                handleError('Xverse', 'Compatible Xverse wallet provider not found or it lacks a .request() method. Ensure it is installed, enabled, and has permissions.');
+                handleError('Xverse', 'Xverse wallet provider with .connect method not found. Please ensure Xverse extension is installed, enabled, and up to date.');
             }
         });
 
-        // --- Unisat Connection ---
+        // --- Unisat Connection (Keep as is from previous working version) ---
         document.getElementById('connectUnisat').addEventListener('click', async () => {
             console.log("Attempting to connect Unisat...");
             if (typeof window.unisat !== 'undefined') {
@@ -176,7 +170,7 @@
             }
         });
 
-        // --- Magic Eden (Bitcoin) Connection ---
+        // --- Magic Eden (Bitcoin) Connection (Keep as is from previous debug version) ---
         document.getElementById('connectMagicEden').addEventListener('click', async () => {
             console.log("Attempting to connect Magic Eden (Bitcoin)...");
             let meProvider;
@@ -189,7 +183,7 @@
                     providerSource = "window.magicEden.bitcoin";
                 } else {
                     console.warn('window.magicEden.bitcoin was found, but it does not have a .request() method. Logging object properties below.');
-                    console.dir(window.magicEden.bitcoin); // Log the object to see its structure
+                    console.dir(window.magicEden.bitcoin);
                 }
             }
 
@@ -201,7 +195,7 @@
                      console.warn('Using generic window.BitcoinProvider for Magic Eden. This might be another wallet if Magic Eden is not the default Bitcoin provider.');
                 } else {
                     console.warn('Generic window.BitcoinProvider found, but it does not have a .request() method (when checking for Magic Eden). Logging object properties below.');
-                    console.dir(window.BitcoinProvider); // Log the object
+                    console.dir(window.BitcoinProvider);
                 }
             }
             console.log(`Magic Eden: Using provider from: ${providerSource}`);
