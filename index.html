@@ -63,10 +63,12 @@
         
         function getJsonTokensLib() {
             if (typeof jsontokens !== 'undefined' && typeof jsontokens.createUnsecuredToken === 'function') {
-                console.log("jsontokens library appears to be loaded (version 0.4.0 hopefully).");
+                console.log("jsontokens library appears to be loaded and createUnsecuredToken is a function. Version should be 0.4.0.");
                 return jsontokens;
             }
-            console.error("CRITICAL: jsontokens library not found or jsontokens.createUnsecuredToken is not a function. Magic Eden connection will fail. Please ensure the script tag in <head> is correct and the library loads.");
+            // This block will be hit if jsontokens.js itself had a fatal error during load (like the BigInt issue)
+            // or if the script tag failed to load the library.
+            console.error("CRITICAL: jsontokens library not found OR jsontokens.createUnsecuredToken is not a function. This could be due to an error WITHIN jsontokens.js during page load (e.g., the 'BigInt' error previously seen). Magic Eden connection will fail.");
             return {
                 createUnsecuredToken: function(payload) {
                     console.error("Attempted to use dummy createUnsecuredToken because jsontokens library is missing or faulty.");
@@ -102,8 +104,6 @@
         }
 
         // --- Xverse Connection ---
-        // The Xverse "Unexpected token '�'" error is internal to the Xverse extension (v0.54.1 Beta).
-        // This dApp code correctly implements their API; the error must be fixed in the extension.
         document.getElementById('connectXverse').addEventListener('click', async () => {
             console.log("Attempting to connect Xverse (Sats Connect method)...");
             let xverseBitcoinProvider; 
@@ -157,10 +157,13 @@
                         message: 'Connect to Magic Eden Wallet for Bitcoin.',
                         network: { type: 'Mainnet' },
                     };
+                    // Attempt to create the token. This is where jsontokens library is crucial.
                     const requestToken = effectiveJsonTokens.createUnsecuredToken(payload);
 
                     if (!requestToken) {
-                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. jsontokens library might be missing, faulty, or had an internal error (e.g., "Cannot convert BigInt to number" with some versions). Please check console.', null);
+                        // This error is shown if getJsonTokensLib determined the library was faulty (e.g., due to BigInt error on load)
+                        // or if createUnsecuredToken itself explicitly returned null.
+                        handleError('Magic Eden (Bitcoin)', 'Failed to create request token. The jsontokens library may be missing, not loaded correctly due to an internal error (like a "BigInt" issue), or createUnsecuredToken failed. Check console for errors from jsontokens.js.', null);
                         return;
                     }
                     
@@ -177,13 +180,15 @@
                              handleError('Magic Eden (Bitcoin)', 'Address not found in response.addresses structure.', response);
                         }
                     } else {
-                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned or permission denied. This can happen if the jsontokens library has an internal error or the generated token is invalid. Check console for jsontokens errors.', response);
+                        handleError('Magic Eden (Bitcoin)', 'No valid addresses array returned from Magic Eden or permission denied. This can occur if the token was invalid (due to jsontokens library issues) or the user denied the request in the wallet.', response);
                     }
                 } catch (error) {
-                    // Check if the error message indicates a jsontokens issue
+                    // This catch block will grab errors from await meBitcoinProvider.connect(requestToken)
+                    // OR if effectiveJsonTokens.createUnsecuredToken(payload) itself throws an unhandled error
+                    // (though the BigInt error seemed to happen at library load time).
                     let detailedErrorMessage = error.message || 'Error during Magic Eden connect call.';
-                    if (detailedErrorMessage.includes("token") || detailedErrorMessage.includes("JWT")) {
-                         detailedErrorMessage += " This could be due to an invalid token from a jsontokens library issue (e.g. 'BigInt error').";
+                    if ( (error.message && error.message.toLowerCase().includes("bigint")) || (error.stack && error.stack.toLowerCase().includes("jsontokens")) ) {
+                         detailedErrorMessage += " This might be related to an internal error in the jsontokens library (e.g., 'BigInt' conversion error).";
                     }
                     handleError('Magic Eden (Bitcoin)', detailedErrorMessage, error);
                 }
@@ -193,15 +198,16 @@
                     specificMeIssue = "window.magicEden.bitcoin was found, but it does not have the documented .connect() method.";
                 }
                 console.warn(specificMeIssue);
+                // Fallback (optional, if you want to try a generic provider if ME's specific one fails)
                 if (typeof window.BitcoinProvider !== 'undefined' && typeof window.BitcoinProvider.request === 'function') {
-                    console.warn('Attempting generic window.BitcoinProvider.request as fallback.');
+                    console.warn('Attempting generic window.BitcoinProvider.request as fallback for Magic Eden.');
                     try {
                         const accounts = await window.BitcoinProvider.request({ method: 'getAccounts', params: [] });
                         if (accounts && accounts.length > 0) updateWalletInfo('Magic Eden (Generic Fallback)', accounts[0]);
                         else handleError('Magic Eden (Generic Fallback)', 'No accounts from generic provider.', accounts);
                     } catch (error) { handleError('Magic Eden (Generic Fallback)', `Error with generic fallback: ${error.message || 'Unknown error.'}`, error); }
                 } else {
-                     handleError('Magic Eden (Bitcoin)', `${specificMeIssue} No suitable provider found.`);
+                     handleError('Magic Eden (Bitcoin)', `${specificMeIssue} No suitable Bitcoin provider found.`);
                 }
             }
         });
