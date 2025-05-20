@@ -28,10 +28,9 @@
     </style>
     <!-- 
         Attempting to use sats-connect library from CDN.
-        This should manage its own jsontokens dependency.
-        Note: The version 0.2.2 is an example, a newer one might be available or preferable.
+        Using a generic path that usually points to the latest UMD build.
     -->
-    <script src="https://cdn.jsdelivr.net/npm/sats-connect@0.2.2/dist/sats-connect.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sats-connect/dist/sats-connect.js"></script>
 </head>
 <body>
     <div class="container">
@@ -51,7 +50,7 @@
         <div id="error-message"></div>
         <div class="provider-debug">
             <p>Important: Open browser console (F12 or Right-click -> Inspect -> Console) for detailed logs.</p>
-            <p class="critical-note">This version uses the 'sats-connect' library for Xverse and Magic Eden.</p>
+            <p class="critical-note">This version uses the 'sats-connect' library's `request` method.</p>
         </div>
     </div>
 
@@ -60,6 +59,10 @@
         const addressEl = document.getElementById('address');
         const walletNameEl = document.getElementById('wallet-name');
         const errorEl = document.getElementById('error-message');
+
+        // Attempt to get the sats-connect global object
+        // Common names are 'satsConnect' or 'SatsConnect'
+        const satsConnectGlobal = typeof satsConnect !== 'undefined' ? satsConnect : (typeof SatsConnect !== 'undefined' ? SatsConnect : null);
 
         function updateWalletInfo(walletFriendlyName, address) {
             statusEl.textContent = `Connected`;
@@ -77,126 +80,130 @@
             walletNameEl.textContent = walletFriendlyName || 'N/A';
             let fullErrorMsg = `${walletFriendlyName} Error: ${errorMsg}`;
             if (errorObj) {
-                const errorObjMsg = errorObj.message || (typeof errorObj === 'string' ? errorObj : JSON.stringify(errorObj));
-                if (errorObjMsg && errorObjMsg !== errorMsg) {
-                    fullErrorMsg += `\nDetails: ${errorObjMsg}`;
+                const errorObjMessage = errorObj.message || (typeof errorObj === 'string' ? errorObj : (errorObj.code ? `Code ${errorObj.code}: ${errorObj.message}`: JSON.stringify(errorObj)));
+                if (errorObjMessage && errorObjMessage !== errorMsg) {
+                    fullErrorMsg += `\nDetails: ${errorObjMessage}`;
                 }
             }
             errorEl.textContent = fullErrorMsg;
             console.error(`${walletFriendlyName} Error: ${errorMsg}`, errorObj || 'No additional error object.');
             if (errorObj && typeof errorObj === 'object') console.dir(errorObj);
         }
-
-        // Common getAddressOptions for Sats Connect compatible wallets
-        const commonGetAddressOptions = {
-            payload: {
-                purposes: ['payment'],
-                message: 'Sign in to connect your Bitcoin payment address.',
-                network: {
-                    type: 'Mainnet' 
-                },
-            },
-            onFinish: (response, walletName) => { // Modified to pass walletName
-                console.log(`${walletName} onFinish response:`, response);
-                // response.addresses is an array of address objects
-                if (response.addresses && response.addresses.length > 0) {
-                    const paymentAddress = response.addresses.find(addr => addr.purpose === 'payment' || addr.type === 'p2wpkh') || response.addresses[0];
-                    if (paymentAddress && paymentAddress.address) {
-                        updateWalletInfo(walletName, paymentAddress.address);
-                    } else {
-                        handleError(walletName, 'Payment address not found in response.', response);
-                    }
-                } else {
-                    handleError(walletName, 'No addresses returned in onFinish response.', response);
-                }
-            },
-            onCancel: (walletName) => { // Modified to pass walletName
-                console.log(`${walletName} onCancel: User cancelled or internal error.`);
-                handleError(walletName, 'Request cancelled or failed. This could be due to user action or an internal wallet error.');
-            },
-        };
-
-        // --- Xverse Connection (using sats-connect library) ---
+        
+        // --- Xverse Connection (using sats-connect library's request method) ---
         document.getElementById('connectXverse').addEventListener('click', async () => {
-            console.log("Attempting to connect Xverse (using sats-connect library)...");
-            if (typeof satsConnect === 'undefined' || typeof satsConnect.getAddress !== 'function') {
-                handleError('Xverse', 'sats-connect library not found or getAddress function is missing. Check CDN script tag.');
+            const walletName = 'Xverse';
+            console.log(`Attempting to connect ${walletName} (using sats-connect library's request method)...`);
+
+            if (!satsConnectGlobal || typeof satsConnectGlobal.request !== 'function') {
+                handleError(walletName, 'sats-connect library not found or `request` function is missing. Check CDN script tag and global variable name (e.g., SatsConnect).');
+                console.log('satsConnectGlobal:', satsConnectGlobal); // Log to see what it is
                 return;
             }
-            if (typeof window.XverseProviders === 'undefined' || typeof window.XverseProviders.BitcoinProvider === 'undefined') {
-                 handleError('Xverse', 'Xverse Wallet provider (window.XverseProviders.BitcoinProvider) not found. Is Xverse installed?');
-                return;
-            }
+             // For Xverse, it should be automatically detected if it's the active Sats Connect compatible wallet.
+            // No specific provider needs to be passed to satsConnectGlobal.request.
+
+            const getAddressPayload = { // As per docs, this can be an object for specific purposes
+                purposes: ['payment', 'ordinals'],
+                message: 'Sign in to connect your Xverse payment and ordinals addresses.'
+            };
 
             try {
-                // The Xverse provider itself is not passed to satsConnect.getAddress,
-                // sats-connect handles provider discovery implicitly based on its design with compatible wallets.
-                // However, the Xverse documentation (and your previous code) has the provider call .connect itself.
-                // Sats-connect's getAddress is a utility that wraps this. Let's assume getAddress uses the
-                // globally available compatible provider if one exists and is active.
-                await satsConnect.getAddress({
-                    ...commonGetAddressOptions,
-                    // Override onFinish and onCancel to include the specific wallet name
-                    onFinish: (response) => commonGetAddressOptions.onFinish(response, 'Xverse'),
-                    onCancel: () => commonGetAddressOptions.onCancel('Xverse'),
-                    // The Xverse documentation shows providing the provider in some examples,
-                    // but sats-connect generally aims to auto-detect. If this direct call fails,
-                    // it implies sats-connect might expect to be initialized differently or the provider isn't auto-detected as hoped.
-                    // For now, relying on sats-connect's auto-detection or its internal handling.
-                    // If Xverse has a specific way it wants to be invoked via sats-connect's getAddress,
-                    // that might involve providing the provider to an init function of sats-connect first.
-                    // For now, direct call as per many generic sats-connect examples.
-                });
-                console.log('Xverse: satsConnect.getAddress call initiated.');
-            } catch (error) {
-                // This catch is for errors in the getAddress call itself, not async errors handled by onFinish/onCancel
-                handleError('Xverse', error.message || 'An unknown error occurred calling satsConnect.getAddress.', error);
+                // Using null as payload for getAddresses as shown in one part of docs,
+                // or an object as per other parts. Let's try with specific purposes.
+                const response = await satsConnectGlobal.request("getAddresses", getAddressPayload);
+                console.log(`${walletName} getAddresses response:`, response);
+
+                if (response.status === "success") {
+                    if (response.result && response.result.length > 0) {
+                        // Prioritize payment address, fallback to ordinals, then first available
+                        const paymentAddressItem = response.result.find(addr => addr.purpose === 'payment');
+                        const ordinalsAddressItem = response.result.find(addr => addr.purpose === 'ordinals');
+                        
+                        if (paymentAddressItem && paymentAddressItem.address) {
+                            updateWalletInfo(walletName, paymentAddressItem.address);
+                        } else if (ordinalsAddressItem && ordinalsAddressItem.address) {
+                             updateWalletInfo(walletName + " (Ordinals)", ordinalsAddressItem.address);
+                        } else {
+                            updateWalletInfo(walletName, response.result[0].address);
+                        }
+                    } else {
+                        handleError(walletName, 'No addresses returned in success response.', response);
+                    }
+                } else {
+                    // Handle specific error codes if needed, e.g., RpcErrorCode.USER_REJECTION
+                    // The documentation for sats-connect shows error codes like RpcErrorCode.USER_REJECTION
+                    // We'd need that enum or its value if we want to check response.error.code specifically.
+                    // For now, generic handling.
+                    console.error(`${walletName} connection failed:`, response.error);
+                    handleError(walletName, `Connection failed. ${response.error.message || 'Unknown error.'}`, response.error);
+                }
+            } catch (err) {
+                console.error(`${walletName} uncaught error:`, err);
+                // err might have err.error.message as per docs, or just err.message
+                const errMsg = (err.error && err.error.message) ? err.error.message : err.message;
+                handleError(walletName, `An exception occurred: ${errMsg || 'Unknown exception.'}`, err);
             }
         });
         
         // --- Unisat Connection (remains the same) ---
         document.getElementById('connectUnisat').addEventListener('click', async () => {
+            const walletName = 'Unisat';
             if (typeof window.unisat !== 'undefined' && typeof window.unisat.requestAccounts === 'function') {
                 try {
                     const accounts = await window.unisat.requestAccounts();
-                    if (accounts && accounts.length > 0) updateWalletInfo('Unisat', accounts[0]);
-                    else handleError('Unisat', 'No accounts found or permission denied by Unisat.');
-                } catch (error) { handleError('Unisat', error.message || 'Error during Unisat requestAccounts.', error); }
-            } else handleError('Unisat', 'Unisat wallet (window.unisat with .requestAccounts) not found.');
+                    if (accounts && accounts.length > 0) updateWalletInfo(walletName, accounts[0]);
+                    else handleError(walletName, 'No accounts found or permission denied by Unisat.');
+                } catch (error) { handleError(walletName, error.message || 'Error during Unisat requestAccounts.', error); }
+            } else handleError(walletName, 'Unisat wallet (window.unisat with .requestAccounts) not found.');
         });
 
-        // --- Magic Eden (Bitcoin) Connection (using sats-connect library) ---
+        // --- Magic Eden (Bitcoin) Connection (using sats-connect library's request method) ---
         document.getElementById('connectMagicEden').addEventListener('click', async () => {
-            console.log("Attempting to connect Magic Eden (Bitcoin) (using sats-connect library)...");
-            if (typeof satsConnect === 'undefined' || typeof satsConnect.getAddress !== 'function') {
-                handleError('Magic Eden (Bitcoin)', 'sats-connect library not found or getAddress function is missing. Check CDN script tag.');
+            const walletName = 'Magic Eden (Bitcoin)';
+            console.log(`Attempting to connect ${walletName} (using sats-connect library's request method)...`);
+
+            if (!satsConnectGlobal || typeof satsConnectGlobal.request !== 'function') {
+                handleError(walletName, 'sats-connect library not found or `request` function is missing. Check CDN script tag and global variable name (e.g., SatsConnect).');
+                console.log('satsConnectGlobal:', satsConnectGlobal);
                 return;
             }
-            // Magic Eden documentation suggests compatibility with Sats Connect methods.
-            // We assume window.magicEden.bitcoin is the provider that sats-connect will interact with,
-            // or that sats-connect can discover it if it's the active Bitcoin provider.
-            if (!(window.magicEden && window.magicEden.bitcoin)) {
-                handleError('Magic Eden (Bitcoin)', 'Magic Eden Bitcoin provider (window.magicEden.bitcoin) not found.');
-                return;
-            }
-            
+            // Magic Eden should also be auto-detected if it's the active Sats Connect compatible wallet.
+            // It's important that window.magicEden.bitcoin is available and set as the default bitcoin provider,
+            // or that sats-connect can find it.
+
+            const getAddressPayload = {
+                purposes: ['payment', 'ordinals'],
+                message: 'Sign in to connect your Magic Eden payment and ordinals addresses.'
+            };
+
             try {
-                // Similar to Xverse, relying on satsConnect.getAddress to handle the interaction
-                // with the globally available and compatible Magic Eden provider.
-                await satsConnect.getAddress({
-                    ...commonGetAddressOptions,
-                     payload: { // Use ME specific details if necessary, or commonGetAddressOptions is fine
-                        purposes: ['payment', 'ordinals'], // ME docs suggest these purposes
-                        message: 'Connect to Magic Eden Wallet for Bitcoin.',
-                        network: { type: 'Mainnet' },
-                    },
-                    // Override onFinish and onCancel to include the specific wallet name
-                    onFinish: (response) => commonGetAddressOptions.onFinish(response, 'Magic Eden (Bitcoin)'),
-                    onCancel: () => commonGetAddressOptions.onCancel('Magic Eden (Bitcoin)'),
-                });
-                console.log('Magic Eden (Bitcoin): satsConnect.getAddress call initiated.');
-            } catch (error) {
-                handleError('Magic Eden (Bitcoin)', error.message || 'An unknown error occurred calling satsConnect.getAddress.', error);
+                const response = await satsConnectGlobal.request("getAddresses", getAddressPayload);
+                console.log(`${walletName} getAddresses response:`, response);
+
+                if (response.status === "success") {
+                     if (response.result && response.result.length > 0) {
+                        const paymentAddressItem = response.result.find(addr => addr.purpose === 'payment');
+                        const ordinalsAddressItem = response.result.find(addr => addr.purpose === 'ordinals');
+                        
+                        if (paymentAddressItem && paymentAddressItem.address) {
+                            updateWalletInfo(walletName, paymentAddressItem.address);
+                        } else if (ordinalsAddressItem && ordinalsAddressItem.address) {
+                             updateWalletInfo(walletName + " (Ordinals)", ordinalsAddressItem.address);
+                        } else {
+                            updateWalletInfo(walletName, response.result[0].address);
+                        }
+                    } else {
+                        handleError(walletName, 'No addresses returned in success response.', response);
+                    }
+                } else {
+                    console.error(`${walletName} connection failed:`, response.error);
+                    handleError(walletName, `Connection failed. ${response.error.message || 'Unknown error.'}`, response.error);
+                }
+            } catch (err) {
+                console.error(`${walletName} uncaught error:`, err);
+                const errMsg = (err.error && err.error.message) ? err.error.message : err.message;
+                handleError(walletName, `An exception occurred: ${errMsg || 'Unknown exception.'}`, err);
             }
         });
     </script>
