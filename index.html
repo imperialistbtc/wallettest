@@ -7,29 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@sats-connect/core@latest/dist/bundles/sats-connect.js"></script>
     <style>
-    html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden; /* Prevent horizontal scrollbars if content slightly overflows */
-}
-
-body { /* Your existing body styles are mostly fine, just ensure no conflicting height/width */
-    font-family: 'VT323', monospace;
-    background-image: var(--body-bg-image-url);
-    background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;
-    color: var(--text-color);
-    /* margin: 0; */ /* Already covered above */
-    font-size: var(--base-font-size);
-    display: flex; flex-direction: column;
-    align-items: center;
-    min-height: 100%; /* Use min-height: 100% if body directly contains game-container that should fill */
-    box-sizing: border-box;
-    transition: color 0.3s, background-color 0.3s;
-}
         :root {
-    --body-bg-image-url: none;
+        --body-bg-image-url: url('https://raw.githubusercontent.com/nvoiy/pvadventures/main/background.jpg');
             --border-color: #000000;
             --text-color: #000000;
             --label-color: #333333; 
@@ -95,6 +74,36 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
         --item-upgrade-plus4-border: #FF8C00; 
         --item-upgrade-plus5-border: #FF4500; 
         }
+        
+        #welcomeScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--body-bg-image-url); 
+            background-size: cover; 
+            background-position: center; 
+            background-repeat: no-repeat;
+            display: flex; 
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 3000; text-align: center; padding: 20px; box-sizing: border-box;
+            overflow-y: auto; 
+        }
+        #welcomeImageLarge { display: block; margin: 0 auto 20px auto; max-width: 80%; max-height: 50vh; object-fit: contain; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        #authFormContainer { background-color: var(--section-bg); padding: 20px 30px; border-radius: 10px; border: 2px solid var(--border-color); box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: background-color 0.3s, border-color 0.3s; z-index: 3001; width: 100%; max-width: 480px; }
+        #authFormContainer h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.8em; color: var(--label-color); transition: color 0.3s; }
+        body.dark-mode #authFormContainer h2 {  color: var(--orange-label); }
+        .auth-form-field { margin-bottom: 12px; text-align: left; }
+        .auth-form-field label { display: block; margin-bottom: 4px; font-size: 1.0em; color: var(--label-color); font-weight: bold; transition: color 0.3s; }
+        body.dark-mode .auth-form-field label {  color: var(--orange-label); }
+        .auth-form-field input { font-family: 'VT323', monospace; font-size: 1.1em; padding: 8px; border: 2px solid var(--border-color); background-color: var(--dropdown-bg); color: var(--text-color); border-radius: 5px; width: calc(100% - 20px); box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+        .auth-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; margin-bottom: 10px; }
+        #loginButton, #registerButton, #googleSignInButton { font-family: 'VT323', monospace; font-size: 1.2em; padding: 10px 15px; cursor: pointer; border-radius: 5px; transition: background-color 0.2s; width: 100%; box-sizing: border-box; }
+        #loginButton, #registerButton { background-color: var(--highlight-color-connected); color: #FFFFFF; border: 2px solid #3c8c3c; }
+        #loginButton:hover, #registerButton:hover { background-color: #3e8e41; }
+        #googleSignInButton { background-color: #4285F4; color: white; border: 2px solid #3578E5; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #googleSignInButton:hover { background-color: #3367D6; }
+        #googleSignInButton img {  height: 20px; width: 20px; background-color: white; border-radius: 2px; }
+        .auth-links-container {  margin-top: 15px; }
+        #authToggleLink, #forgotPasswordLink { display: inline-block; margin: 5px 10px; font-size: 0.9em; color: var(--highlight-color-pv); cursor: pointer; text-decoration: underline; }
+        #authToggleLink:hover, #forgotPasswordLink:hover { color: var(--highlight-color-gold); }
 
         .hidden { display: none !important; }
 
@@ -136,19 +145,7 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
         #popupCraftAgainBtn, #customPopupConfirmBtn { background-color: var(--highlight-color-connected); color:white;}
 
 
-                .game-container {
-            width: 100%; /* Fill full width */
-            min-height: 100vh; /* Ensure it takes at least full viewport height */
-            margin: 0; /* Remove top/bottom and auto side margins */
-            border: 3px solid var(--border-color);
-            padding: 15px;
-            background-color: var(--game-container-bg);
-            box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
-            box-sizing: border-box; /* Important! */
-            display: flex;
-            flex-direction: column;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
+        .game-container { width: 98%; max-width: none; margin: 10px auto; border: 3px solid var(--border-color); padding: 15px; background-color: var(--game-container-bg); box-shadow: 0px 0px 15px rgba(0,0,0,0.5); box-sizing: border-box; display: flex; flex-direction: column; transition: background-color 0.3s, border-color 0.3s; }
         header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; width: 100%; transition: border-color 0.3s; }
         .header-title-container { display: flex; align-items: center; margin-right: auto; }
         .header-title-container img.header-logo { height: 80px; width: auto; margin-right: 15px; }
@@ -733,8 +730,41 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
 </head>
 <body>
     <div id="itemTooltip"></div> <!-- Tooltip Element -->
+    <div id="welcomeScreen">
+        <img id="welcomeImageLarge" src="https://raw.githubusercontent.com/nvoiy/pvadventures/main/ENTRY.gif" alt="Punk Voyage Adventures Welcome">
+        <div id="authFormContainer">
+            <h2 id="authFormTitle">Login to Punk Voyage Adventures</h2>
+            <form id="loginRegisterForm">
+                <div class="auth-form-field">
+                    <label for="authEmail">Email:</label>
+                    <input type="email" id="authEmail" autocomplete="email">
+                </div>
+                <div class="auth-form-field">
+                    <label for="authPassword">Password:</label>
+                    <input type="password" id="authPassword" autocomplete="current-password">
+                <small style="display: block; font-size: 0.8em; opacity: 0.7; margin-top: 3px;">(Password must be at least 6 characters long.)</small>
+                </div>
+                <div class="auth-form-field hidden" id="authNicknameField">
+                    <label for="authNickname">Nickname (for in-game display):</label>
+                    <input type="text" id="authNickname" maxlength="20">
+                </div>
+                <div class="auth-buttons">
+                    <button type="button" id="loginButton">Login</button>
+                    <button type="button" id="registerButton" class="hidden">Register</button>
+                </div>
+            </form>
+            <button type="button" id="googleSignInButton">
+                <img src="https://beige-managing-snail-510.mypinata.cloud/ipfs/bafkreidpivlm24hjxcx7wlknozui7lgwpbtoaeio7dqqeg3b4drbcpwesu" alt="Google G Logo">
+                Sign in with Google
+            </button>
+            <div class="auth-links-container">
+                <a id="authToggleLink">Need an account? Register</a>
+                <a id="forgotPasswordLink">Forgot Password?</a>
+            </div>
+        </div>
+    </div>
 
-    <div class="game-container" id="gameContainer">
+    <div class="game-container hidden" id="gameContainer">
         <header> 
         <div class="header-title-container">
             <h1>PUNK VOYAGE ADVENTURES</h1>
@@ -747,7 +777,7 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
                     <div class="wallet-connector"><button class="connect-wallet-btn" id="connectWalletBtn">CONNECT WALLET</button><ul class="wallet-dropdown" id="walletDropdown"><li data-wallet="xverse_provider">XVERSE</li><li data-wallet="unisat">UNISAT</li></ul>
                     </div> 
                 </div>
-     
+                 <button id="signOutButton" class="hidden">Sign Out</button> 
                 <nav class="socials-nav" id="headerSocialsNav"> 
                     <div class="social-title">SOCIALS</div> 
                     <div class="social-buttons"> 
@@ -1023,7 +1053,7 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
                         <p>Embark on an epic journey in Punk Voyage Adventures! This guide will help you navigate the cosmos of possibilities, from sending your brave adventurers on perilous quests to crafting legendary gear.</p>
 
                         <div class="help-gif-container">
-                            <img src="https://raw.githubusercontent.com/nvoiy/pvadventures/main/HELP.gif" alt="Helpful Guide GIF">
+                            <img src="https://beige-managing-snail-510.mypinata.cloud/ipfs/bafybeibyu3nj3yofxnngakyoyekde2vyffe73mnesrw3ogqmidrm3wgpli" alt="Helpful Guide GIF">
                         </div>
 
                         <h3>Getting Started</h3>
@@ -1257,7 +1287,6 @@ body { /* Your existing body styles are mostly fine, just ensure no conflicting 
         
         document.addEventListener('firebaseReady', async () => {
                    let punkVoyageIdsLoaded = false;
-                   
                     console.log("FirebaseReady event triggered. Starting main script logic.");
                 const userOrdinalsDisplayElement = document.getElementById('userOrdinalsDisplay');
     const userOrdinalsListElement = document.getElementById('userOrdinalsList');
@@ -1295,6 +1324,22 @@ function updateAdventureCardPvDisplay() {
             const GAME_HOUR_IN_REAL_SECONDS = 1; 
             const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
+
+            // --- HTML Element Constants ---
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const authFormContainer = document.getElementById('authFormContainer');
+            const authFormTitle = document.getElementById('authFormTitle');
+            const loginRegisterForm = document.getElementById('loginRegisterForm');
+            const authEmailInput = document.getElementById('authEmail');
+            const authPasswordInput = document.getElementById('authPassword');
+            const authNicknameField = document.getElementById('authNicknameField');
+            const authNicknameInput = document.getElementById('authNickname');
+            const loginButton = document.getElementById('loginButton');
+            const registerButton = document.getElementById('registerButton');
+            const googleSignInButton = document.getElementById('googleSignInButton'); 
+            const authToggleLink = document.getElementById('authToggleLink');
+            const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+            const signOutButton = document.getElementById('signOutButton');
 
             const gameContainer = document.getElementById('gameContainer');
             const playerNicknameDisplay = document.getElementById('playerNicknameDisplay');
@@ -1859,8 +1904,15 @@ const dungeonsData = [
 function processPopupQueue() {
     if (isPopupCurrentlyVisible || popupMessageQueue.length === 0) { return; }
 
-    // welcomeScreen related logic has been removed as the welcome screen itself is gone.
+    const isAuthContextPopup = welcomeScreen && !welcomeScreen.classList.contains('hidden');
     const { message, title, craftCallback, confirmCallback, secondaryActionCallback, secondaryActionText, confirmText, cancelText } = popupMessageQueue.shift();
+
+    if (!isAuthContextPopup && (title.includes("Error") || title.includes("Failed"))) {
+        console.warn("Stale auth popup suppressed. Original message:", title, message);
+        isPopupCurrentlyVisible = false;
+        processPopupQueue();
+        return;
+    }
 
     isPopupCurrentlyVisible = true;
     if (customPopupTitleEl) customPopupTitleEl.textContent = title;
@@ -1878,20 +1930,20 @@ function processPopupQueue() {
 
     currentPopupConfirmCallback = null;
     currentPopupCraftCallback = null;
-    let currentPopupSecondaryActionCallback = null; 
+    let currentPopupSecondaryActionCallback = null; // Store secondary callback
 
     if (craftCallback) {
         currentPopupCraftCallback = craftCallback;
         const craftAgainBtn = document.createElement('button');
         craftAgainBtn.id = 'popupCraftAgainBtn';
         craftAgainBtn.className = 'action-button';
-        craftAgainBtn.textContent = 'Craft Again'; 
+        craftAgainBtn.textContent = 'Craft Again'; // Or make this an option
         craftAgainBtn.style.backgroundColor = 'var(--highlight-color-connected)';
         craftAgainBtn.style.color = 'white';
         customPopupButtonsEl.insertBefore(craftAgainBtn, customPopupCloseBtn);
         customPopupCloseBtn.textContent = cancelText || "No Thanks";
         customPopupCloseBtn.classList.remove('hidden');
-    } else if (confirmCallback) { 
+    } else if (confirmCallback) { // Standard confirm/cancel or confirm/secondaryAction
         currentPopupConfirmCallback = confirmCallback;
         customPopupConfirmBtn.textContent = confirmText || "Confirm";
         customPopupConfirmBtn.classList.remove('hidden');
@@ -1900,29 +1952,32 @@ function processPopupQueue() {
             currentPopupSecondaryActionCallback = secondaryActionCallback;
             const secondaryBtn = document.createElement('button');
             secondaryBtn.id = 'popupSecondaryActionBtn';
-            secondaryBtn.className = 'action-button'; 
+            secondaryBtn.className = 'action-button'; // You might want a different style
             secondaryBtn.textContent = secondaryActionText;
+            // Add listener for secondary button
             secondaryBtn.addEventListener('click', () => {
                 if (currentPopupSecondaryActionCallback) {
                     currentPopupSecondaryActionCallback();
                 }
                 hideCustomPopup();
-            }, { once: true }); 
-            customPopupButtonsEl.insertBefore(secondaryBtn, customPopupCancelBtn.nextSibling); 
+            }, { once: true }); // Ensure listener is added only once per show
+            customPopupButtonsEl.insertBefore(secondaryBtn, customPopupCancelBtn.nextSibling); // Insert before any final "cancel/close"
 
+            // If secondary action exists, the original 'cancel' button becomes the third option or is hidden
+            // For now, let's assume customPopupCancelBtn acts as a general "close/cancel" if no specific cancelText
             if (cancelText) {
                 customPopupCancelBtn.textContent = cancelText;
                 customPopupCancelBtn.classList.remove('hidden');
             } else {
-                customPopupCancelBtn.classList.add('hidden'); 
+                customPopupCancelBtn.classList.add('hidden'); // Hide default cancel if we have confirm + secondary
             }
 
-        } else { 
+        } else { // Just confirm and cancel
             customPopupCancelBtn.textContent = cancelText || "Cancel";
             customPopupCancelBtn.classList.remove('hidden');
         }
-    } else { 
-        customPopupCloseBtn.textContent = confirmText || "OK"; 
+    } else { // Simple notification
+        customPopupCloseBtn.textContent = confirmText || "OK"; // confirmText can be "OK" for simple popups
         customPopupCloseBtn.classList.remove('hidden');
     }
 
@@ -2020,6 +2075,92 @@ function showCustomPopup(message, title = "Notification", options = {}) {
                 });
             }
 
+            // --- Firebase Auth State Change Listener ---
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                if (user) {
+                    // User is signed in or has just signed up
+                    console.log("Auth state changed: User is present.", user.uid, user.email);
+                    welcomeScreen.classList.add('hidden');
+                    gameContainer.classList.remove('hidden');
+                    signOutButton.classList.remove('hidden');
+
+                    if (user.email && user.email.toLowerCase() === 'nvoiysol@gmail.com' && adminRafflePanel) {
+                        adminRafflePanel.classList.remove('hidden');
+                    } else if (adminRafflePanel) {
+                        adminRafflePanel.classList.add('hidden');
+                    }
+
+                    const currentThemeIsDark = body.classList.contains('dark-mode');
+                    loadTwitterWidget(currentThemeIsDark ? 'dark' : 'light');
+
+                    try {
+                        const loadedState = await loadGameStateFromFirebase(user.uid);
+
+                        if (loadedState) {
+                            // EXISTING USER WITH SAVED DATA
+                            console.log("User has existing game state. Applying it.", user.uid);
+                            applyLoadedGameState(loadedState);
+                        } else {
+                            // NEW USER (or user whose data was not found/corrupted)
+                            console.log("No existing game state found for user. Will create initial state.", user.uid);
+                            let nicknameToUseForNewUser = "Voyager"; // Default
+
+                            // This block should only be relevant if it's truly a new sign-up,
+                            // and the welcomeScreen elements are still technically accessible.
+                            if (authNicknameInput && authNicknameInput.value.trim() !== "") {
+                                // This is the primary way to get nickname for new email/password registration
+                                nicknameToUseForNewUser = authNicknameInput.value.trim();
+                                console.log("Determined nickname for new user from authNicknameInput:", nicknameToUseForNewUser);
+                            } else if (user.displayName && user.displayName.trim() !== "") {
+                                // Fallback for Google Sign-In or if authNicknameInput was somehow cleared
+                                nicknameToUseForNewUser = user.displayName.trim();
+                                console.log("Determined nickname for new user from user.displayName:", nicknameToUseForNewUser);
+                            } else {
+                                console.log("Could not determine nickname from form or user.displayName. Defaulting to:", nicknameToUseForNewUser);
+                            }
+
+                            await createInitialGameState(user.uid, nicknameToUseForNewUser);
+
+                            // Clear the auth form fields after successful use for a new user.
+                            // This helps prevent stale data if the user logs out and then tries to register again in the same session.
+                            if(loginRegisterForm) loginRegisterForm.reset();
+                            if(authNicknameInput) authNicknameInput.value = ''; // Specifically clear nickname
+                        }
+                        showPage('adventures-page'); // Show the default game page
+                        await loadPunkVoyageIds(); // Load the fixed list of IDs
+                        await loadDungeonCrawlerIds();
+
+                    } catch (error) {
+                        console.error("Error during user state processing in onAuthStateChanged:", error);
+                        showCustomPopup("An error occurred loading your game data. Please try logging out and back in. Details: " + error.message, "Load Error");
+                        // Optionally, sign the user out if loading fails catastrophically
+                        // await fbSignOut(auth);
+                    }
+
+                } else {
+                    // User is signed out
+                    console.log("Auth state changed: User is signed out.");
+                    currentUser = null;
+                    userNickname = ''; // Clear global nickname
+                    welcomeScreen.classList.remove('hidden');
+                    gameContainer.classList.add('hidden');
+                    signOutButton.classList.add('hidden');
+                    if (adminRafflePanel) adminRafflePanel.classList.add('hidden');
+
+                    resetGameStateToDefaults(); // Reset all game variables to their initial empty/default states
+                    updateStatsDisplay();       // Update UI to reflect reset state
+                    updateWalletDisplay(null);  // Clear wallet display
+
+                    // Reset the auth form to its default (login) state
+                    if (authFormTitle) authFormTitle.textContent = "Login to Punk Voyage Adventures";
+                    if (authNicknameField) authNicknameField.classList.add('hidden');
+                    if (loginButton) loginButton.classList.remove('hidden');
+                    if (registerButton) registerButton.classList.add('hidden');
+                    if (authToggleLink) authToggleLink.textContent = "Need an account? Register";
+                    if (loginRegisterForm) loginRegisterForm.reset(); // Clear any typed text
+                }
+            });
             
 function resetGameStateToDefaults() {
     currentPvTokens = 0; currentGold = 0; currentDiamonds = 0;
@@ -2083,7 +2224,96 @@ function resetGameStateToDefaults() {
 }
 
 
+            // --- Auth Form Toggle ---
+            authToggleLink.addEventListener('click', () => {
+                const isLoginModeCurrently = !registerButton.classList.contains('hidden'); // If register button is shown, we are in register mode
+                loginRegisterForm.reset(); 
+                if (isLoginModeCurrently) { // Switch to Login
+                    authFormTitle.textContent = "Login to Punk Voyage Adventures";
+                    authNicknameField.classList.add('hidden');
+                    loginButton.classList.remove('hidden');
+                    registerButton.classList.add('hidden');
+                    authToggleLink.textContent = "Need an account? Register";
+                } else { // Switch to Register
+                    authFormTitle.textContent = "Register for Punk Voyage Adventures";
+                    authNicknameField.classList.remove('hidden');
+                    loginButton.classList.add('hidden');
+                    registerButton.classList.remove('hidden');
+                    authToggleLink.textContent = "Already have an account? Login";
+                }
+            });
 
+
+            // --- Auth Event Listeners ---
+            loginButton.addEventListener('click', async () => {
+                const email = authEmailInput.value.trim();
+                const password = authPasswordInput.value;
+                if (!email || !password) {
+                    showCustomPopup("Please enter both email and password.", "Login Error");
+                    return;
+                }
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    console.error("Login error:", error);
+                    showCustomPopup(`Login failed: ${error.code} - ${error.message}`, "Login Error");
+                }
+            });
+
+            registerButton.addEventListener('click', async () => {
+                const email = authEmailInput.value.trim();
+                const password = authPasswordInput.value;
+                const nickname = authNicknameInput.value.trim();
+
+                if (!email || !password || !nickname) {
+                    showCustomPopup("Please fill in all fields: email, password, and nickname.", "Registration Error");
+                    return;
+                }
+                if (password.length < 6) {
+                     showCustomPopup("Password must be at least 6 characters long.", "Registration Error");
+                    return;
+                }
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    console.error("Registration error:", error);
+                    showCustomPopup(`Registration failed: ${error.code} - ${error.message}`, "Registration Error");
+                }
+            });
+
+            googleSignInButton.addEventListener('click', async () => {
+                const provider = new GoogleAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    console.error("Google Sign-In error:", error);
+                    showCustomPopup(`Google Sign-In failed: ${error.code} - ${error.message}`, "Google Sign-In Error");
+                }
+            });
+
+            signOutButton.addEventListener('click', async () => {
+                try {
+                    await fbSignOut(auth);
+                } catch (error) {
+                    console.error("Sign out error:", error);
+                    showCustomPopup(`Sign out failed: ${error.message}`, "Sign Out Error");
+                }
+            });
+            
+            forgotPasswordLink.addEventListener('click', async () => {
+                const email = authEmailInput.value.trim();
+                if (!email) {
+                    showCustomPopup("Please enter your email address in the email field to reset your password.", "Password Reset");
+                    return;
+                }
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    showCustomPopup(`Password reset email sent to ${email}. Please check your inbox (and spam folder).`, "Password Reset");
+                } catch (error) {
+                    console.error("Password reset error:", error);
+                    showCustomPopup(`Password reset failed: ${error.message}`, "Password Reset Error");
+                }
+            });
 
 
             // --- Firebase Save/Load ---
@@ -2393,8 +2623,7 @@ function applyLoadedGameState(loadedState) {
         updateStatsDisplay();
         updatePlayerCombatStatsDisplay();
         renderMaterials();
-        renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); // Renamed renderActiveAdventuresInSidebar
+        renderActiveTasksInSidebar(); // Renamed renderActiveAdventuresInSidebar
         renderActivePotions();
         renderInventory();
         updateAdventureDisplayStates();
@@ -3189,8 +3418,7 @@ console.log("Current activeDungeons BEFORE dungeon push:", JSON.parse(JSON.strin
                 recalculateTotalAvailableAdventurers(); 
 
                 console.log("Explicitly calling renderActiveTasksInSidebar after new dungeon...");
-                renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); 
+                renderActiveTasksInSidebar(); 
                 renderDungeonsPage(); 
                 
                 if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
@@ -3748,7 +3976,6 @@ function usePetWhistleUnlock(itemUniqueId) {
 
                 // Update UI and save state
                 renderActiveTasksInSidebar();
-    updateAdventureDisplayStates();
                 if (document.getElementById('dungeons-page').classList.contains('active')) {
                     renderDungeonsPage();
                 }
@@ -3770,7 +3997,6 @@ function usePetWhistleUnlock(itemUniqueId) {
                     // To prevent errors, try to ensure renderActiveTasksInSidebar is robust.
                     if (activeAdventures.length === 0 && sidebarActiveAdventuresList) { // If no adventures left, clear sidebar
                         renderActiveTasksInSidebar();
-    updateAdventureDisplayStates();
                     }
                     return; 
                 }
@@ -3989,8 +4215,7 @@ function usePetWhistleUnlock(itemUniqueId) {
                 renderActivePotions(); // After potion adventure counts are updated
                 updateAdventureDisplayStates(); // After adventure might unlock next one via quest
                 // updateStatsDisplay(); // Called by recalculateTotalAvailableAdventurers
-                // renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); // Called by recalculateTotalAvailableAdventurers (if list changes) or by updateTimers
+                // renderActiveTasksInSidebar(); // Called by recalculateTotalAvailableAdventurers (if list changes) or by updateTimers
                 renderMaterials(); // If materials were found
                 if (foundDropNames.some(name => craftableItemsData.find(ci => ci.name === name))) { // Re-render if an equippable item dropped
                     renderInventory();
@@ -4084,7 +4309,6 @@ function updateAdventureDisplayStates() {
                                     showCustomPopup(`Adventure "${adventureToCancel.name}" has been cancelled. Adventurers have returned.`, "Adventure Cancelled");
                                     updateStatsDisplay();
                                     renderActiveTasksInSidebar();
-    updateAdventureDisplayStates();
                                     updateAdventureDisplayStates();
                                     if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                                 }
@@ -4139,8 +4363,7 @@ function updateAdventureDisplayStates() {
                 // were relying on this specific call pattern.
                 if (taskCompletedThisTick) {
                     console.log("Task completed this tick, re-rendering active tasks sidebar.");
-                    renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); 
+                    renderActiveTasksInSidebar(); 
                 }
 
                 // --- Process Active Potions ---
@@ -4303,8 +4526,7 @@ function updateAdventureDisplayStates() {
 
                                         // Update UI
                                         updateStatsDisplay(); 
-                                        renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); 
+                                        renderActiveTasksInSidebar(); 
                                         updateAdventureDisplayStates(); 
                                         if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                                         showCustomPopup(`${numAdventurersToSend} adventurer(s) added to "${adventureName}". Timer reset.`, "Adventurers Added");
@@ -4380,8 +4602,7 @@ function updateAdventureDisplayStates() {
 
                         // Update UI
                         updateStatsDisplay(); 
-                        renderActiveTasksInSidebar();
-    updateAdventureDisplayStates(); 
+                        renderActiveTasksInSidebar(); 
                         updateAdventureDisplayStates(); 
                         if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                     }
@@ -4466,19 +4687,11 @@ function updateAdventureDisplayStates() {
             async function handleDrawWinners(event) { await drawRaffleWinners(event.target.dataset.raffleId, false); }
             async function handleDrawNow(event) { await drawRaffleWinners(event.target.dataset.raffleId, true); }
             async function handleDeleteRaffle(event) { if (!currentUser || !currentUser.email || currentUser.email.toLowerCase() !== 'nvoiysol@gmail.com' || !db) return; const raffleId = event.target.dataset.raffleId; const raffleName = allRaffles.find(r => r.id === raffleId)?.name || "this raffle"; if (confirm(`Are you sure you want to delete "${raffleName}"? This cannot be undone.`)) { const raffleDocRef = doc(db, "raffles", raffleId); try { await deleteDoc(raffleDocRef); showCustomPopup(`Raffle "${raffleName}" deleted.`, "Admin Action"); await fetchAndDisplayRaffles(); } catch (error) { console.error("Error deleting raffle:", error); showCustomPopup("Failed to delete raffle.", "Admin Error"); } }}
-            
-async function loadPunkVoyageIds() {
-    console.log("loadPunkVoyageIds: Function CALLED. Current punkVoyageIdsLoaded state:", punkVoyageIdsLoaded); // Log entry and current flag state
-
-    // If already loaded, no need to re-process. This can prevent issues if called multiple times.
-    if (punkVoyageIdsLoaded) {
-        console.log("loadPunkVoyageIds: Already loaded. Skipping.");
-        return true;
-    }
-
+async function loadPunkVoyageIds() { // This was originally line 2414
+    console.log("loadPunkVoyageIds: Loading embedded Punk Voyage inscription IDs.");
     try {
-        console.log("loadPunkVoyageIds: Attempting to define idsArray.");
-        // For testing with a small, known-good array:
+        // PASTE YOUR 1665 IDs HERE, formatted as a JavaScript array
+        // It should look like: const idsArray = [ "id1", "id2", "id3", ... ];
         const idsArray = [
 "0bad7bab126b907355c767d29128b2d762999b8d50acd8f5eebb31418ce7b485i527",
 "0bad7bab126b907355c767d29128b2d762999b8d50acd8f5eebb31418ce7b485i554",
@@ -6145,45 +6358,30 @@ async function loadPunkVoyageIds() {
 "f217c636d35a75756e4965135547a72b4b35bd9527cd6510d25a56153d3a1398i432",
 "f217c636d35a75756e4965135547a72b4b35bd9527cd6510d25a56153d3a1398i433",
 "f217c636d35a75756e4965135547a72b4b35bd9527cd6510d25a56153d3a1398i436"
-]
-        console.log("loadPunkVoyageIds: idsArray defined. Length:", idsArray.length);
+]; // The closing bracket for your array of IDs
 
-        if (!Array.isArray(idsArray)) { // Added a more specific check
-            console.error("loadPunkVoyageIds: idsArray is NOT an array after definition. This is unexpected.");
+        if (!Array.isArray(idsArray) || idsArray.length === 0) {
+            console.error("loadPunkVoyageIds: Embedded idsArray is not a valid non-empty array. Make sure you pasted your IDs correctly between the brackets [ ... ] and that each ID is a string in quotes, separated by commas.");
             if(userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
-            if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Error: Collection ID list is malformed (not an array).</p>`;
-            punkVoyageIdsLoaded = false; // Ensure flag is false on error
+            if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Error: Collection ID list is empty or invalid. Please check the code.</p>`;
+            PUNK_VOYAGE_IDS_SET = new Set();
+            punkVoyageIdsLoaded = false; // Explicitly set flag
             return false;
         }
 
-        if (idsArray.length === 0) { // Check for empty array specifically
-            console.warn("loadPunkVoyageIds: Embedded idsArray is empty. No Punk Voyage IDs will be checked.");
-            // If an empty list is valid (meaning user owns 0 of your collection type),
-            // then this might be okay, but the "not ready" message implies it's an issue.
-            // For now, let's assume an empty list after trying to load is an issue for the bonus.
-            if(userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
-            if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Warning: Game's collection ID list is empty.</p>`;
-            PUNK_VOYAGE_IDS_SET = new Set(); // Ensure set is empty
-            punkVoyageIdsLoaded = true; // Set to true, as the "loading" process (of an empty list) completed.
-                                       // The subsequent check in fetchWalletInscriptions will find 0 owned.
-            console.log("loadPunkVoyageIds: Set punkVoyageIdsLoaded to true (for empty list).");
-            return true; // Indicate successful loading of an empty list.
-        }
-
         PUNK_VOYAGE_IDS_SET = new Set(idsArray);
-        console.log(`loadPunkVoyageIds: Successfully processed ${PUNK_VOYAGE_IDS_SET.size} IDs into PUNK_VOYAGE_IDS_SET. Setting punkVoyageIdsLoaded to true.`);
-        punkVoyageIdsLoaded = true; // CRITICAL: Set the global flag
-        return true; // Indicate success
-
+        console.log(`loadPunkVoyageIds: Successfully loaded ${PUNK_VOYAGE_IDS_SET.size} Punk Voyage inscription IDs from embedded array.`);
+        punkVoyageIdsLoaded = true; // Explicitly set flag
+        return true;
     } catch (error) {
-        console.error('loadPunkVoyageIds: CRITICAL ERROR processing embedded IDs:', error, error.stack); // Log stack for more details
+        console.error('loadPunkVoyageIds: Error processing embedded IDs:', error);
         if(userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
-        if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Critical Error: Could not process embedded collection ID list. Error: ${error.message}</p>`;
-        PUNK_VOYAGE_IDS_SET = new Set(); // Reset the set on error
-        punkVoyageIdsLoaded = false;     // CRITICAL: Ensure flag is false on error
-        return false; // Indicate failure
+        if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Error: Could not process embedded collection ID list. Error: ${error.message}</p>`;
+        PUNK_VOYAGE_IDS_SET = new Set();
+        punkVoyageIdsLoaded = false; // Explicitly set flag
+        return false;
     }
-}
+} // This was originally line 2444
 
    async function loadDungeonCrawlerIds() {
         console.log("loadDungeonCrawlerIds: Attempting to load Dungeon Crawler inscription IDs.");
@@ -6930,8 +7128,6 @@ async function fetchPlayerDungeonCrawlers(userAddress, walletName) {
             initializeTheme(); 
             setInterval(updateTimers, 1000);
             document.querySelectorAll('.adventure-num-select').forEach(select => { select.value = "5"; });
-handleWalletDisconnected(); // This will reset state and prompt for connection
-initializeTheme();
             
             const connectWalletBtn = document.getElementById('connectWalletBtn'); const walletDropdown = document.getElementById('walletDropdown'); const walletOptions = walletDropdown.querySelectorAll('li'); const walletAddressDisplay = document.getElementById('walletAddressDisplay');
             let connectedAccount = null; let connectedWalletName = null;
@@ -6940,69 +7136,82 @@ initializeTheme();
 
 
 
-function updateWalletDisplay(account, walletName = '', idsWereLoadedForThisCall = false, crawlersWereLoadedForThisCall = false) {
-    console.log("updateWalletDisplay CALLED. Passed idsWereLoadedForThisCall:", idsWereLoadedForThisCall, "Passed crawlersWereLoadedForThisCall:", crawlersWereLoadedForThisCall, "Passed Account:", account, "Passed WalletName:", walletName);
-    const connectWalletBtnElement = document.getElementById('connectWalletBtn');
-    const walletAddressDisplayElement = document.getElementById('walletAddressDisplay');
-    const playerNicknameDisplayElement = document.getElementById('playerNicknameDisplay');
-
+function updateWalletDisplay(account, walletName = '') {
     if (account) {
         const shortAddress = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
-        if (connectWalletBtnElement) {
-            connectWalletBtnElement.textContent = `${walletName}: ${shortAddress}`;
-            connectWalletBtnElement.classList.add('connected');
+        if (connectWalletBtn) {
+            connectWalletBtn.textContent = `${walletName}: ${shortAddress}`;
+            connectWalletBtn.classList.add('connected');
         }
-        if (walletAddressDisplayElement) walletAddressDisplayElement.textContent = `Wallet: ${account}`;
+        if (walletAddressDisplay) walletAddressDisplay.textContent = `Wallet: ${account}`;
 
+        // Wallet is now connected, so verification is no longer pending from a previous state.
         walletVerificationPendingForBonus = false;
 
+        // Hide any wallet verification related popups that might have been shown
         if (customPopup && !customPopup.classList.contains('hidden') && customPopupTitleEl) {
             const currentPopupTitle = customPopupTitleEl.textContent;
             if (currentPopupTitle === "Wallet Bonus Information" ||
-                currentPopupTitle === "Wallet Connection Required" ||
-                currentPopupTitle === "Verify Wallet Bonus" ||
+                currentPopupTitle === "Wallet Connection Required" || // Kept for safety from older states
+                currentPopupTitle === "Verify Wallet Bonus" ||      // Kept for safety
                 currentPopupTitle === "Wallet Verification Needed") {
                 hideCustomPopup();
             }
         }
 
-        // Use the flags passed directly from handleWalletConnected for this specific call's logic
-        if (idsWereLoadedForThisCall && account && walletName) {
-            console.log("updateWalletDisplay: Conditions MET for fetching inscriptions. idsWereLoadedForThisCall:", idsWereLoadedForThisCall);
-            fetchWalletInscriptions(account, walletName);
-            if (crawlersWereLoadedForThisCall) {
-                console.log("updateWalletDisplay: Conditions MET for fetching crawlers. crawlersWereLoadedForThisCall:", crawlersWereLoadedForThisCall);
-                fetchPlayerDungeonCrawlers(account, walletName);
+        // Now that wallet is connected and flags are cleared, fetch inscriptions
+        if (punkVoyageIdsLoaded && connectedAccount && connectedWalletName) {
+            console.log(`DEBUG updateWalletDisplay: punkVoyageIdsLoaded: ${punkVoyageIdsLoaded}, PUNK_VOYAGE_IDS_SET size: ${PUNK_VOYAGE_IDS_SET ? PUNK_VOYAGE_IDS_SET.size : 'undefined'}`);
+            fetchWalletInscriptions(connectedAccount, connectedWalletName);
+            // fetchWalletInscriptions will update ordinalBonusAdventurers, call recalculateTotalAvailableAdventurers, and save.
+            
+            // +++ FETCH DUNGEON CRAWLERS +++
+            if (dungeonCrawlerIdsLoaded) {
+                fetchPlayerDungeonCrawlers(connectedAccount, connectedWalletName);
+            } else {
+                console.warn("Dungeon Crawler IDs not loaded, skipping fetch for them.");
             }
+            // +++ END FETCH DUNGEON CRAWLERS +++
         } else {
-            console.warn("updateWalletDisplay: Wallet connected, but asset ID lists not indicated as loaded via parameters OR account/name issue. Ordinal/Crawler check skipped. Details - idsWereLoadedForThisCall:", idsWereLoadedForThisCall, "crawlersWereLoadedForThisCall:", crawlersWereLoadedForThisCall, "account:", account, "walletName:", walletName);
+            console.warn("Wallet connected, but Punk Voyage IDs not loaded or connectedAccount/Name is an issue. Ordinal check skipped. Bonus will be 0.");
             if (userOrdinalsDisplayElement) {
                  userOrdinalsDisplayElement.style.display = 'block';
-                 if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = "<p>Could not check Ordinals: Game's collection ID list not ready or wallet info missing.</p>";
+                 if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = "<p>Could not check Ordinals: Game's collection ID list not ready.</p>";
             }
+            // If we can't check, assume no bonus for safety in this session part
             let previousBonus = ordinalBonusAdventurers;
             ordinalBonusAdventurers = 0;
-            if (previousBonus > 0) {
-                 recalculateTotalAvailableAdventurers();
-                 if (currentUser && currentUser.uid) {
+            if (previousBonus > 0) { // Only recalc if it actually changes
+                 recalculateTotalAvailableAdventurers(); // This updates UI
+                 if (currentUser && currentUser.uid) { // Save the new 0 bonus state
                     saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                  }
             }
         }
-        if (playerNicknameDisplayElement && userNickname) {
-            playerNicknameDisplayElement.textContent = userNickname;
-        }
 
     } else { // Wallet disconnected or not present
-        if (connectWalletBtnElement) {
-            connectWalletBtnElement.textContent = 'CONNECT WALLET';
-            connectWalletBtnElement.classList.remove('connected');
+        if (connectWalletBtn) {
+            connectWalletBtn.textContent = 'CONNECT WALLET';
+            connectWalletBtn.classList.remove('connected');
         }
-        if (walletAddressDisplayElement) walletAddressDisplayElement.textContent = '';
-        if (playerNicknameDisplayElement) playerNicknameDisplayElement.textContent = 'Voyager';
+        if (walletAddressDisplay) walletAddressDisplay.textContent = '';
 
         if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'none';
         if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = '';
+
+        // If wallet disconnects, the saved bonus might make walletVerificationPendingForBonus = true on next load.
+        // For the current session, if wallet disconnects, active bonus is lost.
+        if (connectedAccount !== null || connectedWalletName !== null) { // only if there WAS a connection
+            let previousBonusBeforeDisconnect = ordinalBonusAdventurers;
+            ordinalBonusAdventurers = 0;
+            // walletVerificationPendingForBonus will be determined on next app load/login if a bonus was saved
+            recalculateTotalAvailableAdventurers();
+            if (currentUser && currentUser.uid && previousBonusBeforeDisconnect !== 0) {
+                saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+            }
+        }
+        connectedAccount = null;
+        connectedWalletName = null;
     }
 }
 // --- END OF FULL updateWalletDisplay FUNCTION TO REPLACE ---
@@ -7045,139 +7254,29 @@ function updateWalletDisplay(account, walletName = '', idsWereLoadedForThisCall 
             showCustomPopup(`An error occurred with SatsConnect: ${e.message || 'Unknown error'}`, 'Wallet Error');
         }
     }         
-    
-  async function handleWalletConnected(walletAddress, walletName) {
-    console.log(`Wallet connected: ${walletName} - ${walletAddress} (handleWalletConnected start)`);
-    window.connectedAccount = walletAddress; // Using window to ensure global assignment if there was any doubt
-    window.connectedWalletName = walletName;
-    currentUser = { uid: walletAddress, name: walletName };
-
-    let idsAreNowLoaded = false;
-    let crawlersAreNowLoaded = false;
-
-    // 1. Load essential ID lists first
-    if (!punkVoyageIdsLoaded) { // Check the global flag first
-        console.log("handleWalletConnected: Calling await loadPunkVoyageIds()");
-        idsAreNowLoaded = await loadPunkVoyageIds(); // Capture the direct result
-        console.log("handleWalletConnected: loadPunkVoyageIds() finished. Result:", idsAreNowLoaded, "Global punkVoyageIdsLoaded is now:", punkVoyageIdsLoaded);
-    } else {
-        idsAreNowLoaded = true; // It was already loaded globally
-        console.log("handleWalletConnected: Punk Voyage IDs were already loaded globally.");
-    }
-
-    if (!dungeonCrawlerIdsLoaded) { // Check the global flag first
-        console.log("handleWalletConnected: Calling await loadDungeonCrawlerIds()");
-        crawlersAreNowLoaded = await loadDungeonCrawlerIds(); // Capture the direct result
-        console.log("handleWalletConnected: loadDungeonCrawlerIds() finished. Result:", crawlersAreNowLoaded, "Global dungeonCrawlerIdsLoaded is now:", dungeonCrawlerIdsLoaded);
-    } else {
-        crawlersAreNowLoaded = true; // It was already loaded globally
-        console.log("handleWalletConnected: Dungeon Crawler IDs were already loaded globally.");
-    }
-
-    console.log("handleWalletConnected: ID loading phase complete. Local flags for this call - idsAreNowLoaded:", idsAreNowLoaded, "crawlersAreNowLoaded:", crawlersAreNowLoaded);
-
-    // 2. Now update the wallet display. Pass the locally captured loading results.
-    updateWalletDisplay(walletAddress, walletName, idsAreNowLoaded, crawlersAreNowLoaded);
-
-    const currentThemeIsDark = body.classList.contains('dark-mode');
-    loadTwitterWidget(currentThemeIsDark ? 'dark' : 'light');
-
-    let isNewUser = false;
-    try {
-        const loadedState = await loadGameStateFromFirebase(walletAddress);
-        if (loadedState) {
-            console.log("Existing game state found for wallet. Applying it.", walletAddress);
-            applyLoadedGameState(loadedState);
-        } else {
-            console.log("No game state for wallet. Creating initial state.", walletAddress);
-            isNewUser = true;
-            let initialNickname = `Voyager ${walletAddress.substring(0, 4)}`;
-            await createInitialGameState(walletAddress, initialNickname);
-        }
-
-        if (isNewUser || (userNickname && userNickname.startsWith("Voyager "))) {
-            setTimeout(() => {
-                promptAndSetNickname(walletAddress);
-            }, 500);
-        }
-        showPage('adventures-page');
-    } catch (error) {
-        console.error("Error during wallet state processing in handleWalletConnected:", error, error.stack); // Added stack
-        showCustomPopup("An error occurred loading your game data. Details: " + error.message, "Load Error");
-    }
-    console.log("handleWalletConnected: Processing finished.");
-}
-
-         function handleWalletDisconnected() {
-             console.log("Wallet disconnected or no account found / Initializing disconnected state.");
-             currentUser = null;
-             userNickname = ''; // Reset global nickname variable
-
-             // Explicitly set the global variables to null
-             window.connectedAccount = null;
-             window.connectedWalletName = null;
-
-             resetGameStateToDefaults(); // This should handle resetting game-specific states
-             updateStatsDisplay();       // Update UI based on reset state
-             updateWalletDisplay(null);  // This will set button to "CONNECT WALLET"
-
-             // No welcome screen, game container remains visible
-             // gameContainer.classList.add('hidden');
-
-
-             showPage('adventures-page'); // Show a default page
-             if(sidebarActiveAdventuresList) {
-                 sidebarActiveAdventuresList.innerHTML = '<p style="text-align:center;">Connect wallet to see active tasks.</p>';
-             }
-             if(userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'none';
-             if(userOrdinalsListElement) userOrdinalsListElement.innerHTML = '';
-             if(playerNicknameDisplay) playerNicknameDisplay.textContent = "Voyager"; // Reset display
-
-             console.log("handleWalletDisconnected finished. State reset.");
-         }
-    async function promptAndSetNickname(walletAddressForNickname) {
-            const newNickname = prompt("Welcome, Voyager! Please set your in-game nickname (max 20 chars):", userNickname || `Voyager${walletAddressForNickname.slice(0,4)}`);
-            if (newNickname && newNickname.trim() !== "") {
-                userNickname = newNickname.trim().substring(0, 20);
-                if (playerNicknameDisplay) {
-                    playerNicknameDisplay.textContent = userNickname;
-                }
-                // Update the nickname in Firebase
-                if (currentUser && currentUser.uid === walletAddressForNickname) { // Ensure we're updating the correct user
-                    const playerDocRef = doc(db, 'playerProgress', walletAddressForNickname);
-                    try {
-                        await updateDoc(playerDocRef, { nickname: userNickname });
-                        console.log("Nickname updated in Firebase:", userNickname);
-                        showCustomPopup(`Nickname set to: ${userNickname}`, "Nickname Set");
-                    } catch (error) {
-                        console.error("Error updating nickname in Firebase:", error);
-                        showCustomPopup("Could not save nickname. Please try again later.", "Nickname Error");
-                    }
-                }
-            } else if (newNickname !== null) { // User clicked OK but left it empty
-                showCustomPopup("Nickname cannot be empty. Your default nickname will be used for now.", "Nickname Info");
-            }
-            // If user cancels prompt, userNickname remains as it was (either loaded or default)
-        }
     async function connectUnisat() {
     try {
         if (typeof window.unisat !== 'undefined') {
             const accounts = await window.unisat.requestAccounts();
-if (accounts && accounts.length > 0) {
-    const walletAddress = accounts[0];
-    const walletName = 'UniSat';
-                await handleWalletConnected(walletAddress, walletName); // New call
+            if (accounts && accounts.length > 0) {
+                connectedAccount = accounts[0];
+                connectedWalletName = 'UniSat';
+                updateWalletDisplay(connectedAccount, 'UniSat');
+                // ADD THIS LINE:
+                if (punkVoyageIdsLoaded) fetchWalletInscriptions(connectedAccount, connectedWalletName);
+                                if (dungeonCrawlerIdsLoaded && connectedAccount) fetchPlayerDungeonCrawlers(connectedAccount, connectedWalletName);
 
-                window.unisat.on('accountsChanged', async (newAccs) => { // Make async
-                    if (walletName === 'UniSat') { // Use the captured walletName
-                        const newAddress = (newAccs && newAccs.length > 0) ? newAccs[0] : null;
-                        if (newAddress !== connectedAccount) { // Only if address actually changed
-                            if (newAddress) {
-                                await handleWalletConnected(newAddress, walletName);
-                            } else {
-                                handleWalletDisconnected();
-                            }
-                        }
+
+                window.unisat.on('accountsChanged', (newAccs) => {
+                    if (connectedWalletName === 'UniSat') {
+                        connectedAccount = (newAccs && newAccs.length > 0) ? newAccs[0] : null;
+                        if (!connectedAccount) connectedWalletName = null;
+                        updateWalletDisplay(connectedAccount, connectedAccount ? 'UniSat' : '');
+                        // ADD THIS LINE (for account changes):
+                        if (punkVoyageIdsLoaded && connectedAccount) fetchWalletInscriptions(connectedAccount, connectedWalletName);
+                                                if (dungeonCrawlerIdsLoaded && connectedAccount) fetchPlayerDungeonCrawlers(connectedAccount, connectedWalletName);
+
+                        else if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'none'; // Hide if no account
                     }
                 });
             }
@@ -7257,8 +7356,9 @@ if (walletOptions) {
             if (addrToUse) {
                 connectedAccount = addrToUse;
                 connectedWalletName = 'Xverse'; // Set wallet name
-                // NOW, CALL handleWalletConnected INSTEAD OF THE DIRECT CALLS
-                await handleWalletConnected(connectedAccount, connectedWalletName);
+                updateWalletDisplay(connectedAccount, connectedWalletName);
+                  if (punkVoyageIdsLoaded) fetchWalletInscriptions(connectedAccount, connectedWalletName);
+                                  if (dungeonCrawlerIdsLoaded && connectedAccount) fetchPlayerDungeonCrawlers(connectedAccount, connectedWalletName);
 
                 // You might want to check Xverse documentation for an 'accountsChanged' event
                 // to handle account switches in the wallet, similar to UniSat.
