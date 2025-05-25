@@ -2393,7 +2393,8 @@ function applyLoadedGameState(loadedState) {
         updateStatsDisplay();
         updatePlayerCombatStatsDisplay();
         renderMaterials();
-        renderActiveTasksInSidebar(); // Renamed renderActiveAdventuresInSidebar
+        renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); // Renamed renderActiveAdventuresInSidebar
         renderActivePotions();
         renderInventory();
         updateAdventureDisplayStates();
@@ -3188,7 +3189,8 @@ console.log("Current activeDungeons BEFORE dungeon push:", JSON.parse(JSON.strin
                 recalculateTotalAvailableAdventurers(); 
 
                 console.log("Explicitly calling renderActiveTasksInSidebar after new dungeon...");
-                renderActiveTasksInSidebar(); 
+                renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); 
                 renderDungeonsPage(); 
                 
                 if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
@@ -3746,6 +3748,7 @@ function usePetWhistleUnlock(itemUniqueId) {
 
                 // Update UI and save state
                 renderActiveTasksInSidebar();
+    updateAdventureDisplayStates();
                 if (document.getElementById('dungeons-page').classList.contains('active')) {
                     renderDungeonsPage();
                 }
@@ -3767,6 +3770,7 @@ function usePetWhistleUnlock(itemUniqueId) {
                     // To prevent errors, try to ensure renderActiveTasksInSidebar is robust.
                     if (activeAdventures.length === 0 && sidebarActiveAdventuresList) { // If no adventures left, clear sidebar
                         renderActiveTasksInSidebar();
+    updateAdventureDisplayStates();
                     }
                     return; 
                 }
@@ -3985,7 +3989,8 @@ function usePetWhistleUnlock(itemUniqueId) {
                 renderActivePotions(); // After potion adventure counts are updated
                 updateAdventureDisplayStates(); // After adventure might unlock next one via quest
                 // updateStatsDisplay(); // Called by recalculateTotalAvailableAdventurers
-                // renderActiveTasksInSidebar(); // Called by recalculateTotalAvailableAdventurers (if list changes) or by updateTimers
+                // renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); // Called by recalculateTotalAvailableAdventurers (if list changes) or by updateTimers
                 renderMaterials(); // If materials were found
                 if (foundDropNames.some(name => craftableItemsData.find(ci => ci.name === name))) { // Re-render if an equippable item dropped
                     renderInventory();
@@ -4079,6 +4084,7 @@ function updateAdventureDisplayStates() {
                                     showCustomPopup(`Adventure "${adventureToCancel.name}" has been cancelled. Adventurers have returned.`, "Adventure Cancelled");
                                     updateStatsDisplay();
                                     renderActiveTasksInSidebar();
+    updateAdventureDisplayStates();
                                     updateAdventureDisplayStates();
                                     if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                                 }
@@ -4133,7 +4139,8 @@ function updateAdventureDisplayStates() {
                 // were relying on this specific call pattern.
                 if (taskCompletedThisTick) {
                     console.log("Task completed this tick, re-rendering active tasks sidebar.");
-                    renderActiveTasksInSidebar(); 
+                    renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); 
                 }
 
                 // --- Process Active Potions ---
@@ -4296,7 +4303,8 @@ function updateAdventureDisplayStates() {
 
                                         // Update UI
                                         updateStatsDisplay(); 
-                                        renderActiveTasksInSidebar(); 
+                                        renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); 
                                         updateAdventureDisplayStates(); 
                                         if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                                         showCustomPopup(`${numAdventurersToSend} adventurer(s) added to "${adventureName}". Timer reset.`, "Adventurers Added");
@@ -4372,7 +4380,8 @@ function updateAdventureDisplayStates() {
 
                         // Update UI
                         updateStatsDisplay(); 
-                        renderActiveTasksInSidebar(); 
+                        renderActiveTasksInSidebar();
+    updateAdventureDisplayStates(); 
                         updateAdventureDisplayStates(); 
                         if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                     }
@@ -7250,7 +7259,6 @@ if (walletOptions) {
                 connectedWalletName = 'Xverse'; // Set wallet name
                 // NOW, CALL handleWalletConnected INSTEAD OF THE DIRECT CALLS
                 await handleWalletConnected(connectedAccount, connectedWalletName);
-                updateWalletDisplay(connectedAccount, connectedWalletName);
 
                 // You might want to check Xverse documentation for an 'accountsChanged' event
                 // to handle account switches in the wallet, similar to UniSat.
