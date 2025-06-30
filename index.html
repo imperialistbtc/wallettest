@@ -4048,27 +4048,29 @@ function setupQuestUI() {
     const nextBtn = document.getElementById('questNextBtn');
     if (!toggleBtn || !prevBtn || !nextBtn) return;
 
-    toggleBtn.addEventListener('click', () => {
+    // By using .onclick, we ensure there is only ever one command on the button.
+    // It automatically replaces the old one each time the page is viewed.
+    toggleBtn.onclick = () => {
         questsShowCompleted = !questsShowCompleted;
         toggleBtn.classList.toggle('active', questsShowCompleted);
         toggleBtn.textContent = questsShowCompleted ? 'Hide Completed' : 'Show Completed';
         applyQuestFiltersAndRender();
-    });
+    };
 
-    prevBtn.addEventListener('click', () => {
+    prevBtn.onclick = () => {
         if (questsCurrentPage > 1) {
             questsCurrentPage--;
             renderQuests();
         }
-    });
+    };
 
-    nextBtn.addEventListener('click', () => {
+    nextBtn.onclick = () => {
         const totalPages = Math.ceil(questsFiltered.length / questsItemsPerPage);
         if (questsCurrentPage < totalPages) {
             questsCurrentPage++;
             renderQuests();
         }
-    });
+    };
 }
             
              function renderDailyRewards() {
