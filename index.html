@@ -1717,6 +1717,7 @@ function updateAdventureCardPvDisplay() {
             let ordinalBonusAdventurers = 0;
             let activeDungeons = [];
             let craftingCurrentPage = 1;
+            let craftingShowOnlyCraftable = false;
 const craftingItemsPerPage = 5;
 let craftingFilterType = 'all';
 let craftableItemsDataFiltered = [];
@@ -3435,7 +3436,7 @@ function handleCancelDungeon(dungeonInstanceId) {
 
            /* DELETE THE OLD applyCraftingFiltersAndRender, renderCraftingItems, AND setupCraftingUI FUNCTIONS AND PASTE THIS ENTIRE NEW BLOCK */
 
-function applyCraftingFiltersAndRender() {
+           function applyCraftingFiltersAndRender() {
     // Filter by type (e.g., 'all', 'armour', 'boots')
     let tempFiltered = craftableItemsData.filter(item => {
         if (craftingFilterType === 'all') {
@@ -3458,7 +3459,9 @@ function applyCraftingFiltersAndRender() {
                     return false; // Not enough materials
                 }
             }
-            return true; // Has enough materials
+            // Check if they are already owned
+            const alreadyOwned = playerInventory.some(invItem => invItem.id === item.id);
+            return !alreadyOwned; // Only include if NOT owned
         });
     }
     
@@ -3646,7 +3649,7 @@ async function showPage(pageIdToShow) {
     }
 }
             
-    // DELETE THE OLD renderInventory FUNCTION AND PASTE THIS NEW ONE
+// DELETE THE OLD renderInventory FUNCTION AND PASTE THIS NEW ONE
 
 function renderInventory() {
     if (!inventoryItemsContainer || !equipmentSlotsDisplay) return;
@@ -3757,6 +3760,7 @@ function renderInventory() {
     
     // Finally, update combat stats which depend on equipped items
     updatePlayerCombatStatsDisplay();
+    renderActiveSpecialties(); // <<< THIS IS THE FIX
 }
 
             function useRiderScrollUnlock(itemUniqueId) {
