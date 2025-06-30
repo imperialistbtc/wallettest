@@ -226,6 +226,21 @@ body.dark-mode {
         #signOutButton { background-color: var(--highlight-color-danger); color: white; border-color: var(--highlight-color-danger); }
         body:not(.dark-mode) #signOutButton:hover { background-color: #cc0000; }
         body.dark-mode #signOutButton:hover { background-color: #dd0000; }
+        .leaderboard-filter-btn.active-type-filter {
+    background-color: var(--highlight-color-gold);
+    color: black;
+    border-color: var(--highlight-color-gold);
+}
+
+.craftable-toggle-checkmark {
+    margin-left: 8px;
+    font-size: 0.9em;
+    display: none; /* Hidden by default */
+}
+
+.leaderboard-filter-btn.active .craftable-toggle-checkmark {
+    display: inline; /* Show the checkmark when the button is active */
+}
         .leaderboard-filter-btn.active { background-color: var(--highlight-color-connected); color: white; }
         .use-rider-scroll-btn { font-size: 0.85em; padding: 3px 6px; margin-top: 5px; }
 
@@ -3472,15 +3487,19 @@ function handleCancelDungeon(dungeonInstanceId) {
     // Further filter by 'craftable only' if the toggle is active
     if (craftingShowOnlyCraftable) {
         tempFiltered = tempFiltered.filter(item => {
-            if (!item.recipe) return false;
+            if (!item.recipe) return false; // Must have a recipe to be craftable
+            
+            // Check if player already owns this base item
+            const alreadyOwned = playerInventory.some(invItem => invItem.id === item.id);
+            if (alreadyOwned) return false;
+
+            // Check if player has enough materials
             for (const mat in item.recipe) {
                 if ((playerMaterials[mat] || 0) < item.recipe[mat]) {
                     return false; // Not enough materials
                 }
             }
-            // Check if they are already owned
-            const alreadyOwned = playerInventory.some(invItem => invItem.id === item.id);
-            return !alreadyOwned; // Only include if NOT owned
+            return true; // Has materials and does not own it
         });
     }
     
@@ -3580,38 +3599,44 @@ function setupCraftingUI() {
     
     filterContainer.innerHTML = ''; // Clear any existing buttons
 
-    // Create the "Craftable Only" toggle first
+    // Create the "Show Craftable Only" toggle first
     const craftableToggleBtn = document.createElement('button');
-    craftableToggleBtn.className = 'action-button leaderboard-filter-btn'; // Use same style
-    craftableToggleBtn.textContent = 'Show Craftable Only';
-    craftableToggleBtn.addEventListener('click', () => {
+    craftableToggleBtn.className = 'action-button leaderboard-filter-btn';
+    craftableToggleBtn.innerHTML = `Show Craftable Only <span class="craftable-toggle-checkmark">✓</span>`;
+    
+    // Check state on load and apply class if needed
+    if (craftingShowOnlyCraftable) {
+        craftableToggleBtn.classList.add('active');
+    }
+
+    craftableToggleBtn.onclick = () => {
         craftingShowOnlyCraftable = !craftingShowOnlyCraftable; // Toggle the state
         craftableToggleBtn.classList.toggle('active', craftingShowOnlyCraftable); // Toggle visual style
         applyCraftingFiltersAndRender();
-    });
+    };
     filterContainer.appendChild(craftableToggleBtn);
     
     // Create the type filter buttons
     filterTypes.forEach(type => {
         const btn = document.createElement('button');
-        btn.className = 'action-button leaderboard-filter-btn'; // Reuse leaderboard style
+        btn.className = 'action-button leaderboard-filter-btn';
         btn.textContent = `${type} Items`;
         btn.dataset.filter = type.toLowerCase();
 
-        // Set the 'All' button as active by default
+        // Set the active class based on the current state
         if (type.toLowerCase() === craftingFilterType) {
-            btn.classList.add('active');
+            btn.classList.add('active-type-filter');
         }
         
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             // Remove active class from all *type* filters
-            filterContainer.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+            filterContainer.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active-type-filter'));
             // Add active class to the clicked button
-            btn.classList.add('active');
+            btn.classList.add('active-type-filter');
             // Set the state and re-render
             craftingFilterType = type.toLowerCase();
             applyCraftingFiltersAndRender();
-        });
+        };
         filterContainer.appendChild(btn);
     });
 
