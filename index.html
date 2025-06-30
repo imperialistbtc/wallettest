@@ -5714,98 +5714,119 @@ async function loadPunkVoyageIds() {
     specialtiesListContainer.innerHTML = specialtiesHtml;
 }
 
-async function fetchWalletInscriptions(userAddress, walletName) {
-    if (!punkVoyageIdsLoaded) {
-        console.warn("fetchWalletInscriptions: Punk Voyage ID list (game definition) not loaded. Cannot calculate bonus or display.");
-        if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
-        if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Loading game's collection definitions...</p>`;
+function renderOwnedPunkVoyageOrdinals(ownedInscriptions) { // ownedInscriptions is an array of {id, name, imageUrl}
+    if (!userOrdinalsDisplayElement || !userOrdinalsListElement) return;
+
+    userOrdinalsListElement.innerHTML = ''; // Clear previous list items
+
+    // Get the <h4> element for the title, or create it if it doesn't exist
+    let titleElement = userOrdinalsDisplayElement.querySelector('h4');
+    if (!titleElement) {
+        titleElement = document.createElement('h4');
+        // Ensure the title is the first child of userOrdinalsDisplayElement, before userOrdinalsListElement
+        if (userOrdinalsDisplayElement.firstChild) {
+            userOrdinalsDisplayElement.insertBefore(titleElement, userOrdinalsDisplayElement.firstChild);
+        } else {
+            userOrdinalsDisplayElement.appendChild(titleElement);
+        }
+    }
+
+    if (!ownedInscriptions || ownedInscriptions.length === 0) {
+        titleElement.textContent = "MY PUNK VOYAGE ORDINALS (0)";
+        userOrdinalsListElement.innerHTML = `<p style="text-align:center; font-size:0.9em;">You don't own any Punk Voyage Ordinals from this collection in the connected wallet.</p>`;
+        userOrdinalsDisplayElement.style.display = 'block'; // Ensure the section is visible to show the "0" count
         return;
     }
 
-    if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
-    if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Loading your inscriptions...</p>`;
+    titleElement.textContent = `MY PUNK VOYAGE ORDINALS (${ownedInscriptions.length})`;
 
-    let actualWalletInscriptionIds = [];
-    let inscriptionDetailsForRendering = [];
-    let previousBonusAdventurers = ordinalBonusAdventurers;
+    const ul = document.createElement('ul');
+    ul.style.listStyleType = 'none'; // Remove bullet points
+    ul.style.paddingLeft = '0';
+    ul.style.textAlign = 'center'; // Center the list items
 
-    try {
-        if (walletName === 'UniSat' && typeof window.unisat !== 'undefined') {
-            const unisatInscriptions = await window.unisat.getInscriptions(0, 200);
-            if (unisatInscriptions && unisatInscriptions.list) {
-                actualWalletInscriptionIds = unisatInscriptions.list.map(insc => insc.inscriptionId);
+    ownedInscriptions.forEach(insc => {
+        const li = document.createElement('li');
+        li.textContent = insc.name; // insc.name already includes '#' from fetchWalletInscriptions
+        li.style.fontSize = '0.9em';
+        li.style.marginBottom = '3px';
+        ul.appendChild(li);
+    });
+    userOrdinalsListElement.appendChild(ul);
+    userOrdinalsDisplayElement.style.display = 'block'; // Make sure the section is visible
+}
+async function fetchPlayerDungeonCrawlers(userAddress, walletName) {
+    if (!dungeonCrawlerIdsLoaded) {
+        console.warn("Dungeon Crawler ID list not loaded. Cannot fetch player's crawlers.");
+        playerDungeonCrawlers = [];
+        return;
+    }
+
+    console.log(`Fetching Dungeon Crawlers for ${userAddress} via ${walletName}... (Currently Placeholder)`);
+    // This will be similar to fetchWalletInscriptions but will use PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET
+    // For now, let's simulate owning a few if the main Punk Voyage collection is used as a stand-in, or add dummy data
+    
+    playerDungeonCrawlers = []; // Clear previous
+
+    // --- SIMULATION / PLACEHOLDER ---
+    // If you want to test with some dummy data:
+    // Temporarily add some dummy crawlers if the set is empty for UI testing
+    if (PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET.size === 0) { // <<< MODIFIED THIS CONDITION FOR TESTING
+        console.log("DEV MODE: Adding dummy crawlers for UI testing as actual ID set is empty.");
+        playerDungeonCrawlers.push({ 
+            id: "dummy_crawler_1i0", 
+            uniqueInstanceId: "crawler_dummy1", 
+            name: "Test Crawler Alpha", 
+            imageUrl: "https://via.placeholder.com/30/FF0000/FFFFFF?Text=C1", 
+            attack: 10, 
+            defense: 5 
+        });
+        playerDungeonCrawlers.push({ 
+            id: "dummy_crawler_2i0", 
+            uniqueInstanceId: "crawler_dummy2", 
+            name: "Test Crawler Beta", 
+            imageUrl: "https://via.placeholder.com/30/00FF00/FFFFFF?Text=C2", 
+            attack: 7, 
+            defense: 8 
+        });
+        playerDungeonCrawlers.push({ 
+            id: "dummy_crawler_3i0", 
+            uniqueInstanceId: "crawler_dummy3", 
+            name: "Test Crawler Gamma", 
+            imageUrl: "https://via.placeholder.com/30/0000FF/FFFFFF?Text=C3", 
+            attack: 5, 
+            defense: 10 
+        });
+    } else if (PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET.size > 0) { 
+        let count = 0;
+        PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET.forEach(id => {
+            if (count < 5) { 
+                playerDungeonCrawlers.push({ 
+                    id: id, 
+                    uniqueInstanceId: `crawler_${id.slice(0,8)}`, 
+                    name: `Crawler #${id.slice(0,4)}`, 
+                    imageUrl: `https://api.hiro.so/ordinals/v1/inscriptions/${id}/content`, 
+                    attack: Math.floor(Math.random() * 10) + 5, 
+                    defense: Math.floor(Math.random() * 10) + 5
+                });
+                count++;
             }
-        } else if (walletName === 'Xverse' || walletName === 'UniSat') {
-            let currentOffset = 0; const pageLimit = 60; let hasMore = true;
-            const tempIds = [];
-            while (hasMore && tempIds.length < 500) {
-                const hiroApiUrl = `https://api.hiro.so/ordinals/v1/inscriptions?address=${userAddress}&limit=${pageLimit}&offset=${currentOffset}`;
-                const response = await fetch(hiroApiUrl);
-                if (!response.ok) {
-                     if (tempIds.length === 0 && userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Error fetching inscriptions via public API. Status: ${response.statusText}</p>`;
-                    break;
-                }
-                const data = await response.json();
-                if (data.results && data.results.length > 0) tempIds.push(...data.results.map(insc => insc.id));
-                if (data.total > tempIds.length && data.results && data.results.length === pageLimit) currentOffset += pageLimit;
-                else hasMore = false;
-            }
-            actualWalletInscriptionIds = tempIds;
-        } else {
-            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Wallet type not supported for inscription listing.</p>`;
-            ordinalBonusAdventurers = 0;
-            recalculateTotalAvailableAdventurers();
-            if (previousBonusAdventurers !== 0 && currentUser && currentUser.uid) await saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
-            return;
-        }
+        });
+         console.log("Simulated owning Dungeon Crawlers:", playerDungeonCrawlers);
+    } else {
+        console.log("No Dungeon Crawler IDs defined in PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET. Player will have no crawlers.");
+    }
+    // --- END SIMULATION ---
 
-        if (actualWalletInscriptionIds.length === 0) {
-            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>No inscriptions found in this wallet.</p>`;
-            ordinalBonusAdventurers = 0;
-        } else {
-            const ownedPunkVoyageForBonus = actualWalletInscriptionIds.filter(id => PUNK_VOYAGE_IDS_SET.has(id));
-            ordinalBonusAdventurers = ownedPunkVoyageForBonus.length;
-
-            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Found ${ownedPunkVoyageForBonus.length} Punk Voyage Ordinal(s). You get ${ordinalBonusAdventurers} bonus adventurer(s)! Fetching details for display...</p>`;
-
-            for (const inscriptionId of ownedPunkVoyageForBonus) {
-                if (PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]) {
-                    inscriptionDetailsForRendering.push(PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]);
-                    continue;
-                }
-                try {
-                    const detailUrl = `https://api.hiro.so/ordinals/v1/inscriptions/${inscriptionId}`;
-                    const contentUrl = `https://api.hiro.so/ordinals/v1/inscriptions/${inscriptionId}/content`;
-                    let name = `#${inscriptionId.slice(0,4)}...`;
-                    try {
-                        const detailResponse = await fetch(detailUrl);
-                        if(detailResponse.ok){
-                            const detailData = await detailResponse.json();
-                            name = `#${detailData.number || inscriptionId.slice(0,4)}`;
-                        }
-                    } catch (nameFetchError) { console.warn("Could not fetch name for display", nameFetchError); }
-                    PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId] = { id: inscriptionId, name: name, imageUrl: contentUrl };
-                    inscriptionDetailsForRendering.push(PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]);
-                } catch (detailError) {
-                    console.error(`Error processing inscription ${inscriptionId} for display:`, detailError);
-                    inscriptionDetailsForRendering.push({ id: inscriptionId, name: `ID ${inscriptionId.slice(0,6)}... (Error)`, imageUrl: null });
-                }
-            }
-        }
-        renderOwnedPunkVoyageOrdinals(inscriptionDetailsForRendering);
-
-    } catch (error) {
-        console.error(`Error in fetchWalletInscriptions (Client-Side Bonus) for ${walletName}:`, error);
-        if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>An error occurred while checking your Ordinals.</p>`;
-        ordinalBonusAdventurers = 0;
-    } finally {
-        recalculateTotalAvailableAdventurers();
-        if (ordinalBonusAdventurers !== previousBonusAdventurers && currentUser && currentUser.uid) {
-            console.log(`Ordinal bonus changed from ${previousBonusAdventurers} to ${ordinalBonusAdventurers}. Saving game state.`);
-            await saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
-        } else if (ordinalBonusAdventurers === previousBonusAdventurers) {
-            console.log(`Ordinal bonus unchanged (${ordinalBonusAdventurers}). No save triggered by fetchWalletInscriptions.`);
-        }
+    // In the real version, you'd:
+    // 1. Fetch all inscriptions from the user's wallet (like in fetchWalletInscriptions)
+    // 2. Filter those against PUNK_VOYAGE_DUNGEON_CRAWLER_IDS_SET
+    // 3. For each owned crawler, fetch its metadata (name, image, and importantly, its ATK/DEF stats if they are part of the inscription metadata)
+    // 4. Populate playerDungeonCrawlers with objects containing { id, uniqueInstanceId, name, imageUrl, attack, defense }
+    
+    // For now, we assume it's populated (e.g., by the simulation above or if you manually add to playerDungeonCrawlers for testing)
+    if (currentUser.uid) { // Save if state changed (e.g. simulated crawlers were added)
+        saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
     }
 }
 
