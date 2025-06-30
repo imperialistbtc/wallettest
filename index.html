@@ -2252,25 +2252,43 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
     if (baseItemMaster.perk) {
         const scaledPerk = getScaledItemPerk(baseItemMaster, currentItemLevel);
         
-        // --- NEW: Simplified Perk Display Logic ---
-        let perkStrings = [];
-        if (scaledPerk.attack) perkStrings.push(`Attack: +${scaledPerk.attack}`);
-        if (scaledPerk.defense) perkStrings.push(`Defense: ${scaledPerk.defense > 0 ? '+' : ''}${scaledPerk.defense}`);
-        if (scaledPerk.pvBonus) perkStrings.push(`PV Bonus: +${(scaledPerk.pvBonus * 100).toFixed(1)}%`);
-        if (scaledPerk.goldBonus) perkStrings.push(`Gold Find: +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
-        if (scaledPerk.diamondBonus) perkStrings.push(`Diamond Find: +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
-        if (scaledPerk.timeReduction && !scaledPerk.percent) perkStrings.push(`Adventure Time: -${scaledPerk.timeReduction / 60} min`);
-        if (scaledPerk.timeReductionPercent) perkStrings.push(`Adventure Time: -${(scaledPerk.timeReductionPercent * 100).toFixed(0)}%`);
-        if (scaledPerk.timeReductionHybrid) perkStrings.push(`Adventure Time: -${scaledPerk.timeReductionHybrid.flat / 60} min & -${(scaledPerk.timeReductionHybrid.percent * 100).toFixed(0)}%`);
-        if (scaledPerk.dungeon1) perkStrings.push(`Dungeon 1 Entry: +${scaledPerk.dungeon1}`);
-        if (scaledPerk.dungeon2) perkStrings.push(`Dungeon 2 Entry: +${scaledPerk.dungeon2}`);
-        if (scaledPerk.dungeon3) perkStrings.push(`Dungeon 3 Entry: +${scaledPerk.dungeon3}`);
-        if (scaledPerk.statAndDungeonTime) perkStrings.push(`Dungeon Time: -${(scaledPerk.statAndDungeonTime.timeReduction * 100).toFixed(0)}%`);
+        // --- FINALIZED PERK DISPLAY LOGIC ---
+        let perkDetails = [];
 
-        if (perkStrings.length > 0) {
-            contentHtml += `<p class="perk-info">Perk: ${perkStrings.join(', ')}</p>`;
+        // Stat boosts
+        if (scaledPerk.attack) perkDetails.push(`Attack: +${scaledPerk.attack}`);
+        if (scaledPerk.defense) perkDetails.push(`Defense: ${scaledPerk.defense > 0 ? '+' : ''}${scaledPerk.defense}`);
+        
+        // PV and Currency boosts
+        if (scaledPerk.pvBonus) perkDetails.push(`PV Bonus: +${(scaledPerk.pvBonus * 100).toFixed(1)}%`);
+        if (scaledPerk.goldBonus) perkDetails.push(`Gold Find: +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
+        if (scaledPerk.diamondBonus) perkDetails.push(`Diamond Find: +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
+        if (scaledPerk.pvMultiplier) perkDetails.push(`Dungeon PV x${scaledPerk.pvMultiplier}`);
+
+        // Time reductions
+        if (scaledPerk.timeReduction) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.timeReduction / 60)} min`);
+        if (scaledPerk.timeReductionPercent) perkDetails.push(`Adventure Time: -${(scaledPerk.timeReductionPercent * 100).toFixed(0)}%`);
+        if (scaledPerk.timeReductionHybrid) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
+        if (scaledPerk.statAndDungeonTime) perkDetails.push(`Dungeon Time: -${(scaledPerk.timeReduction * 100).toFixed(0)}%`);
+
+        // Dungeon Entry boosts
+        if (scaledPerk.dungeon1) perkDetails.push(`Dungeon 1 Entry: +${scaledPerk.dungeon1}`);
+        if (scaledPerk.dungeon2) perkDetails.push(`Dungeon 2 Entry: +${scaledPerk.dungeon2}`);
+        if (scaledPerk.dungeon3) perkDetails.push(`Dungeon 3 Entry: +${scaledPerk.dungeon3}`);
+        
+        // Other unique perks
+        if (scaledPerk.materialChanceMultiplier) perkDetails.push(`Material Find: x${scaledPerk.value.toFixed(2)}`);
+        if (scaledPerk.dungeonMaterialFetch) perkDetails.push(`Dungeon Material Fetch: +${scaledPerk.count}`);
+        if (scaledPerk.dungeonDropEcho) perkDetails.push(`Dungeon Drop Echo: ${scaledPerk.chance * 100}%`);
+        if (scaledPerk.crawlerSlotBonus) {
+            if(scaledPerk.crawlerSlotBonus.dungeon2) perkDetails.push(`Dungeon 2 Crawler Slot: +1`);
+            if(scaledPerk.crawlerSlotBonus.dungeon3) perkDetails.push(`Dungeon 3 Crawler Slot: +1`);
         }
-        // --- END: Simplified Perk Display Logic ---
+        
+        if (perkDetails.length > 0) {
+            contentHtml += `<p class="perk-info">Perk: ${perkDetails.join(', ')}</p>`;
+        }
+        // --- END FINALIZED LOGIC ---
     }
     
     if (itemData.level > 0) contentHtml += `<p>Level: +${itemData.level}</p>`;
@@ -2816,6 +2834,13 @@ function getCurrentGameState() {
 function applyLoadedGameState(loadedState) {
     console.log("Applying loaded game state:", JSON.parse(JSON.stringify(loadedState)));
     walletVerificationPendingForBonus = false; // Reset flag at the start of applying state
+    
+    if (currentUser && ADMIN_WALLET_ADDRESSES.includes(currentUser.uid.toLowerCase())) {
+        MAX_PLAYER_ADVENTURERS = 15;
+        console.log(`Admin wallet detected. Base adventurers set to ${MAX_PLAYER_ADVENTURERS}.`);
+    } else {
+        MAX_PLAYER_ADVENTURERS = 1;
+    }
 
     if (!loadedState) {
         console.error("applyLoadedGameState called with null or undefined state.");
