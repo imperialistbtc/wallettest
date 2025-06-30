@@ -6417,89 +6417,114 @@ function openItemSelectionModal(purpose) {
             }
 
             if (upgradeItemButton) {
-                upgradeItemButton.addEventListener('click', () => {
-                    if (!currentUser) return;
-                    if (!selectedItemForUpgrade || !selectedScrollForUpgrade) { upgradeResultDisplay.textContent = "Please select an item and a scroll."; return; }
+    upgradeItemButton.addEventListener('click', () => {
+        if (!currentUser) return;
+        if (!selectedItemForUpgrade || !selectedScrollForUpgrade) {
+            upgradeResultDisplay.textContent = "Please select an item and a scroll.";
+            return;
+        }
+
+        const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier;
+        const scrollTier = selectedScrollForUpgrade.scrollTier;
+        const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0;
+
+        let compatibleForLevel = false;
+        if (scrollTier === 1 && itemCurrentLevel === 0) compatibleForLevel = true;
+        else if (scrollTier === 2 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 2)) compatibleForLevel = true;
+        else if (scrollTier === 3 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 4)) compatibleForLevel = true;
+
+        if (!compatibleForLevel) {
+            upgradeResultDisplay.textContent = `This scroll is not suitable for an item at +${itemCurrentLevel}.`;
+            return;
+        }
+        
+        if (playerScrolls[selectedScrollForUpgrade.type] <= 0) {
+            upgradeResultDisplay.textContent = `You don't have any ${selectedScrollForUpgrade.name}.`;
+            return;
+        }
+        if (itemCurrentLevel >= 5) {
+            upgradeResultDisplay.textContent = "Item is at max level (+5).";
+            return;
+        }
+
+        // --- CORE UPGRADE LOGIC WITH BOOSTER ---
+        let successChance = upgradeChances[itemCurrentLevel]; // Base chance (e.g., 0.45 for 45%)
+        
+        // Apply scroll tier bonus
+        if (scrollTier > itemBaseTier && ((scrollTier === 2 && itemBaseTier <= 1) || (scrollTier === 3 && itemBaseTier <= 2))) {
+            successChance += 0.10;
+        }
+
+        // --- NEW: Find and apply the Upgrade Booster ---
+        const boosterIndex = activePotions.findIndex(p => p.id === 'upgrade_booster');
+        if (boosterIndex > -1) {
+            successChance += activePotions[boosterIndex].effect.flatValue; // Add the flat 10% (0.10)
+        }
+        // --- END NEW ---
+
+        successChance = Math.min(successChance, 1); // Cap at 100%
+
+        upgradeResultDisplay.textContent = `Attempting upgrade... Chance: ${(successChance * 100).toFixed(0)}%`;
+        upgradeItemButton.disabled = true;
+
+        // Consume the regular scroll
+        playerScrolls[selectedScrollForUpgrade.type]--;
+
+        // --- NEW: Consume the Upgrade Booster if it was used ---
+        if (boosterIndex > -1) {
+            activePotions.splice(boosterIndex, 1);
+            console.log("Upgrade Booster consumed.");
+        }
+        // --- END NEW ---
+
+        const originalSlotId = Object.keys(equippedItems).find(slot => equippedItems[slot] === selectedItemForUpgrade.uniqueInstanceId);
+
+        setTimeout(async () => {
+            const destroyedItemMasterData = { ...selectedItemForUpgrade };
+            if (Math.random() < successChance) { // SUCCESS
+                const itemInvIndex = playerInventory.findIndex(invItem => invItem.uniqueInstanceId === selectedItemForUpgrade.uniqueInstanceId);
+                if (itemInvIndex > -1) {
+                    playerInventory[itemInvIndex].level++;
+                    const updatedItem = playerInventory[itemInvIndex];
+                    upgradeResultDisplay.textContent = `SUCCESS! ${selectedItemForUpgrade.name} upgraded to +${updatedItem.level}!`;
                     
-                    const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier;
-                    const scrollTier = selectedScrollForUpgrade.scrollTier;
-                    const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0;
-
-                    let compatibleForLevel = false;
-                    if (scrollTier === 1 && itemCurrentLevel === 0) compatibleForLevel = true;
-                    else if (scrollTier === 2 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 2)) compatibleForLevel = true;
-                    else if (scrollTier === 3 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 4)) compatibleForLevel = true;
-
-                    if (!compatibleForLevel) { 
-                        if (scrollTier === 1 && itemCurrentLevel > 0) {
-                            upgradeResultDisplay.textContent = `Low Class Scrolls can only be used on +0 items. This item is +${itemCurrentLevel}.`;
-                        } else {
-                             upgradeResultDisplay.textContent = `This scroll (Tier ${scrollTier}) is not suitable for upgrading an item at +${itemCurrentLevel}.`; 
-                        }
-                        return; 
-                    }
+                    selectedItemForUpgrade = { ...selectedItemForUpgrade, ...updatedItem, currentLevel: updatedItem.level };
+                    const levelText = updatedItem.level > 0 ? `(+${updatedItem.level}) ` : '';
+                    selectedItemForUpgradeDisplay.innerHTML = `Item: ${getItemIconHTML(selectedItemForUpgrade.iconUrlOrColor, selectedItemForUpgrade.type, '30px')} ${levelText}${selectedItemForUpgrade.name}`;
                     
-                    if (playerScrolls[selectedScrollForUpgrade.type] <= 0) {
-                         upgradeResultDisplay.textContent = `You don't have any ${selectedScrollForUpgrade.name}.`; return;
-                    }
-                    if (itemCurrentLevel >= 5) { upgradeResultDisplay.textContent = "Item is at max level (+5)."; return; }
-                    
-                    let successChance = upgradeChances[itemCurrentLevel];
-                    if (scrollTier > itemBaseTier) {
-                         if ((scrollTier === 2 && itemBaseTier <= 1) || (scrollTier === 3 && itemBaseTier <= 2)) {
-                            successChance += 0.10;
-                            successChance = Math.min(successChance, 1);
-                        }
-                    }
-
-                    upgradeResultDisplay.textContent = `Attempting to upgrade ${selectedItemForUpgrade.name} from +${itemCurrentLevel} to +${itemCurrentLevel + 1}. Chance: ${(successChance * 100).toFixed(0)}%...`;
-                    upgradeItemButton.disabled = true; 
-                    
-                    playerScrolls[selectedScrollForUpgrade.type]--; 
-
-                    const originalSlotId = Object.keys(equippedItems).find(slot => equippedItems[slot] === selectedItemForUpgrade.uniqueInstanceId);
-
-                    setTimeout(async () => { 
-                        const destroyedItemMasterData = { ...selectedItemForUpgrade }; // Capture for potential re-craft
-                        if (Math.random() < successChance) {
-                            const itemInvIndex = playerInventory.findIndex(invItem => invItem.uniqueInstanceId === selectedItemForUpgrade.uniqueInstanceId);
-                            if (itemInvIndex > -1) {
-                                playerInventory[itemInvIndex].level = (playerInventory[itemInvIndex].level || 0) + 1;
-                                const updatedItem = playerInventory[itemInvIndex];
-                                upgradeResultDisplay.textContent = `SUCCESS! ${selectedItemForUpgrade.name} upgraded to +${updatedItem.level}!`;
-                                
-                                // Keep item in slot after successful upgrade
-                                selectedItemForUpgrade = { ...selectedItemForUpgrade, ...updatedItem, currentLevel: updatedItem.level }; // Update selectedItemForUpgrade with new level
-                                const levelText = (updatedItem.level || 0) > 0 ? `(+${updatedItem.level || 0}) ` : '';
-                                selectedItemForUpgradeDisplay.innerHTML = `Item: ${getItemIconHTML(selectedItemForUpgrade.iconUrlOrColor, selectedItemForUpgrade.type, '30px')} ${levelText}${selectedItemForUpgrade.name}`;
-                                
-                                quests.forEach(q => { 
-                                    if (q.metric === "itemUpgradedToPlus2" && updatedItem.level >= 2 && !q.completed && !q.claimed) { q.progress = 1; q.completed = true; if(!q.claimed) showCustomPopup(`Quest Completed: ${q.text}`, "Quest Complete!");} 
-                                    if (q.metric === "itemUpgradedToPlus3" && updatedItem.level >= 3 && !q.completed && !q.claimed) { q.progress = 1; q.completed = true; if(!q.claimed) showCustomPopup(`Quest Completed: ${q.text}`, "Quest Complete!");} 
-                                });
-                                if(document.getElementById('quests-page').classList.contains('active')) renderQuests();
-                            } else { upgradeResultDisplay.textContent = "Error: Item vanished post-scroll consumption."; }
-                        } else {
-                            const itemInvIndex = playerInventory.findIndex(invItem => invItem.uniqueInstanceId === selectedItemForUpgrade.uniqueInstanceId);
-                            if (itemInvIndex > -1) {
-                                if (originalSlotId) { equippedItems[originalSlotId] = null; } 
-                                playerInventory.splice(itemInvIndex, 1); 
-                                upgradeResultDisplay.textContent = `FAILURE! ${destroyedItemMasterData.name} +${itemCurrentLevel} was destroyed.`;
-                                promptToCraftAgain(destroyedItemMasterData, originalSlotId);
-                            } else { upgradeResultDisplay.textContent = "Error: Failed item not found for destruction."; }
-                            selectedItemForUpgrade = null; // Clear item slot on failure
-                            selectedItemForUpgradeDisplay.innerHTML = `Item: None`;
-                        }
-                        
-                        selectedScrollForUpgrade = null; // Always clear scroll slot
-                        selectedScrollForUpgradeDisplay.innerHTML = `Scroll: None`;
-                        updateUpgradeSuccessRateDisplay(); renderInventory(); renderCraftingItems(); renderMaterials();
-                        renderActiveSpecialties();
-                        upgradeItemButton.disabled = false;
-                        if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
-                    }, 1000);
-                });
+                    // Quest checks...
+                    quests.forEach(q => { 
+                        if (q.metric === "itemUpgradedToPlus2" && updatedItem.level >= 2 && !q.completed && !q.claimed) { q.progress = 1; q.completed = true; if(!q.claimed) showCustomPopup(`Quest Completed: ${q.text}`, "Quest Complete!");} 
+                        if (q.metric === "itemUpgradedToPlus3" && updatedItem.level >= 3 && !q.completed && !q.claimed) { q.progress = 1; q.completed = true; if(!q.claimed) showCustomPopup(`Quest Completed: ${q.text}`, "Quest Complete!");} 
+                    });
+                    if(document.getElementById('quests-page').classList.contains('active')) renderQuests();
+                }
+            } else { // FAILURE
+                const itemInvIndex = playerInventory.findIndex(invItem => invItem.uniqueInstanceId === selectedItemForUpgrade.uniqueInstanceId);
+                if (itemInvIndex > -1) {
+                    if (originalSlotId) equippedItems[originalSlotId] = null;
+                    playerInventory.splice(itemInvIndex, 1);
+                    upgradeResultDisplay.textContent = `FAILURE! ${destroyedItemMasterData.name} +${itemCurrentLevel} was destroyed.`;
+                    promptToCraftAgain(destroyedItemMasterData, originalSlotId);
+                }
+                selectedItemForUpgrade = null;
+                selectedItemForUpgradeDisplay.innerHTML = `Item: None`;
             }
+
+            selectedScrollForUpgrade = null;
+            selectedScrollForUpgradeDisplay.innerHTML = `Scroll: None`;
+            
+            updateUpgradeSuccessRateDisplay();
+            renderInventory();
+            renderCraftingItems();
+            renderMaterials();
+            renderActivePotions(); // Re-render potions to show the booster is gone
+            renderActiveSpecialties();
+            upgradeItemButton.disabled = false;
+            if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+        }, 1000);
+    });
+}
 
 
             // --- Final Initializations ---
