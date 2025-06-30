@@ -2065,14 +2065,15 @@ let lastDailyRewardDayClaimed = 0;
         placeholderReward: "500 PV, 10 Gold, 2 Diamonds", // CHANGED
         isLockedContent: false // CHANGED: Now unlocked
     }
-    const npcData = [
+
+];
+const npcData = [
     { id: "npc1", name: "NPC 1", attack: 4, defense: 5, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230014.png" },
     { id: "npc2", name: "NPC 2", attack: 4, defense: 6, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230328.png" },
     { id: "npc3", name: "NPC 3", attack: 12, defense: 6, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230757.png" },
     { id: "npc4", name: "NPC 4", attack: 4, defense: 16, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%231656.png" },
     { id: "npc5", name: "NPC 5", attack: 20, defense: 20, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/bf3.png" },
     { id: "npc6", name: "NPC 6", attack: 15, defense: 15, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230037.png" }
-];
 ];
             const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", unlockQuestId: null, unlockMessage: "" }, { id: "2", blockId: "adventure-2-block", unlockQuestId: 1, unlockMessage: "Complete 'Spirit Forest' 5 times to unlock." }, { id: "3", blockId: "adventure-3-block", unlockQuestId: 2, unlockMessage: "Complete 'Mountain of the Marowan' 5 times to unlock." }, { id: "4", blockId: "adventure-4-block", unlockQuestId: 3, unlockMessage: "Complete 'Fire Fields of Flyinals' 5 times to unlock." },{ id: "5", blockId: "adventure-5-block", unlockQuestId: 15, unlockMessage: "Complete 'Tomb of the Death Riders' 5 times to unlock." } ];
             const upgradeChances = [1, 0.85, 0.50, 0.35, 0.13]; // For +0->+1, +1->+2, ..., +4->+5
