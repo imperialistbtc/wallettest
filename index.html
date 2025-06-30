@@ -3487,126 +3487,118 @@ function handleCancelDungeon(dungeonInstanceId) {
                 });
             }
             
-            function renderInventory() { 
-                if (!inventoryItemsContainer || !equipmentSlotsDisplay) return; 
-                
-                equipmentSlotsDisplay.innerHTML = ''; 
-            const slotTypes = [ { name: "Armour", id: "Armour" }, { name: "Helmet", id: "Helmet" }, { name: "Boots", id: "Boots" }, { name: "Amulet", id: "Amulet" }, { name: "Ring 1", id: "Ring1" }, { name: "Ring 2", id: "Ring2" }, { name: "Weapon", id: "Weapon" }, { name: "Pet", id: "Pet" }, { name: "Misc 1", id: "Misc1" }, { name: "Misc 2", id: "Misc2" } ];
+    // DELETE THE OLD renderInventory FUNCTION AND PASTE THIS NEW ONE
+
+function renderInventory() {
+    if (!inventoryItemsContainer || !equipmentSlotsDisplay) return;
+
+    // --- Part 1: Render Equipped Item Slots ---
+    equipmentSlotsDisplay.innerHTML = '';
+    const slotTypes = [{ name: "Armour", id: "Armour" }, { name: "Helmet", id: "Helmet" }, { name: "Boots", id: "Boots" }, { name: "Amulet", id: "Amulet" }, { name: "Ring 1", id: "Ring1" }, { name: "Ring 2", id: "Ring2" }, { name: "Weapon", id: "Weapon" }, { name: "Pet", id: "Pet" }, { name: "Misc 1", id: "Misc1" }, { name: "Misc 2", id: "Misc2" }];
+    
+    // Create a Set of all equipped item instance IDs for quick lookup
+    const equippedInstanceIds = new Set(Object.values(equippedItems));
+
+    slotTypes.forEach(slot => {
+        const slotDiv = document.createElement('div');
+        slotDiv.classList.add('equipment-slot');
+        const equippedItemInstanceId = equippedItems[slot.id];
+        const equippedInvItem = equippedItemInstanceId ? playerInventory.find(invItem => invItem.uniqueInstanceId === equippedItemInstanceId) : null;
+        const itemDataForSlot = equippedInvItem ? craftableItemsData.find(i => i.id === equippedInvItem.id) : null;
+        let slotContent = `<div class="slot-name">${slot.name.toUpperCase()}</div>`;
         
-        slotTypes.forEach(slot => { 
-                    const slotDiv = document.createElement('div'); 
-                    slotDiv.classList.add('equipment-slot'); 
-                    
-                    const equippedItemInstanceId = equippedItems[slot.id]; 
-                    const equippedInvItem = playerInventory.find(invItem => invItem.uniqueInstanceId === equippedItemInstanceId);
-                    const itemDataForSlot = equippedInvItem ? (craftableItemsData.find(i => i.id === equippedInvItem.id) || (equippedInvItem.id === "ring_cursedpower" ? craftableItemsData.find(i => i.id === "ring_cursedpower") : null)) : null;
-
-                    let slotContent = `<div class="slot-name">${slot.name.toUpperCase()}</div>`; 
-                    
-                    if (slot.id === "Ring2" && !secondRingSlotUnlocked) {
-                        slotDiv.classList.add('locked');
-                        slotContent += `<div class="equipped-item-container"><div class="empty-slot-text">(Locked)</div>`; // Wrap for consistency
-                        const riderScrollInInventory = playerInventory.find(item => item.id === 'rider_scroll_unlock');
-                        if (riderScrollInInventory) {
-                            slotContent += `<button class="action-button use-rider-scroll-btn" data-item-unique-id="${riderScrollInInventory.uniqueInstanceId}">Use Rider Scroll</button>`;
-                        } else if (!playerHasPurchasedRiderScroll) { 
-                             slotContent += `<div class="empty-slot-text" style="font-size:0.8em;">Purchase Rider Scroll from Shop</div>`;
-                        }
-                    slotContent += `</div>`;
-                } else if (slot.id === "Pet" && !petSlotUnlocked) { // NEW ELSE IF BLOCK
-                    slotDiv.classList.add('locked');
-                    slotContent += `<div class="equipped-item-container"><div class="empty-slot-text">(Locked)</div>`;
-                    const petWhistleInInventory = playerInventory.find(item => item.id === 'pet_whistle_unlock');
-                    if (petWhistleInInventory) {
-                        slotContent += `<button class="action-button use-pet-whistle-btn" data-item-unique-id="${petWhistleInInventory.uniqueInstanceId}">Use Pet Whistle</button>`;
-                    } else if (!playerHasPurchasedPetWhistle) { // Check if it was ever purchased
-                         slotContent += `<div class="empty-slot-text" style="font-size:0.8em;">Purchase Pet Whistle from Shop</div>`;
-                    }
-                    slotContent += `</div>`;
-                } else {
-                    slotContent += `<div class="equipped-item-container">`; // Container for tooltip target
-                        if (itemDataForSlot && equippedInvItem) { 
-                            const levelText = (equippedInvItem.level || 0) > 0 ? `(+${equippedInvItem.level || 0}) ` : '';
-                            slotContent += `${getItemIconHTML(itemDataForSlot.iconUrlOrColor, itemDataForSlot.type, 'var(--item-icon-size)')} <div class="equipped-item-name">${levelText}${itemDataForSlot.name}</div> <button class="unequip-btn action-button" data-item-slot-id="${slot.id}">Unequip</button>`; 
-                    if (equippedInvItem.level === 1) slotDiv.classList.add('item-level-plus1'); // NEW
-                    if (equippedInvItem.level === 2) slotDiv.classList.add('item-level-plus2'); // NEW
-                    if (equippedInvItem.level === 3) slotDiv.classList.add('item-level-plus3'); // NEW
-                    if (equippedInvItem.level === 4) slotDiv.classList.add('item-level-plus4');
-                    if (equippedInvItem.level === 5) slotDiv.classList.add('item-level-plus5');
-                } else {  
-                            slotContent += `<div class="empty-slot-text">(Empty Slot)</div>`; 
-                        }
-                        slotContent += `</div>`;
-                    }
-                    slotDiv.innerHTML = slotContent; 
-                    equipmentSlotsDisplay.appendChild(slotDiv); 
-
-                    // Add tooltip listener to the container if item is equipped
-                    const itemContainerForTooltip = slotDiv.querySelector('.equipped-item-container');
-                    if (itemDataForSlot && equippedInvItem && itemContainerForTooltip) {
-                        itemContainerForTooltip.addEventListener('mousemove', (e) => showItemTooltip(e, { ...itemDataForSlot, level: equippedInvItem.level || 0 }));
-                        itemContainerForTooltip.addEventListener('mouseleave', hideItemTooltip);
-                    }
-                }); 
-            equipmentSlotsDisplay.querySelectorAll('.unequip-btn').forEach(b => b.addEventListener('click', e => { const itemSlotId = e.target.dataset.itemSlotId; unequipItem(itemSlotId); })); 
-            equipmentSlotsDisplay.querySelectorAll('.use-rider-scroll-btn').forEach(b => b.addEventListener('click', e => useRiderScrollUnlock(e.target.dataset.itemUniqueId)));
-            equipmentSlotsDisplay.querySelectorAll('.use-pet-whistle-btn').forEach(b => b.addEventListener('click', e => usePetWhistleUnlock(e.target.dataset.itemUniqueId))); // ADD THIS LINE
-            
-            inventoryItemsContainer.innerHTML = ''; 
-                if (playerInventory.length === 0) { inventoryItemsContainer.innerHTML = '<p style="text-align:center;">Your bag is empty.</p>'; return; } 
-                
-                playerInventory.forEach(invItem => { 
-                    let itemData = craftableItemsData.find(i => i.id === invItem.id); 
-                    if (!itemData && invItem.id === "rider_scroll_unlock") { 
-                        itemData = shopItemsData.find(si => si.id === "rider_scroll_unlock");
-                    }
-                    
-                    if (itemData) { 
-                        const card = document.createElement('div'); 
-                card.className = 'inventory-item-card'; 
-                if (invItem.level === 1) card.classList.add('item-level-plus1'); // NEW
-                if (invItem.level === 2) card.classList.add('item-level-plus2'); // NEW
-                if (invItem.level === 3) card.classList.add('item-level-plus3'); // NEW
-                if (invItem.level === 4) card.classList.add('item-level-plus4');
-                if (invItem.level === 5) card.classList.add('item-level-plus5');
-
-            let actionsHtml = '';
-                    const isEquipped = Object.values(equippedItems).includes(invItem.uniqueInstanceId);
-                    const levelText = (invItem.level || 0) > 0 ? `(+${invItem.level || 0}) ` : '';
-
-                // Prevent "Equip" button for specific non-equippable items
-                if (itemData.type !== "Pet Unlock Consumable" && // Still keep this
-                    itemData.type !== "Consumable" &&
-                    itemData.type !== "upgrade_scroll_purchase" &&
-                    itemData.type !== "unlockable_consumable" &&
-                    !isEquipped ) {
-                    // For Pet type, only show equip if the slot is unlocked
-                    if (itemData.type === "Pet") {
-                        if (petSlotUnlocked) {
-                            actionsHtml += `<button class="equip-btn action-button" data-item-unique-id="${invItem.uniqueInstanceId}">Equip</button>`;
-                        }
-                    } else { // For other equippable types
-                        actionsHtml += `<button class="equip-btn action-button" data-item-unique-id="${invItem.uniqueInstanceId}">Equip</button>`;
-                    }
-                } // The original `else if (itemData.type !== "Pet Unlock Consumable" ...)` closing brace was here
-                    
-                    card.innerHTML = ` 
-                        <div class="item-icon-placeholder">${getItemIconHTML(itemData.iconUrlOrColor, itemData.type)}</div> 
-                        <div class="item-info"> 
-                            <p><strong>${levelText}${itemData.name}</strong> (${itemData.type || 'Item'})</p> 
-                            <small class="item-perk">${itemData.description || ''}</small> 
-                        </div> 
-                        <div class="item-actions">${actionsHtml} ${isEquipped ? '<span class="equipped-status">Equipped</span>' : ''}</div>`; 
-                        inventoryItemsContainer.appendChild(card); 
-                        card.addEventListener('mousemove', (e) => showItemTooltip(e, { ...itemData, level: invItem.level || 0 }));
-                        card.addEventListener('mouseleave', hideItemTooltip);
-                    } 
-
-            });
-            inventoryItemsContainer.querySelectorAll('.equip-btn').forEach(b => b.addEventListener('click', e => equipItem(e.target.dataset.itemUniqueId)));
-            updatePlayerCombatStatsDisplay();
-            renderActiveSpecialties(); // <<< ADD THIS LINE
+        // Handle locked slots first
+        if (slot.id === "Ring2" && !secondRingSlotUnlocked) {
+            slotDiv.classList.add('locked');
+            slotContent += `<div class="equipped-item-container"><div class="empty-slot-text">(Locked)</div>`;
+            const riderScrollInInventory = playerInventory.find(item => item.id === 'rider_scroll_unlock');
+            if (riderScrollInInventory && !equippedInstanceIds.has(riderScrollInInventory.uniqueInstanceId)) {
+                slotContent += `<button class="action-button use-rider-scroll-btn" data-item-unique-id="${riderScrollInInventory.uniqueInstanceId}">Use Rider Scroll</button>`;
+            } else if (!playerHasPurchasedRiderScroll) {
+                slotContent += `<div class="empty-slot-text" style="font-size:0.8em;">Purchase from Shop</div>`;
+            }
+            slotContent += `</div>`;
+        } else if (slot.id === "Pet" && !petSlotUnlocked) {
+            slotDiv.classList.add('locked');
+            slotContent += `<div class="equipped-item-container"><div class="empty-slot-text">(Locked)</div>`;
+            const petWhistleInInventory = playerInventory.find(item => item.id === 'pet_whistle_unlock');
+            if (petWhistleInInventory && !equippedInstanceIds.has(petWhistleInInventory.uniqueInstanceId)) {
+                slotContent += `<button class="action-button use-pet-whistle-btn" data-item-unique-id="${petWhistleInInventory.uniqueInstanceId}">Use Pet Whistle</button>`;
+            } else if (!playerHasPurchasedPetWhistle) {
+                slotContent += `<div class="empty-slot-text" style="font-size:0.8em;">Purchase from Shop</div>`;
+            }
+            slotContent += `</div>`;
+        } else {
+            // Handle regular unlocked slots
+            slotContent += `<div class="equipped-item-container">`;
+            if (itemDataForSlot && equippedInvItem) {
+                const level = equippedInvItem.level || 0;
+                const levelText = level > 0 ? `(+${level}) ` : '';
+                slotDiv.className = `equipment-slot item-level-plus${level}`; // Set border color class
+                slotContent += `${getItemIconHTML(itemDataForSlot.iconUrlOrColor, itemDataForSlot.type)} <div class="equipped-item-name">${levelText}${itemDataForSlot.name}</div> <button class="unequip-btn action-button" data-item-slot-id="${slot.id}">Unequip</button>`;
+            } else {
+                slotContent += `<div class="empty-slot-text">(Empty)</div>`;
+            }
+            slotContent += `</div>`;
         }
+        slotDiv.innerHTML = slotContent;
+        equipmentSlotsDisplay.appendChild(slotDiv);
+        
+        const itemContainerForTooltip = slotDiv.querySelector('.equipped-item-container');
+        if (itemDataForSlot && equippedInvItem && itemContainerForTooltip) {
+            itemContainerForTooltip.addEventListener('mousemove', (e) => showItemTooltip(e, { ...itemDataForSlot, level: equippedInvItem.level || 0 }));
+            itemContainerForTooltip.addEventListener('mouseleave', hideItemTooltip);
+        }
+    });
+    
+    // Add event listeners for buttons in the slots
+    equipmentSlotsDisplay.querySelectorAll('.unequip-btn').forEach(b => b.addEventListener('click', e => unequipItem(e.target.dataset.itemSlotId)));
+    equipmentSlotsDisplay.querySelectorAll('.use-rider-scroll-btn').forEach(b => b.addEventListener('click', e => useRiderScrollUnlock(e.target.dataset.itemUniqueId)));
+    equipmentSlotsDisplay.querySelectorAll('.use-pet-whistle-btn').forEach(b => b.addEventListener('click', e => usePetWhistleUnlock(e.target.dataset.itemUniqueId)));
+
+    // --- Part 2: Render "My Items" (the bag) ---
+    inventoryItemsContainer.innerHTML = '';
+    
+    // Filter out items that are currently equipped
+    const unequippedInventory = playerInventory.filter(invItem => !equippedInstanceIds.has(invItem.uniqueInstanceId));
+
+    if (unequippedInventory.length === 0) {
+        inventoryItemsContainer.innerHTML = '<p style="text-align:center;">Your item bag is empty.</p>';
+    } else {
+        unequippedInventory.forEach(invItem => {
+            const itemData = craftableItemsData.find(i => i.id === invItem.id) || shopItemsData.find(i => i.id === invItem.id);
+            if (itemData) {
+                const card = document.createElement('div');
+                const level = invItem.level || 0;
+                card.className = `inventory-item-card item-level-plus${level}`;
+                const levelText = level > 0 ? `(+${level}) ` : '';
+                
+                let actionsHtml = '';
+                // Check if the item is equippable
+                if (itemData.type !== "unlockable_consumable" && itemData.type !== "upgrade_scroll_purchase") {
+                    actionsHtml = `<button class="equip-btn action-button" data-item-unique-id="${invItem.uniqueInstanceId}">Equip</button>`;
+                }
+                
+                card.innerHTML = ` 
+                    <div class="item-icon-placeholder">${getItemIconHTML(itemData.iconUrlOrColor, itemData.type)}</div> 
+                    <div class="item-info"> 
+                        <p><strong>${levelText}${itemData.name}</strong> (${itemData.type || 'Item'})</p> 
+                        <small class="item-perk">${itemData.description || ''}</small> 
+                    </div> 
+                    <div class="item-actions">${actionsHtml}</div>`;
+                inventoryItemsContainer.appendChild(card);
+                card.addEventListener('mousemove', (e) => showItemTooltip(e, { ...itemData, level: invItem.level || 0 }));
+                card.addEventListener('mouseleave', hideItemTooltip);
+            }
+        });
+    }
+
+    // Add event listener for equip buttons in the bag
+    inventoryItemsContainer.querySelectorAll('.equip-btn').forEach(b => b.addEventListener('click', e => equipItem(e.target.dataset.itemUniqueId)));
+    
+    // Finally, update combat stats which depend on equipped items
+    updatePlayerCombatStatsDisplay();
+}
 
             function useRiderScrollUnlock(itemUniqueId) {
                 if (!currentUser) return;
@@ -4246,53 +4238,64 @@ function checkAndResetDailyDungeonEntries() {
                 }});
             }
 
-            function equipItem(itemUniqueId, specificSlotId = null) { 
-                if(!currentUser) return; 
-                const invItemToEquip = playerInventory.find(invItem => invItem.uniqueInstanceId === itemUniqueId);
-                if (!invItemToEquip) { console.error("Item to equip not found in inventory:", itemUniqueId); return;}
+      // DELETE THE OLD equipItem FUNCTION AND PASTE THIS NEW ONE
 
-                const itemData = craftableItemsData.find(i => i.id === invItemToEquip.id) || (invItemToEquip.id === "ring_cursedpower" ? craftableItemsData.find(i => i.id === "ring_cursedpower") : null) ; 
-                if (!itemData || !itemData.type) { console.error("Cannot equip item without a type:", itemData); return; } 
-                
-                let targetSlotId = specificSlotId; 
+function equipItem(itemUniqueId, specificSlotId = null) {
+    if (!currentUser) return;
+    const invItemToEquip = playerInventory.find(invItem => invItem.uniqueInstanceId === itemUniqueId);
+    if (!invItemToEquip) {
+        console.error("Item to equip not found in inventory:", itemUniqueId);
+        return;
+    }
 
-                if (!targetSlotId) { 
-                    if (itemData.type === "Ring") { 
-                        if (!equippedItems.Ring1) targetSlotId = "Ring1"; 
-                        else if (secondRingSlotUnlocked && !equippedItems.Ring2) targetSlotId = "Ring2"; 
-                        else showCustomPopup("Both ring slots are full or second slot is locked/unavailable.", "Equip Failed"); 
-            } else if (itemData.type === "Trinket" || itemData.type === "Rucksack") { 
-                if (!equippedItems.Misc1) targetSlotId = "Misc1"; 
-                else if (!equippedItems.Misc2) targetSlotId = "Misc2"; 
-                else showCustomPopup("Both miscellaneous slots are full.", "Equip Failed"); 
-            } else if (itemData.type === "Pet") { // Explicitly check for Pet type
-                if (petSlotUnlocked) { // Only allow equipping if slot is unlocked
-                    if (!equippedItems.Pet) {
-                        targetSlotId = "Pet";
-                    } else {
-                        showCustomPopup("Pet slot is already occupied.", "Equip Failed");
-                    }
-                } else {
-                    showCustomPopup("Pet slot is locked. Unlock it first.", "Equip Failed");
-                }
-            } else if (equippedItems.hasOwnProperty(itemData.type)) { 
-                targetSlotId = itemData.type; 
-            } 
-                }
-                
-                if (targetSlotId) { 
-                    if (equippedItems[targetSlotId] && equippedItems[targetSlotId] !== invItemToEquip.uniqueInstanceId) {
-                        // An item is already in the target slot, it remains in inventory.
-                    }
-                    equippedItems[targetSlotId] = invItemToEquip.uniqueInstanceId; 
-                    renderInventory(); 
-                    renderActiveSpecialties();
-                    console.log("Equipped:", equippedItems); 
-                    if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState()); 
-                } else if (!specificSlotId && !equippedItems.hasOwnProperty(itemData.type) && itemData.type !== "Ring" && itemData.type !== "Trinket" && itemData.type !== "Rucksack") { 
-                    showCustomPopup(`No available slot for item type: ${itemData.type}`, "Equip Failed"); 
-                }
+    const itemData = craftableItemsData.find(i => i.id === invItemToEquip.id);
+    if (!itemData || !itemData.type) {
+        console.error("Cannot equip item without a type:", itemData);
+        return;
+    }
+
+    let targetSlotId = specificSlotId;
+
+    if (!targetSlotId) {
+        // Find the correct slot for the item type
+        if (itemData.type === "Ring") {
+            if (!equippedItems.Ring1) targetSlotId = "Ring1";
+            else if (secondRingSlotUnlocked && !equippedItems.Ring2) targetSlotId = "Ring2";
+            else targetSlotId = "Ring1"; // Default to swapping with Ring 1 if both are full
+        } else if (itemData.type === "Trinket" || itemData.type === "Rucksack" || itemData.type === "Misc") {
+            if (!equippedItems.Misc1) targetSlotId = "Misc1";
+            else if (!equippedItems.Misc2) targetSlotId = "Misc2";
+            else targetSlotId = "Misc1"; // Default to swapping with Misc 1
+        } else if (itemData.type === "Pet") {
+            if (petSlotUnlocked) {
+                targetSlotId = "Pet";
+            } else {
+                showCustomPopup("Pet slot is locked. Unlock it first.", "Equip Failed");
+                return; // Stop if pet slot is locked
             }
+        } else if (equippedItems.hasOwnProperty(itemData.type)) {
+            targetSlotId = itemData.type;
+        }
+    }
+
+    // If we have a slot, perform the equip/swap
+    if (targetSlotId) {
+        // Check if the item is already equipped in this exact slot
+        if (equippedItems[targetSlotId] === invItemToEquip.uniqueInstanceId) {
+            return; // Don't do anything if trying to equip to the same slot
+        }
+
+        // Overwrite the slot. This handles both equipping to an empty slot and swapping.
+        equippedItems[targetSlotId] = invItemToEquip.uniqueInstanceId;
+
+        // Re-render everything that needs updating
+        renderInventory();
+        renderActiveSpecialties();
+        if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+    } else {
+        showCustomPopup(`No available slot for item type: ${itemData.type}`, "Equip Failed");
+    }
+}
 
             function unequipItem(itemSlotId) { 
                 if(!currentUser) return; 
