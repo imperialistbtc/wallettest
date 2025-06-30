@@ -1091,22 +1091,26 @@ body.dark-mode {
                     <div id="dungeon-npc-selection-container" style="width: 100%; max-width: 900px; margin-bottom: 20px;">
                         <!-- NPC selection UI will be rendered here -->
                     </div>
-                
+                    
                     <div id="dungeonResetTimerDisplay" style="text-align: center; margin-bottom: 15px; font-size: 1em;">
                         Daily Dungeon Resets In: <span id="dungeonPageResetCountdown">--:--:--</span>
                     </div>
+                    
                     <p style="text-align:center; margin-top: 5px; margin-bottom:15px; font-size:1em;">
-                        Party Dungeons unlock when you have an adventurer on **Adventure 4 +**.<br> 
-                        Entering a Party Dungeon uses **one** adventurer from your available pool.
+                        Dungeons require specific adventures to be active to enter.<br>
+                        <strong style="color: var(--label-color);">Crypts (D1 & D2):</strong> Require Adventure 4 active.<br>
+                        <strong style="color: var(--label-color);">ATH City (D3):</strong> Requires Adventure 5 active.
                     </p>
+                    
                     <p style="text-align:center; margin-top: 5px; margin-bottom:15px; font-size:0.9em; line-height: 1.6;">
-                        <strong style="color: var(--highlight-color-gold);">Dungeon Crawler Frames multiply their stats!</strong><br>
+                        <strong style="color: var(--highlight-color-gold);">Dungeon Crawler NFT Frames multiply their stats!</strong><br>
                         <span style="color: #CD7F32;">Bronze: x1</span> | 
                         <span style="color: #C0C0C0;">Silver: x2</span> | 
                         <span style="color: #FFD700;">Gold: x3</span> | 
                         <span style="color: #00E676;">Emerald: x4</span> | 
                         <span style="color: #00BFFF;">Diamond: x5</span> | 
-                        <span style="color: #FF0000;">Ruby: x6</span>
+                        <span style="color: #FF0000;">Ruby: x6</span><br>
+                        <em style="font-size: 0.9em; opacity: 0.8;">(Note: Current NPCs are placeholders and will be removed when the official Dungeon Crawler mint begins.)</em>
                     </p>
                 </section>
 
@@ -1395,7 +1399,13 @@ body.dark-mode {
 
                         <h3>Other Features</h3>
                         <ul>
-                            <li><strong>Dungeons:</strong>  Players can join dungeons while Adventure 4 is active, Dungeon1 daily limit:3, Dungeon2 daily limit:2 Pizza Pendant gives +1 entry chance to both.</li>
+                            <li><strong>Dungeons:</strong> High-risk, high-reward challenges.
+                                <ul>
+                                    <li><strong>Unlocking:</strong> Dungeons require a specific high-level adventure to be active. Crypts (D1 & D2) require Adventure 4 to be active. ATH City (D3) requires Adventure 5 to be active.</li>
+                                    <li><strong>Party System:</strong> Party Dungeons (D2 & D3) allow you to recruit placeholder NPCs to boost your stats. These NPCs will be replaced by the official Dungeon Crawler NFT mint in the future.</li>
+                                    <li><strong>Rewards:</strong> Dungeons are the primary source for the rarest crafting materials and unique, powerful equipment that cannot be crafted.</li>
+                                </ul>
+                            </li>
                             <li><strong>Quests:</strong> Complete objectives for rewards. Claim from the Quests page.</li>
                             <li><strong>Daily Login Rewards:</strong> Claim a reward every 24 hours.</li>
                             <li><strong>Whitelist Raffles:</strong> Participate in raffles.</li>
@@ -1995,21 +2005,21 @@ let lastDailyRewardDayClaimed = 0;
         id: "fire_sword_satoshi", name: "Fire Sword of Satoshi", type: "Weapon",
         description: "A blade forged in the genesis block. (+10 Attack, +1 Dungeon 1 Entry)",
         perk: { type: "statAndEntryBoost", attack: 10, dungeon1: 1 },
-        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Fire Ink": 1 }, // UPDATED RECIPE
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 5, "ATH Ash": 5, "Fire Ink": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/fire%20sword%20of%20satoshi.jpg", tier: 5
     },
     {
         id: "krakkin_bow", name: "Krakkin Bow", type: "Weapon",
         description: "A powerful but unwieldy bow. (+15 Attack, -5 Defense, +1 Dungeon 2 Entry)",
         perk: { type: "statAndEntryBoost", attack: 15, defense: -5, dungeon2: 1 },
-        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Zeus's Tear": 1 }, // UPDATED RECIPE
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 5, "ATH Ash": 5, "Zeus's Tear": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/krakkin%20bow.jpg", tier: 5
     },
     {
         id: "poisy_daggs", name: "Poisy Daggs", type: "Weapon",
         description: "Daggers dripping with a potent alchemical brew. (+7 Attack, +2 Defense, Doubles Dungeon PV Rewards)",
         perk: { type: "statAndDungeonPVBoost", attack: 7, defense: 2, pvMultiplier: 2 },
-        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Indian Street Food": 1 }, // UPDATED RECIPE
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 5, "ATH Ash": 5, "Indian Street Food": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/poison%20daggers.jpg", tier: 5
     },
     {
@@ -2141,14 +2151,14 @@ let lastDailyRewardDayClaimed = 0;
         type: "party_npc",
         maxPartySize: 6,
         maxEntriesPerDay: 1,
-        drops: [ // NEW DROPS
-             { name: "Void Crystal", chance: 0.1, qty: 1 },
-             { name: "ATH Ash", chance: 0.1, qty: 1 },
-             { name: "Fire Ink", chance: 0.05, qty: 1 },
-             { name: "Zeus's Tear", chance: 0.05, qty: 1 },
-             { name: "Indian Street Food", chance: 0.05, qty: 1 },
-             { id: "pet_bat", chance: 0.005, qty: 1, type: "equipment" }
-        ],
+        drops: [
+     { name: "Void Crystal", chance: 0.08, qty: 1 },         
+     { name: "ATH Ash", chance: 0.08, qty: 1 },            
+     { name: "Fire Ink", chance: 0.03, qty: 1 },           
+     { name: "Zeus's Tear", chance: 0.03, qty: 1 },        
+     { name: "Indian Street Food", chance: 0.03, qty: 1 }, 
+     { id: "pet_bat", chance: 0.005, qty: 1, type: "equipment" } 
+],
         placeholderReward: "5000 PV, 10 Gold, 2 Diamonds",
         isLockedContent: false
     }
@@ -3921,65 +3931,52 @@ function renderInventory() {
     const dungeonId = event.target.dataset.dungeonId;
     const dungeon = dungeonsData.find(d => d.id === dungeonId);
 
-    if (!dungeon) {
-        console.error("Dungeon data not found for ID:", dungeonId);
-        showCustomPopup("Error finding dungeon data.", "Dungeon Error");
+    if (!dungeon || activeDungeons.some(ad => ad.dungeonId === dungeon.id) || !activeAdventures.find(adv => adv.originalAdventureId === dungeon.requiredAdventureId)) {
+        // This will prevent entry if requirements are not met, the render function already shows the specific reason
+        renderDungeonsPage();
         return;
     }
-    if (activeDungeons.some(ad => ad.dungeonId === dungeon.id)) {
-        showCustomPopup(`You already have a party in "${dungeon.name}".`, "Dungeon Already Active");
-        return;
-    }
-    if (!activeAdventures.find(adv => adv.originalAdventureId === "4")) {
-        showCustomPopup(`Dungeons are locked. You need an adventurer on Adventure 4.`, "Dungeon Locked");
-        return;
-    }
-
-    // --- NEW: Correct Stat Calculation ---
+    
+    // --- FINAL CHECK BEFORE ENTRY ---
     const playerBaseAttack = parseInt(playerAttackStatElement.textContent) || 0;
     const playerBaseDefense = parseInt(playerDefenseStatElement.textContent) || 0;
     let currentPartyAttack = playerBaseAttack;
     let currentPartyDefense = playerBaseDefense;
-    
     if (dungeon.type === "party_npc") {
-        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
-        selectedNpcs.forEach(npcId => {
+        (confirmedCrawlersForDungeons[dungeon.id] || []).forEach(npcId => {
             const npc = npcData.find(n => n.id === npcId);
-            if (npc) {
-                currentPartyAttack += npc.attack;
-                currentPartyDefense += npc.defense;
-            }
+            if (npc) { currentPartyAttack += npc.attack; currentPartyDefense += npc.defense; }
         });
     }
 
-    if (currentPartyAttack < dungeon.attackRequirement || currentPartyDefense < dungeon.defenseRequirement) {
-        showCustomPopup(`Cannot enter ${dungeon.name}. Requires ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF. Your current party total is ${currentPartyAttack} ATK & ${currentPartyDefense} DEF.`, "Requirements Not Met");
+    if (currentPartyAttack < dungeon.attackRequirement || currentPartyDefense < dungeon.defenseRequirement || totalAvailableAdventurers < 1) {
+         showCustomPopup(`Requirements not met. Please check stats and available adventurers.`, "Entry Failed");
         return;
     }
-    // --- END: Correct Stat Calculation ---
 
-    // Daily Entry Limit Check
-    let effectiveMaxEntries = dungeon.maxEntriesPerDay;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) {
-        effectiveMaxEntries++;
-    }
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") {
-        effectiveMaxEntries++;
-    }
-
-    if ((playerDungeonEntriesToday[dungeon.id] || 0) >= effectiveMaxEntries) {
+    // --- Daily Entry Calculation (moved here for final check) ---
+    let bonusEntries = 0;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) bonusEntries++;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "fire_sword_satoshi")) && dungeon.id === "dungeon_1") bonusEntries++;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "krakkin_bow")) && dungeon.id === "dungeon_2") bonusEntries++;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") bonusEntries++;
+    
+    if ((playerDungeonEntriesToday[dungeon.id] || 0) >= (dungeon.maxEntriesPerDay + bonusEntries)) {
         showCustomPopup(`Daily limit for ${dungeon.name} reached.`, "Limit Reached");
         return;
     }
 
-    if (totalAvailableAdventurers < 1) {
-        showCustomPopup("Not enough adventurers available.", "Adventurers Needed");
-        return;
+    // --- TIME CALCULATION (FIXED) ---
+    let baseDurationMs = dungeon.durationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
+    let timeReductionPercent = 0;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "dungeon_boots"))) {
+        timeReductionPercent += 0.10; // 10% reduction from Dungeon Boots
     }
+    const calculatedDurationMs = baseDurationMs * (1 - timeReductionPercent);
+    const returnTime = Date.now() + calculatedDurationMs;
+    // --- END TIME CALCULATION ---
 
     playerDungeonEntriesToday[dungeon.id] = (playerDungeonEntriesToday[dungeon.id] || 0) + 1;
-    let calculatedDurationMs = dungeon.durationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
-    const returnTime = Date.now() + calculatedDurationMs;
 
     const newActiveDungeon = {
         id: nextActiveAdventureId++,
@@ -5189,210 +5186,91 @@ function updateAdventureDisplayStates() {
             }
             
             adventureSendButtons.forEach(button => {
-                button.addEventListener('click', () => {
-          if (walletVerificationPendingForBonus) {
-            showCustomPopup(
-                `Your game remembers a bonus of +${ordinalBonusAdventurers} adventurers from your Ordinals.<br><br>Tap <b>Connect Wallet</b> to verify your current Ordinal holdings and use this bonus.<br><br>Or, tap <b>Use Base Adventurers</b> to proceed with only your base ${MAX_PLAYER_ADVENTURERS} adventurer(s) and forfeit the remembered bonus for now.`,
-                "Wallet Verification Needed",
-                {
-                    // confirmCallback is for the "Connect Wallet" action (customPopupConfirmBtn)
-                    confirmCallback: (confirmed) => {
-                        if (confirmed) { // User clicked "Connect Wallet"
-                            console.log("User chose to Connect Wallet from adventure send prompt.");
-                            if (connectWalletBtn && walletDropdown) {
-                                walletDropdown.style.display = 'block';
-                            } else if (connectWalletBtn) {
-                                connectWalletBtn.click();
-                            }
-                            // Adventure does not proceed yet. User connects, then clicks SEND again.
-                            // The `walletVerificationPendingForBonus` flag will be cleared by `updateWalletDisplay` upon successful connection.
-                        } else { // User clicked "Use Base Adventurers" (which is customPopupCancelBtn)
-                            console.log("User chose to Use Base Adventurers (Forfeit Bonus).");
-                            let previousBonus = ordinalBonusAdventurers;
-                            ordinalBonusAdventurers = 0;
-                            walletVerificationPendingForBonus = false;
-                            recalculateTotalAvailableAdventurers();
-                            updateAdventureDisplayStates();
-                            if (currentUser && currentUser.uid && previousBonus > 0) {
-                                saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
-                            }
-                            // Re-simulate the original button click to send with base adventurers
-                            button.click();
-                        }
+    button.addEventListener('click', () => {
+        if (!currentUser) return;
+        
+        // Simplified requirements check
+        const adventureIdBase = button.dataset.adventureId;
+        const numAdventurersToSend = parseInt(document.getElementById(`num-adventurers-${adventureIdBase}`).value);
+        if (numAdventurersToSend <= 0 || numAdventurersToSend > totalAvailableAdventurers) {
+            showCustomPopup(`Invalid number of adventurers selected.`, "Action Needed");
+            return;
+        }
+
+        const adventureName = button.dataset.adventureName;
+        const originalDurationHours = parseInt(button.dataset.durationHours);
+        const pvReward = parseInt(button.dataset.pvReward) * 2;
+        const goldChance = parseFloat(button.dataset.goldChance);
+        const diamondChance = parseFloat(button.dataset.diamondChance) || 0;
+        const requiredAdventurers = parseInt(button.dataset.adventurerRequirement) || 0;
+
+        if (numAdventurersToSend < requiredAdventurers) {
+            showCustomPopup(`This adventure requires at least ${requiredAdventurers} adventurers.`, "Requirements Not Met");
+            return;
+        }
+        
+        // --- TIME CALCULATION (FIXED) ---
+        let baseDurationMs = originalDurationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
+        let flatReductionSeconds = 0;
+        let percentReduction = 0;
+
+        Object.values(equippedItems).forEach(equippedInstanceId => {
+            if (!equippedInstanceId) return;
+            const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
+            if (invItem) {
+                const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
+                if (itemMaster && itemMaster.perk) {
+                    const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
+                    if (scaledPerk.type === "timeReduction") flatReductionSeconds += scaledPerk.value;
+                    if (scaledPerk.type === "timeReductionPercent") percentReduction += scaledPerk.value;
+                    if (scaledPerk.type === "timeReductionHybrid") {
+                        flatReductionSeconds += scaledPerk.flat;
+                        percentReduction += scaledPerk.percent;
                     }
                 }
-            );
-            // Manually set the button texts because processPopupQueue uses confirmCallback
-            // to decide to show customPopupConfirmBtn and customPopupCancelBtn
-            if (customPopupConfirmBtn) customPopupConfirmBtn.textContent = "Connect Wallet";
-            if (customPopupCancelBtn) {
-                customPopupCancelBtn.textContent = "Use Base Adventurers";
-                customPopupCancelBtn.classList.remove('hidden'); // Make sure it's visible
             }
-            if (customPopupCloseBtn) customPopupCloseBtn.classList.add('hidden'); // Hide the default "OK" button
+        });
+        
+        const flatReductionMs = (flatReductionSeconds / 3600) * (GAME_HOUR_IN_REAL_SECONDS * 1000);
+        let calculatedDurationMs = (baseDurationMs * (1 - percentReduction)) - flatReductionMs;
+        calculatedDurationMs = Math.max(1000, calculatedDurationMs); // Ensure time is at least 1 second
+        const returnTime = Date.now() + calculatedDurationMs;
+        // --- END TIME CALCULATION ---
 
-            return; // Stop this adventure send attempt; action will be handled by popup
-        }
-                    
-                    if(!currentUser) return;
-                    const adventureIdBase = button.dataset.adventureId;
-                    const adventureName = button.dataset.adventureName;
-                    const originalDurationHours = parseInt(button.dataset.durationHours);
-                    let pvReward = parseInt(button.dataset.pvReward);
-                    let actualPvRewardForAdventure = pvReward * 2;
-                    const goldChance = parseFloat(button.dataset.goldChance);
-                    const diamondChance = parseFloat(button.dataset.diamondChance) || 0;
-                    const selectElement = document.getElementById(`num-adventurers-${adventureIdBase}`);
-                    const numAdventurersToSend = parseInt(selectElement.value);
+        const existingActiveAdventure = activeAdventures.find(adv => adv.originalAdventureId === adventureIdBase);
 
-                    if (numAdventurersToSend <= 0) { showCustomPopup("Please select at least one adventurer.", "Action Needed"); return; }
-                    // This check is important: it uses the *current* correct count of available adventurers
-                    if (numAdventurersToSend > totalAvailableAdventurers) { showCustomPopup(`Not enough adventurers available! You only have ${totalAvailableAdventurers}.`, "Adventurers Needed"); return; }
-                    
-                    const existingActiveAdventureIndex = activeAdventures.findIndex(adv => adv.originalAdventureId === adventureIdBase);
-
-                    if (existingActiveAdventureIndex !== -1) { // Adding to existing adventure
-                        showCustomPopup(
-                            `Adding ${numAdventurersToSend} adventurer(s) to "${adventureName}" will reset its timer to the full ${originalDurationHours} hours. Continue?`,
-                            "Confirm Add Adventurers",
-                            {
-                                confirmCallback: (confirmed) => {
-                                    if (confirmed) {
-                                         console.log("Confirmed ADD MORE. Processing...");
-                                        // Step 1: Update the adventure in the activeAdventures list
-                                        const advInstance = activeAdventures[existingActiveAdventureIndex];
-                                        advInstance.adventurers += numAdventurersToSend; // Add more adventurers to it
-                                        
-                                                          let baseDurationMs = originalDurationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
-                        let calculatedDurationMs = baseDurationMs;
-                        let totalPercentageReduction = 0;
-                        let flatTimeReductionSeconds = 0;
-
-                        // 1. Apply percentage reductions first (Set Bonus, Orb of Haste)
-                        totalPercentageReduction += getDungeonSetBonusTimeReduction(); // Dungeon Set Bonus
-
-                        Object.values(equippedItems).forEach(equippedInstanceId => {
-                            if (!equippedInstanceId) return;
-                            const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                            if (invItem) {
-                                const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                                if (itemMaster && itemMaster.perk) {
-                                    const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                                    if (scaledPerk.type === "timeReductionPercent") { // Like Orb of Haste
-                                        totalPercentageReduction += scaledPerk.value;
-                                    }
-                                }
-                            }
-                        });
-                        calculatedDurationMs = baseDurationMs * (1 - totalPercentageReduction);
-                        
-                        // 2. Then apply flat time reductions (like Warped Boots)
-                        Object.values(equippedItems).forEach(equippedInstanceId => {
-                            if (!equippedInstanceId) return;
-                            const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                            if (invItem) {
-                                const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                                if (itemMaster && itemMaster.perk) {
-                                    const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                                     if (scaledPerk.type === "timeReduction") { // Flat reduction from items like boots
-                                        flatTimeReductionSeconds += scaledPerk.value;
-                                    }
-                                }
-                            }
-                        });
-                        const flatReductionMs = (flatTimeReductionSeconds / 3600) * (GAME_HOUR_IN_REAL_SECONDS * 1000) ;
-                        calculatedDurationMs = Math.max(1000, calculatedDurationMs - flatReductionMs);
-                                        advInstance.returnTime = Date.now() + calculatedDurationMs; // Reset its timer
-
-                                        // Step 2: Now that activeAdventures is updated, recalculate the available count
-                                        recalculateTotalAvailableAdventurers(); 
-
-                                        // Update UI
-                                        updateStatsDisplay(); 
-                                        renderActiveTasksInSidebar(); 
-                                        updateAdventureDisplayStates(); 
-                                        if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
-                                        showCustomPopup(`${numAdventurersToSend} adventurer(s) added to "${adventureName}". Timer reset.`, "Adventurers Added");
-                                    }
-                                }
-                            }
-                        );
-                    } else { // Starting a new adventure
-                        const advConfig = adventureProgressionConfig.find(ac => ac.id === adventureIdBase);
-                        if (advConfig && advConfig.unlockQuestId) {
-                            const unlockingQuest = quests.find(q => q.id === advConfig.unlockQuestId);
-                            if (!unlockingQuest || !unlockingQuest.completed) {
-                                showCustomPopup(advConfig.unlockMessage, "Adventure Locked");
-                                return;
-                            }
-                        }
-                        // We DON'T directly change totalAvailableAdventurers here anymore.
-                        const requiredAdventurers = parseInt(button.dataset.adventurerRequirement) || 0;
-                        if (requiredAdventurers > 0 && numAdventurersToSend < requiredAdventurers) {
-                            showCustomPopup(`This adventure ("${adventureName}") requires at least ${requiredAdventurers} adventurer(s). You selected ${numAdventurersToSend}.`, "Requirements Not Met");
-                            return; // Stop processing
-                        }
-                         let baseDurationMs = originalDurationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
-                        let calculatedDurationMs = baseDurationMs;
-                        let totalPercentageReduction = 0;
-                        let flatTimeReductionSeconds = 0;
-
-                        // 1. Apply percentage reductions first (Set Bonus, Orb of Haste)
-                        totalPercentageReduction += getDungeonSetBonusTimeReduction(); // Dungeon Set Bonus
-
-                        Object.values(equippedItems).forEach(equippedInstanceId => {
-                            if (!equippedInstanceId) return;
-                            const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                            if (invItem) {
-                                const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                                if (itemMaster && itemMaster.perk) {
-                                    const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                                    if (scaledPerk.type === "timeReductionPercent") { // Like Orb of Haste
-                                        totalPercentageReduction += scaledPerk.value;
-                                    }
-                                }
-                            }
-                        });
-                        calculatedDurationMs = baseDurationMs * (1 - totalPercentageReduction);
-                        
-                        // 2. Then apply flat time reductions (like Warped Boots)
-                        Object.values(equippedItems).forEach(equippedInstanceId => {
-                            if (!equippedInstanceId) return;
-                            const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                            if (invItem) {
-                                const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                                if (itemMaster && itemMaster.perk) {
-                                    const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                                     if (scaledPerk.type === "timeReduction") { // Flat reduction from items like boots
-                                        flatTimeReductionSeconds += scaledPerk.value;
-                                    }
-                                }
-                            }
-                        });
-                        const flatReductionMs = (flatTimeReductionSeconds / 3600) * (GAME_HOUR_IN_REAL_SECONDS * 1000) ;
-                        calculatedDurationMs = Math.max(1000, calculatedDurationMs - flatReductionMs);
-                        
-                        const returnTime = Date.now() + calculatedDurationMs; 
-                        const newActiveAdventure = { id: nextActiveAdventureId++, originalAdventureId: adventureIdBase, name: adventureName, adventurers: numAdventurersToSend, returnTime: returnTime, pvReward: actualPvRewardForAdventure, goldChance: goldChance, diamondChance: diamondChance }; 
-                        
-                        // Step 1: Add the new adventure to our list
-                        activeAdventures.push(newActiveAdventure); 
-                        console.log("New adventure pushed:", JSON.parse(JSON.stringify(newActiveAdventure)));
-                        console.log("Current activeAdventures array:", JSON.parse(JSON.stringify(activeAdventures)));
-                        
-                        // Step 2: Now that activeAdventures is updated, recalculate the available count
+        if (existingActiveAdventure) { // Adding more
+            showCustomPopup(`Adding ${numAdventurersToSend} to "${adventureName}" will reset its timer. Continue?`, "Confirm Add", {
+                confirmCallback: (confirmed) => {
+                    if (confirmed) {
+                        existingActiveAdventure.adventurers += numAdventurersToSend;
+                        existingActiveAdventure.returnTime = returnTime; // Use newly calculated time
                         recalculateTotalAvailableAdventurers();
-
-                        // Update UI
-                        updateStatsDisplay(); 
-                        renderActiveTasksInSidebar(); 
-                        updateAdventureDisplayStates(); 
+                        renderActiveTasksInSidebar();
+                        updateAdventureDisplayStates();
                         if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
                     }
-                }); 
+                }
             });
-            adventureDropButtons.forEach(button => { button.addEventListener('mouseenter', (event) => { const adventureId = event.target.dataset.adventureId; const popover = document.getElementById(`drops-popover-${adventureId}`); const adventureInfo = adventuresData[adventureId]; if (popover && adventureInfo && adventureInfo.drops) { let dropsHtml = '<h5>Possible Drops:</h5><ul>'; adventureInfo.drops.forEach(drop => { const dItem = craftableItemsData.find(cd => cd.id === drop.name); dropsHtml += `<li>${drop.qty}x ${dItem ? dItem.name : drop.name} (${(drop.chance * 100).toFixed(3)}%)</li>`; }); dropsHtml += '</ul>'; popover.innerHTML = dropsHtml; popover.style.display = 'block'; } }); button.addEventListener('mouseleave', (event) => { const adventureId = event.target.dataset.adventureId; const popover = document.getElementById(`drops-popover-${adventureId}`); if (popover) { popover.style.display = 'none'; } }); });
-            
+        } else { // Starting new
+            const newActiveAdventure = {
+                id: nextActiveAdventureId++,
+                originalAdventureId: adventureIdBase,
+                name: adventureName,
+                adventurers: numAdventurersToSend,
+                returnTime: returnTime,
+                pvReward: pvReward,
+                goldChance: goldChance,
+                diamondChance: diamondChance
+            };
+            activeAdventures.push(newActiveAdventure);
+            recalculateTotalAvailableAdventurers();
+            renderActiveTasksInSidebar();
+            updateAdventureDisplayStates();
+            if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+        }
+    });
+});
             // --- Currency Swap Logic ---
             function updateSwapDisplay() {
                 if (!swapInfoDisplay || !swapBtn || !reverseSwapDirectionBtn) return;
