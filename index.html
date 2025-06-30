@@ -1073,8 +1073,23 @@ body.dark-mode {
                         <!-- Dungeon entries will be dynamically inserted here by JavaScript -->
                     </div>
                 </section>
-                <section id="quests-page" class="page-content"> <h2 class="page-title">QUESTS</h2> <div class="quest-list" id="questList"> </div> </section>
-                <section id="daily-rewards-page" class="page-content"> <h2 class="page-title">DAILY LOGIN REWARDS</h2> <div class="rewards-grid" id="dailyRewardsGrid"> </div> </section>
+                <section id="quests-page" class="page-content">
+                    <h2 class="page-title">QUESTS</h2>
+                    
+                    <!-- NEW: Filter controls -->
+                    <div id="questFilterContainer" style="text-align: center; margin-bottom: 20px;">
+                        <button id="questToggleCompletedBtn" class="action-button leaderboard-filter-btn">Show Completed</button>
+                    </div>
+                
+                    <div class="quest-list" id="questList"></div>
+                    
+                    <!-- NEW: Pagination controls -->
+                    <div id="questPaginationContainer" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px;">
+                        <button id="questPrevBtn" class="action-button">< Prev</button>
+                        <span id="questPageInfo">Page 1 / 1</span>
+                        <button id="questNextBtn" class="action-button">Next ></button>
+                    </div>
+                </section>                <section id="daily-rewards-page" class="page-content"> <h2 class="page-title">DAILY LOGIN REWARDS</h2> <div class="rewards-grid" id="dailyRewardsGrid"> </div> </section>
                 
                 <section id="shop-page" class="page-content"> 
                     <h2 class="page-title">SHOP</h2> 
@@ -1721,6 +1736,10 @@ function updateAdventureCardPvDisplay() {
 const craftingItemsPerPage = 5;
 let craftingFilterType = 'all';
 let craftableItemsDataFiltered = [];
+let questsCurrentPage = 1;
+const questsItemsPerPage = 10;
+let questsShowCompleted = false;
+let questsFiltered = [];
 
 
             const initialPlayerMaterials = { 
@@ -3943,60 +3962,113 @@ function usePetWhistleUnlock(itemUniqueId) {
     renderInventory(); // Re-render to show the unlocked slot
     if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
 }
-             function renderQuests() { 
-                if (!questListDiv) return; 
-                questListDiv.innerHTML = ''; 
-            quests.forEach(quest => { 
-                const qe = document.createElement('div'); 
-                qe.classList.add('quest-item'); 
+function applyQuestFiltersAndRender() {
+    questsFiltered = quests.filter(quest => {
+        return questsShowCompleted ? true : !quest.claimed;
+    });
+    questsCurrentPage = 1;
+    renderQuests();
+}
 
-                // +++ ADD CLASS BASED ON QUEST STATUS +++
-                if (quest.completed && quest.claimed) {
-                    qe.classList.add('completed-and-claimed');
-                } else if (quest.completed && !quest.claimed) {
-                    qe.classList.add('available-to-claim');
-                }
-                // No special class if not completed yet
+function renderQuests() {
+    if (!questListDiv) return;
+    questListDiv.innerHTML = '';
+    
+    const paginationContainer = document.getElementById('questPaginationContainer');
+    const totalPages = Math.ceil(questsFiltered.length / questsItemsPerPage);
 
-                qe.innerHTML = `
-                    <div class="quest-info">
-                            <p>${quest.text} (${quest.progress || 0}/${quest.target||'N/A'})</p>
-                        </div>
-                        <div class="quest-actions">
-                            <span class="quest-reward">Reward: ${quest.reward}</span>
-                            <button class="action-button claim-quest-btn" data-quest-id="${quest.id}" ${quest.completed && !(quest.claimed) ? '' : 'disabled'}>${quest.claimed ? 'Claimed' : 'Claim'}</button>
-                        </div>`; 
-                    questListDiv.appendChild(qe); 
-                }); 
-                document.querySelectorAll('.claim-quest-btn').forEach(b => { 
-                    b.addEventListener('click', (e) => { 
-                        if (!currentUser) return; 
-                        const qId = parseInt(e.target.dataset.questId); 
-                        const q = quests.find(q => q.id === qId); 
-                        if(q && q.completed && !q.claimed){ 
-                            q.claimed = true; 
-                            e.target.disabled = true; 
-                            e.target.textContent = 'Claimed'; 
-                            const rewardParts = q.reward.split(','); 
-                            let pvReward = 0; 
-                            let diamondReward = 0; 
-                            let goldReward = 0;
-                            rewardParts.forEach(part => { 
-                                if (part.includes("PV")) pvReward = parseInt(part.match(/(\d+) PV/)[1]); 
-                                if (part.includes("Diamond")) diamondReward = parseInt(part.match(/(\d+) Diamond/)[1]); 
-                                if (part.includes("Gold")) goldReward = parseInt(part.match(/(\d+) Gold/)[1]); 
-                            }); 
-                            currentPvTokens += pvReward; 
-                            currentDiamonds += diamondReward; 
-                            currentGold += goldReward;
-                            updateStatsDisplay(); 
-                            showCustomPopup(`Claimed reward: ${q.reward} for completing quest: "${q.text}"`, "Quest Reward Claimed"); 
-                            if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState()); 
-                            if ([1, 2, 3].includes(q.id)) { updateAdventureDisplayStates(); } 
-                        } 
-                    }); 
-                }); 
+    if (questsFiltered.length === 0) {
+        questListDiv.innerHTML = `<p style="text-align:center;">No quests to show.</p>`;
+        if (paginationContainer) paginationContainer.style.display = 'none';
+        return;
+    }
+
+    if (paginationContainer) paginationContainer.style.display = 'flex';
+    
+    const startIndex = (questsCurrentPage - 1) * questsItemsPerPage;
+    const endIndex = startIndex + questsItemsPerPage;
+    const questsToRender = questsFiltered.slice(startIndex, endIndex);
+
+    questsToRender.forEach(quest => {
+        const qe = document.createElement('div');
+        qe.classList.add('quest-item');
+        if (quest.completed && quest.claimed) {
+            qe.classList.add('completed-and-claimed');
+        } else if (quest.completed && !quest.claimed) {
+            qe.classList.add('available-to-claim');
+        }
+        qe.innerHTML = `
+            <div class="quest-info">
+                <p>${quest.text} (${quest.progress || 0}/${quest.target || 'N/A'})</p>
+            </div>
+            <div class="quest-actions">
+                <span class="quest-reward">Reward: ${quest.reward}</span>
+                <button class="action-button claim-quest-btn" data-quest-id="${quest.id}" ${quest.completed && !quest.claimed ? '' : 'disabled'}>
+                    ${quest.claimed ? 'Claimed' : 'Claim'}
+                </button>
+            </div>`;
+        questListDiv.appendChild(qe);
+    });
+
+    document.getElementById('questPageInfo').textContent = `Page ${questsCurrentPage} / ${totalPages > 0 ? totalPages : 1}`;
+    document.getElementById('questPrevBtn').disabled = (questsCurrentPage === 1);
+    document.getElementById('questNextBtn').disabled = (questsCurrentPage >= totalPages);
+
+    document.querySelectorAll('.claim-quest-btn:not([disabled])').forEach(b => {
+        b.addEventListener('click', (e) => {
+            if (!currentUser) return;
+            const qId = parseInt(e.target.dataset.questId);
+            const q = quests.find(q => q.id === qId);
+            if (q && q.completed && !q.claimed) {
+                q.claimed = true;
+                const rewardParts = q.reward.split(',');
+                let pvReward = 0, diamondReward = 0, goldReward = 0;
+                rewardParts.forEach(part => {
+                    if (part.includes("PV")) pvReward = parseInt(part.match(/(\d+)/)[1]);
+                    if (part.includes("Diamond")) diamondReward = parseInt(part.match(/(\d+)/)[1]);
+                    if (part.includes("Gold")) goldReward = parseInt(part.match(/(\d+)/)[1]);
+                });
+                currentPvTokens += pvReward;
+                currentDiamonds += diamondReward;
+                currentGold += goldReward;
+                updateStatsDisplay();
+                showCustomPopup(`Claimed reward: ${q.reward} for completing quest: "${q.text}"`, "Quest Reward Claimed");
+                if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+                if ([1, 2, 3, 15].includes(q.id)) { updateAdventureDisplayStates(); }
+                applyQuestFiltersAndRender(); // Re-render the quest list
             }
+        });
+    });
+}
+
+function setupQuestUI() {
+    const toggleBtn = document.getElementById('questToggleCompletedBtn');
+    const prevBtn = document.getElementById('questPrevBtn');
+    const nextBtn = document.getElementById('questNextBtn');
+    if (!toggleBtn || !prevBtn || !nextBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+        questsShowCompleted = !questsShowCompleted;
+        toggleBtn.classList.toggle('active', questsShowCompleted);
+        toggleBtn.textContent = questsShowCompleted ? 'Hide Completed' : 'Show Completed';
+        applyQuestFiltersAndRender();
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (questsCurrentPage > 1) {
+            questsCurrentPage--;
+            renderQuests();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(questsFiltered.length / questsItemsPerPage);
+        if (questsCurrentPage < totalPages) {
+            questsCurrentPage++;
+            renderQuests();
+        }
+    });
+}
             
              function renderDailyRewards() {
                 if (!dailyRewardsGrid) return;
@@ -6097,53 +6169,57 @@ async function fetchPlayerDungeonCrawlers(userAddress, walletName) {
     }
 }
 
-            function openItemSelectionModal(purpose) { 
-                itemSelectionModalList.innerHTML = '';
-                itemSelectionModalOverlay.classList.remove('hidden');
-                itemSelectionModal.classList.remove('hidden');
+       
+function openItemSelectionModal(purpose) {
+    if (upgradeResultDisplay) upgradeResultDisplay.textContent = ''; // Clear previous results on any new selection
 
-                if (purpose === 'item') {
-                    itemSelectionModalTitle.textContent = "Select Item to Upgrade";
-                    const equippableItemsInInventory = playerInventory.filter(invItem => {
-                        const itemMaster = craftableItemsData.find(ci => ci.id === invItem.id);
-                        return itemMaster && itemMaster.type !== "Consumable" && itemMaster.type !== "upgrade_scroll_purchase" && itemMaster.type !== "unlockable_consumable" && (invItem.level || 0) < 5; 
-                    });
-                    if (equippableItemsInInventory.length === 0) { itemSelectionModalList.innerHTML = "<p>No upgradable items (non-max level) in inventory.</p>"; return; }
-                    equippableItemsInInventory.forEach(invItem => {
-                        const itemMaster = craftableItemsData.find(ci => ci.id === invItem.id);
-                        const btn = document.createElement('button'); btn.classList.add('action-button'); btn.style.width = '100%'; btn.style.marginBottom = '5px'; btn.style.display = 'flex'; btn.style.alignItems = 'center';
-                        const levelText = (invItem.level || 0) > 0 ? `(+${invItem.level || 0}) ` : '';
-                        const itemTierDisplay = itemMaster.tier === undefined ? 0 : itemMaster.tier;
-                        btn.innerHTML = `${getItemIconHTML(itemMaster.iconUrlOrColor, itemMaster.type, '20px')} <span style="margin-left: 5px;">${levelText}${itemMaster.name} (Tier ${itemTierDisplay})</span>`;
-                        btn.onclick = () => {
-                            selectedItemForUpgrade = { ...itemMaster, ...invItem, uniqueInstanceId: invItem.uniqueInstanceId, currentLevel: invItem.level || 0, tier: itemMaster.tier }; // Ensure tier is passed
-                            selectedItemForUpgradeDisplay.innerHTML = `Item: ${getItemIconHTML(selectedItemForUpgrade.iconUrlOrColor, selectedItemForUpgrade.type, '30px')} ${levelText}${selectedItemForUpgrade.name}`;
-                            closeItemSelectionModal(); updateUpgradeSuccessRateDisplay();
-                        };
-                        itemSelectionModalList.appendChild(btn);
-                    });
-                } else if (purpose === 'scroll') {
-                    itemSelectionModalTitle.textContent = "Select Upgrade Scroll Type";
-                    let hasScrolls = false;
-                    Object.keys(scrollData).forEach(scrollTypeKey => { // Iterate using keys from scrollData
-                        const count = playerScrolls[scrollTypeKey] || 0;
-                        if (count > 0) hasScrolls = true;
-                        const scrollMaster = scrollData[scrollTypeKey];
-                        const btn = document.createElement('button'); btn.classList.add('action-button'); btn.style.width = '100%'; btn.style.marginBottom = '5px'; btn.style.display = 'flex'; btn.style.alignItems = 'center';
-                        btn.innerHTML = `${getItemIconHTML(scrollMaster.icon, 'S', '20px')} <span style="margin-left: 5px;">${scrollMaster.name} (Count: ${count})</span>`;
-                        if (count === 0) btn.disabled = true;
-                        btn.onclick = () => {
-                            if (count > 0) {
-                                selectedScrollForUpgrade = { type: scrollTypeKey, name: scrollMaster.name, scrollTier: scrollMaster.tier, iconUrlOrColor: scrollMaster.icon }; 
-                                selectedScrollForUpgradeDisplay.innerHTML = `Scroll: ${getItemIconHTML(selectedScrollForUpgrade.iconUrlOrColor, 'S', '30px')} ${selectedScrollForUpgrade.name}`;
-                                closeItemSelectionModal(); updateUpgradeSuccessRateDisplay();
-                            }
-                        };
-                        itemSelectionModalList.appendChild(btn);
-                    });
-                     if (!hasScrolls) { itemSelectionModalList.innerHTML = "<p>No upgrade scrolls available.</p>";}
+    itemSelectionModalList.innerHTML = '';
+    itemSelectionModalOverlay.classList.remove('hidden');
+    itemSelectionModal.classList.remove('hidden');
+
+    if (purpose === 'item') {
+        itemSelectionModalTitle.textContent = "Select Item to Upgrade";
+        const equippableItemsInInventory = playerInventory.filter(invItem => {
+            const itemMaster = craftableItemsData.find(ci => ci.id === invItem.id);
+            return itemMaster && itemMaster.type !== "Consumable" && itemMaster.type !== "upgrade_scroll_purchase" && itemMaster.type !== "unlockable_consumable" && (invItem.level || 0) < 5;
+        });
+        if (equippableItemsInInventory.length === 0) { itemSelectionModalList.innerHTML = "<p>No upgradable items (non-max level) in inventory.</p>"; return; }
+        equippableItemsInInventory.forEach(invItem => {
+            const itemMaster = craftableItemsData.find(ci => ci.id === invItem.id);
+            const btn = document.createElement('button'); btn.classList.add('action-button'); btn.style.width = '100%'; btn.style.marginBottom = '5px'; btn.style.display = 'flex'; btn.style.alignItems = 'center';
+            const levelText = (invItem.level || 0) > 0 ? `(+${invItem.level || 0}) ` : '';
+            const itemTierDisplay = itemMaster.tier === undefined ? 0 : itemMaster.tier;
+            btn.innerHTML = `${getItemIconHTML(itemMaster.iconUrlOrColor, itemMaster.type, '20px')} <span style="margin-left: 5px;">${levelText}${itemMaster.name} (Tier ${itemTierDisplay})</span>`;
+            btn.onclick = () => {
+                selectedItemForUpgrade = { ...itemMaster, ...invItem, uniqueInstanceId: invItem.uniqueInstanceId, currentLevel: invItem.level || 0, tier: itemMaster.tier };
+                selectedItemForUpgradeDisplay.innerHTML = `Item: ${getItemIconHTML(selectedItemForUpgrade.iconUrlOrColor, selectedItemForUpgrade.type, '30px')} ${levelText}${selectedItemForUpgrade.name}`;
+                closeItemSelectionModal(); updateUpgradeSuccessRateDisplay();
+            };
+            itemSelectionModalList.appendChild(btn);
+        });
+    } else if (purpose === 'scroll') {
+        itemSelectionModalTitle.textContent = "Select Upgrade Scroll Type";
+        let hasScrolls = false;
+        Object.keys(scrollData).forEach(scrollTypeKey => {
+            const count = playerScrolls[scrollTypeKey] || 0;
+            if (count > 0) hasScrolls = true;
+            const scrollMaster = scrollData[scrollTypeKey];
+            const btn = document.createElement('button'); btn.classList.add('action-button'); btn.style.width = '100%'; btn.style.marginBottom = '5px'; btn.style.display = 'flex'; btn.style.alignItems = 'center';
+            btn.innerHTML = `${getItemIconHTML(scrollMaster.icon, 'S', '20px')} <span style="margin-left: 5px;">${scrollMaster.name} (Count: ${count})</span>`;
+            if (count === 0) btn.disabled = true;
+            btn.onclick = () => {
+                if (count > 0) {
+                    selectedScrollForUpgrade = { type: scrollTypeKey, name: scrollMaster.name, scrollTier: scrollMaster.tier, iconUrlOrColor: scrollMaster.icon };
+                    selectedScrollForUpgradeDisplay.innerHTML = `Scroll: ${getItemIconHTML(selectedScrollForUpgrade.iconUrlOrColor, 'S', '30px')} ${selectedScrollForUpgrade.name}`;
+                    closeItemSelectionModal(); updateUpgradeSuccessRateDisplay();
                 }
-            }
+            };
+            itemSelectionModalList.appendChild(btn);
+        });
+         if (!hasScrolls) { itemSelectionModalList.innerHTML = "<p>No upgrade scrolls available.</p>";}
+    }
+}
+
             function closeItemSelectionModal() { itemSelectionModalOverlay.classList.add('hidden'); itemSelectionModal.classList.add('hidden'); }
             if (upgradeItemSlot) upgradeItemSlot.addEventListener('click', () => openItemSelectionModal('item'));
             if (upgradeScrollSlot) upgradeScrollSlot.addEventListener('click', () => openItemSelectionModal('scroll'));
