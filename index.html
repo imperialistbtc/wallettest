@@ -1353,8 +1353,7 @@ body.dark-mode {
                                 <ul>
                                     <li><strong>Basic Upgrade Scroll:</strong> Can only be used to upgrade an item from +0 to +1.</li>
                                     <li><strong>Advanced Upgrade Scroll:</strong> Can be used on items that are level +0, +1, or +2. Grants a **+10% success bonus** if the item is level +0 or +1.</li>
-                                    <li><strong>Master Upgrade Scroll:</strong> Can be used on items from level +0 up to +4. Grants a **+10% success bonus** if the item is level +0, +1, or +2.</li>
-                                </ul>
+                                    <li><strong>Master Upgrade Scroll:</strong> Can be used on items from level +0 up to +4. Grants a <strong>+10% success bonus</strong> if the item is level +0, +1, +2, or +3.</li>                                </ul>
                              </li>
                                 </ul>
                              </li>
@@ -2059,7 +2058,7 @@ let lastDailyRewardDayClaimed = 0;
 { 
     id: "scroll_high", 
     name: scrollData.high.descriptionName, 
-    description: "Used for items at +0 up to +4. Grants +10% success bonus if item's level is +0, +1 or +2.", // CORRECTED TEXT
+    description: "Used for items at +0 up to +4. Grants +10% success bonus if item's level is +0, +1, +2, or +3.", // CORRECTED TEXT
     price: 500, 
     iconUrlOrColor: scrollData.high.icon, 
     type: "upgrade_scroll_purchase", 
@@ -6233,7 +6232,7 @@ function updateUpgradeSuccessRateDisplay() {
     let bonusText = "";
 
     // Scroll level bonus (NEW LOGIC)
-    if ((scrollTier === 2 && itemCurrentLevel <= 1) || (scrollTier === 3 && itemCurrentLevel <= 2)) {
+    if ((scrollTier === 2 && itemCurrentLevel <= 1) || (scrollTier === 3 && itemCurrentLevel <= 3)) {
         successChance += 0.10;
         bonusText += " (+10% scroll bonus)";
     }
