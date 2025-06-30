@@ -1060,7 +1060,7 @@ body.dark-mode {
                                         <div class="adventure-controls">
                                             <label for="num-adventurers-5">ADVENTURERS:</label> 
                                             <input type="number" id="num-adventurers-5" class="adventure-num-select" value="1" min="1">
-                                            <button class="adventure-send-btn" data-adventure-id="5" data-adventure-name="The Cyber Void Echo" data-duration-hours="720" data-pv-reward="3125" data-gold-guaranteed="5" data-diamond-chance="0.10" data-diamond-reward-multiplier="3" data-adventurer-requirement="10" style="background-color: #8A2BE2; color:white;">SEND</button> 
+                                            <button class="adventure-send-btn" data-adventure-id="5" data-adventure-name="The Cyber Void Echo" data-duration-hours="720" data-pv-reward="3125" data-gold-guaranteed="5" data-diamond-chance="0.10" data-diamond-reward-multiplier="3" data-adventurer-requirement="7" style="background-color: #8A2BE2; color:white;">SEND</button>
                                         </div> 
                                     </div> 
                                     <div class="adventure-drops-area"> 
@@ -1100,7 +1100,7 @@ body.dark-mode {
                         Entering a Party Dungeon uses **one** adventurer from your available pool.
                     </p>
                     <p style="text-align:center; margin-top: 5px; margin-bottom:15px; font-size:0.9em; line-height: 1.6;">
-                        <strong style="color: var(--highlight-color-gold);">Dungeon Crawler NFT Frames multiply their stats!</strong><br>
+                        <strong style="color: var(--highlight-color-gold);">Dungeon Crawler Frames multiply their stats!</strong><br>
                         <span style="color: #CD7F32;">Bronze: x1</span> | 
                         <span style="color: #C0C0C0;">Silver: x2</span> | 
                         <span style="color: #FFD700;">Gold: x3</span> | 
@@ -1946,14 +1946,42 @@ let lastDailyRewardDayClaimed = 0;
     id: "void_compass", name: "Void Compass", type: "Misc",
     description: "Points to lucrative echoes in the void. +10% PV, +5% Gold, +2% Diamond find on all adventures.",
     perk: { type: "multiCurrencyBoost", pvBonus: 0.10, goldBonus: 0.05, diamondBonus: 0.02 },
-    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/compass.jpg",
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/voidcompass.jpg", // Corrected URL
     tier: 5
 },
 {
     id: "ath_talisman", name: "ATH Talisman", type: "Misc",
     description: "A relic from the All-Time-High city. Grants +1 daily entry to ATH City (Dungeon 3) if equipped.",
     perk: { type: "dungeonEntryBonus", dungeon3: 1 },
-    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/talisman.jpg",
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/Talisman%20ath.jpg", // Corrected URL
+    tier: 5
+},
+{
+    id: "fire_sword_satoshi", name: "Fire Sword of Satoshi", type: "Weapon",
+    description: "A blade forged in the genesis block. (+10 Attack, +1 Dungeon 1 Entry)",
+    perk: { type: "statAndEntryBoost", attack: 10, dungeon1: 1 },
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/fire%20sword%20of%20satoshi.jpg",
+    tier: 5
+},
+{
+    id: "krakkin_bow", name: "Krakkin Bow", type: "Weapon",
+    description: "A powerful but unwieldy bow. (+15 Attack, -5 Defense, +1 Dungeon 2 Entry)",
+    perk: { type: "statAndEntryBoost", attack: 15, defense: -5, dungeon2: 1 },
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/krakkin%20bow.jpg",
+    tier: 5
+},
+{
+    id: "poisy_daggs", name: "Poisy Daggs", type: "Weapon",
+    description: "Daggers dripping with a potent alchemical brew. (+7 Attack, +2 Defense, Doubles Dungeon PV Rewards)",
+    perk: { type: "statAndDungeonPVBoost", attack: 7, defense: 2, pvMultiplier: 2 },
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/poison%20daggers.jpg",
+    tier: 5
+},
+{
+    id: "pet_bat", name: "Echo Bat", type: "Pet",
+    description: "A creature of the void. Has a chance to 'echo' a dungeon's material drops, duplicating them.",
+    perk: { type: "dungeonDropEcho", chance: 0.15 }, // 15% chance to duplicate all material drops
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pet%20bat.jpg",
     tier: 5
 }
 
@@ -2038,7 +2066,7 @@ let lastDailyRewardDayClaimed = 0;
     { 
         id: "dungeon_1", 
         name: "Death Rider's Crypt Lvl 1", 
-        description: "A solo challenge in a crypt. Requires 10 Attack & 10 Defense. Can be attempted 2 times daily.", 
+        description: "A solo challenge in a crypt.", 
         durationHours: 2, 
         requiredAdventureId: "4",
         attackRequirement: 10,
@@ -2054,7 +2082,7 @@ let lastDailyRewardDayClaimed = 0;
     { 
         id: "dungeon_2", 
         name: "Death Rider's Crypt Lvl 2", 
-        description: "A party challenge with NPCs. Player requires 30 Attack & 30 Defense. Can be attempted 1 time daily.", 
+        description: "A party challenge with NPCs.", 
         durationHours: 4, 
         requiredAdventureId: "4",
         attackRequirement: 30, 
@@ -2074,19 +2102,23 @@ let lastDailyRewardDayClaimed = 0;
     {
         id: "dungeon_3",
         name: "ATH City",
-        description: "The fabled city of All-Time Highs. A true party challenge. Requires 80 Attack & 80 Defense.",
+        description: "The fabled city of All-Time Highs. A true party challenge.",
         durationHours: 8,
-        requiredAdventureId: "4",
+        requiredAdventureId: "5", // CHANGED
         attackRequirement: 80,
         defenseRequirement: 80,
         type: "party_npc",
         maxPartySize: 6,
         maxEntriesPerDay: 1,
         drops: [ // ADDED NEW DROPS
-             { id: "void_compass", name: "Void Compass", chance: 0.03, qty: 1, type: "equipment" },
-             { id: "ath_talisman", name: "ATH Talisman", chance: 0.03, qty: 1, type: "equipment" }
+             { id: "void_compass", name: "Void Compass", chance: 0.01, qty: 1, type: "equipment" },
+             { id: "ath_talisman", name: "ATH Talisman", chance: 0.01, qty: 1, type: "equipment" },
+             { id: "fire_sword_satoshi", name: "Fire Sword of Satoshi", chance: 0.01, qty: 1, type: "equipment" },
+             { id: "krakkin_bow", name: "Krakkin Bow", chance: 0.01, qty: 1, type: "equipment" },
+             { id: "poisy_daggs", name: "Poisy Daggs", chance: 0.01, qty: 1, type: "equipment" },
+             { id: "pet_bat", name: "Echo Bat", chance: 0.005, qty: 1, type: "equipment" }
         ],
-        placeholderReward: "5000 PV, 10 Gold, 2 Diamonds", // CHANGED PV REWARD
+        placeholderReward: "5000 PV, 10 Gold, 2 Diamonds",
         isLockedContent: false
     }
 ];
@@ -3096,31 +3128,31 @@ function recalculateTotalAvailableAdventurers() {
         });
     }
 
-    // --- Lock Status Logic ---
-    const adventure4Active = activeAdventures.find(adv => adv.originalAdventureId === "4");
-    const dungeonsGloballyUnlocked = !!adventure4Active;
+    // --- Requirements and Lock Logic ---
+    const requiredAdventure = adventuresData[dungeon.requiredAdventureId];
+    const isAdventureActive = activeAdventures.find(adv => adv.originalAdventureId === dungeon.requiredAdventureId);
     let isLockedForEntry = false;
-    let displayLockReason = "";
-    
+    let requirementText = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF. Adventure "${requiredAdventure.name}" must be active.`;
+
+    if (!isAdventureActive) {
+        isLockedForEntry = true;
+    } else if (partyAttack < dungeon.attackRequirement || partyDefense < dungeon.defenseRequirement) {
+        isLockedForEntry = true;
+    }
+
     let bonusEntries = 0;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) bonusEntries = 1;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") bonusEntries = 1;
-    
+    if ((dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") && Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"))) bonusEntries = 1;
+    if (dungeon.id === "dungeon_1" && Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "fire_sword_satoshi"))) bonusEntries = 1;
+    if (dungeon.id === "dungeon_2" && Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "krakkin_bow"))) bonusEntries = 1;
+    if (dungeon.id === "dungeon_3" && Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman"))) bonusEntries = 1;
+
     const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
     let effectiveMaxEntries = dungeon.maxEntriesPerDay + bonusEntries;
 
-    if (dungeon.isLockedContent) {
-        isLockedForEntry = true; displayLockReason = "Content Coming Soon!";
-    } else if (!dungeonsGloballyUnlocked) {
-        isLockedForEntry = true; displayLockReason = "Unlock Requirement: Adventure 4 must be active.";
-    } else if (entriesToday >= effectiveMaxEntries) {
-        isLockedForEntry = true; displayLockReason = `Daily limit reached.`;
-    } else if (partyAttack < dungeon.attackRequirement || partyDefense < dungeon.defenseRequirement) {
-        isLockedForEntry = true; displayLockReason = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF.`;
-    } else if (totalAvailableAdventurers < 1) {
-        isLockedForEntry = true; displayLockReason = `Requires 1 available adventurer.`;
-    }
+    if (entriesToday >= effectiveMaxEntries) isLockedForEntry = true;
+    if (totalAvailableAdventurers < 1) isLockedForEntry = true;
 
+    // --- Create and append the dungeon HTML ---
     const imageUrls = {
         "dungeon_1": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon1.jpg",
         "dungeon_2": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon2.jpg",
@@ -3130,7 +3162,7 @@ function recalculateTotalAvailableAdventurers() {
     const dungeonDiv = document.createElement('div');
     dungeonDiv.className = `dungeon-entry ${isLockedForEntry ? 'locked' : ''}`;
     const rewardHtml = `<span style="color: var(--highlight-color-gold);">${dungeon.placeholderReward}</span>`;
-    const statusHtml = isLockedForEntry ? displayLockReason : `<span style="color: var(--highlight-color-connected);">Ready to Enter!</span>`;
+    const statusHtml = !isLockedForEntry ? `<span style="color: var(--highlight-color-connected);">Ready to Enter!</span>` : `<span style="color: var(--highlight-color-danger);">${requirementText}</span>`;
     
     dungeonDiv.innerHTML = `
         <div class="dungeon-icon-placeholder" style="background-image: url('${imageUrls[dungeon.id]}'); background-size: cover; background-position: center;"></div>
@@ -3153,15 +3185,15 @@ function recalculateTotalAvailableAdventurers() {
     entryContainer.appendChild(dungeonDiv);
 
     if (dungeon.type === 'party_npc' && !dungeon.isLockedContent) {
+        // NPC Selection logic remains the same
         let npcHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                            <h4 style="margin:0; color: var(--label-color);">Select Party Members (Max ${dungeon.maxPartySize})</h4>
                            <button id="reset-party-btn" class="action-button" style="background-color: var(--highlight-color-danger); color: white;">Reset Party</button>
                        </div>
                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">`;
         
-        npcData.slice(0, 6).forEach(npc => { // Always show all 6 NPCs
+        npcData.slice(0, 6).forEach(npc => {
             const isSelected = selectedNpcsForDungeon.includes(npc.id);
-            // Gray out if not selectable for this specific dungeon
             const isSelectable = dungeon.maxPartySize >= (npcData.indexOf(npc) + 1);
             npcHtml += `
                 <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: ${isSelectable ? 'pointer' : 'not-allowed'}; padding: 10px; border-radius: 5px; text-align: center; width: 120px; opacity: ${isSelectable ? '1' : '0.5'};">
@@ -3180,10 +3212,7 @@ function recalculateTotalAvailableAdventurers() {
                 const dungeonId = card.dataset.dungeonId;
                 const currentDungeonData = dungeonsData.find(d => d.id === dungeonId);
 
-                // Check if this NPC is even allowed for this dungeon
-                if (!currentDungeonData || npcData.indexOf(npcData.find(n => n.id === npcId)) >= currentDungeonData.maxPartySize) {
-                    return; // Do nothing if card is for an NPC not in this dungeon's pool
-                }
+                if (!currentDungeonData || npcData.indexOf(npcData.find(n => n.id === npcId)) >= currentDungeonData.maxPartySize) return;
                 
                 let currentSelection = confirmedCrawlersForDungeons[dungeonId] || [];
                 const npcIndex = currentSelection.indexOf(npcId);
@@ -3212,7 +3241,7 @@ function recalculateTotalAvailableAdventurers() {
     
     const dropsButton = dungeonDiv.querySelector('.dungeon-drops-button');
     if (dropsButton) {
-        dropsButton.addEventListener('mouseenter', (event) => {
+        dropsButton.addEventListener('mouseenter', () => {
             const popover = document.getElementById(`dungeon-drops-popover-${dungeon.id}`);
             if (popover && dungeon.drops && dungeon.drops.length > 0) {
                 let dropsHtml = '<h5>Possible Drops:</h5><ul>';
@@ -3223,6 +3252,9 @@ function recalculateTotalAvailableAdventurers() {
                 dropsHtml += '</ul>';
                 popover.innerHTML = dropsHtml;
                 popover.style.display = 'block';
+            } else if (popover) {
+                 popover.innerHTML = '<h5>No rare drops in this dungeon.</h5>';
+                 popover.style.display = 'block';
             }
         });
         dropsButton.addEventListener('mouseleave', () => {
@@ -4536,130 +4568,119 @@ function equipItem(itemUniqueId, specificSlotId = null) {
             }
 
             function completeDungeon(instanceId) {
-                if (!currentUser) return;
-                const dunIdx = activeDungeons.findIndex(dun => dun.id === instanceId);
-                if (dunIdx === -1) return;
+    if (!currentUser) return;
+    const dunIdx = activeDungeons.findIndex(dun => dun.id === instanceId);
+    if (dunIdx === -1) return;
 
-                const completedDun = { ...activeDungeons[dunIdx] };
-                const dungeonMasterData = dungeonsData.find(d => d.id === completedDun.dungeonId);
+    const completedDun = { ...activeDungeons[dunIdx] };
+    const dungeonMasterData = dungeonsData.find(d => d.id === completedDun.dungeonId);
 
-                activeDungeons.splice(dunIdx, 1);
-                recalculateTotalAvailableAdventurers();
+    activeDungeons.splice(dunIdx, 1);
+    recalculateTotalAvailableAdventurers();
 
-                let gainedCurrencySummary = [];
-                let gainedItemsSummary = []; // For actual item drops
-
-                // --- Currency Rewards (from placeholderReward string) ---
-                if (dungeonMasterData && dungeonMasterData.placeholderReward) {
-                    const rewardParts = dungeonMasterData.placeholderReward.split(',').map(s => s.trim());
-                    rewardParts.forEach(part => {
-                        const pvMatch = part.match(/(\d+)\s*PV/i);
-                        const goldMatch = part.match(/(\d+)\s*Gold/i);
-                        const diamondMatch = part.match(/(\d+)\s*Diamond/i);
-                        if (pvMatch) { currentPvTokens += parseInt(pvMatch[1]); gainedCurrencySummary.push(pvMatch[0]); }
-                        else if (goldMatch) { currentGold += parseInt(goldMatch[1]); gainedCurrencySummary.push(goldMatch[0]); }
-                        else if (diamondMatch) { currentDiamonds += parseInt(diamondMatch[1]); gainedCurrencySummary.push(diamondMatch[0]); }
-                    });
-                }
-
-                // --- Item Drops (from dungeonMasterData.drops array) ---
-                    if (dungeonMasterData && Array.isArray(dungeonMasterData.drops)) {
-                        console.log(`--- Processing Drops for Dungeon: ${completedDun.name} ---`);
-                        dungeonMasterData.drops.forEach(dropAttempt => {
-                            const randomNumber = Math.random();
-                            const willDrop = randomNumber < dropAttempt.chance;
-                            console.log(`Attempting drop: ${dropAttempt.name || dropAttempt.id}, Chance: ${dropAttempt.chance}, Rolled: ${randomNumber.toFixed(4)}, WillDrop: ${willDrop}`); // DEBUG LINE
-
-                            if (willDrop) {
-                                const itemMaster = craftableItemsData.find(ci => ci.id === dropAttempt.id);
-                                console.log(`  Item Master for ${dropAttempt.id}:`, itemMaster ? itemMaster.name : "NOT FOUND IN CRAFTABLE DATA"); // DEBUG LINE
-                            if (itemMaster) {
-                                // Check if player already owns this base item
-                                const alreadyOwned = playerInventory.some(invItem => invItem.id === itemMaster.id) ||
-                                    Object.values(equippedItems).some(equippedInstanceId => {
-                                        if (!equippedInstanceId) return false;
-                                        const eqItem = playerInventory.find(pi => pi.uniqueInstanceId === equippedInstanceId);
-                                        return eqItem && eqItem.id === itemMaster.id;
-                                    });
-
-                                if (!alreadyOwned) {
-                                    playerInventory.push({ id: itemMaster.id, level: 0, uniqueInstanceId: `item_${nextUniqueInstanceId++}` });
-                                    gainedItemsSummary.push(`1x ${itemMaster.name}`);
-                                } else {
-                                    console.log(`Attempted to drop ${itemMaster.name}, but player already owns it.`);
-                                    // Optionally, give a small PV compensation or nothing
-                                    // gainedItemsSummary.push(`(Duplicate ${itemMaster.name} - Converted to 25 PV)`); currentPvTokens += 25; 
-                                }
-                            }
-                        }
-                    });
-                }
-                
-                // --- $DOG Pet Effect ---
-                const dogPetEquipped = Object.values(equippedItems).some(instanceId => {
-                    if (!instanceId) return false;
-                    const item = playerInventory.find(invItem => invItem.uniqueInstanceId === instanceId);
-                    return item && item.id === "pet_dog";
-                });
-
-                if (dogPetEquipped) {
-                    const allPossibleAdventureMaterials = [];
-                    Object.values(adventuresData).forEach(adv => {
-                        if (adv.drops) {
-                            adv.drops.forEach(drop => {
-                                // Ensure it's a material and not an item like 'ring_cursedpower'
-                                if (playerMaterials.hasOwnProperty(drop.name)) {
-                                    allPossibleAdventureMaterials.push(drop.name);
-                                }
-                            });
-                        }
-                    });
-                    if (allPossibleAdventureMaterials.length > 0) {
-                        const randomMaterialIndex = Math.floor(Math.random() * allPossibleAdventureMaterials.length);
-                        const fetchedMaterial = allPossibleAdventureMaterials[randomMaterialIndex];
-                        playerMaterials[fetchedMaterial] = (playerMaterials[fetchedMaterial] || 0) + 1;
-                        gainedItemsSummary.push(`$DOG fetched: 1x ${fetchedMaterial}`);
-                    }
-                }
+    // --- Check for item perks BEFORE calculating rewards ---
+    const poisyDaggsEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "poisy_daggs"));
+    const pvMultiplier = poisyDaggsEquipped ? 2 : 1;
+    
+    const dogPetEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pet_dog"));
+    
+    const echoBatEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pet_bat"));
+    const echoBatPerk = craftableItemsData.find(item => item.id === "pet_bat")?.perk;
 
 
-                // --- Popup Message Construction ---
-                let partyCompositionMessage = `${completedDun.adventurers} player adventurer(s)`;
-                if (completedDun.npcCrawlers && completedDun.npcCrawlers.length > 0) {
-                    const crawlerNames = completedDun.npcCrawlers.map(id => {
-                        const crawlerData = playerDungeonCrawlers.find(c => c.uniqueInstanceId === id);
-                        return crawlerData ? crawlerData.name : "Unknown Crawler";
-                    }).join(', ');
-                    partyCompositionMessage += ` (and NPC Crawlers: ${crawlerNames})`;
-                }
+    let gainedCurrencySummary = [];
+    let gainedItemsSummary = [];
+    let gainedMaterialsForEcho = {}; // Track materials for the Echo Bat
 
-                let popupMessage = `${partyCompositionMessage} returned from ${completedDun.name}!\n\nRewards:`;
-                if (gainedCurrencySummary.length > 0) {
-                    popupMessage += `\n- ${gainedCurrencySummary.join(', ')}`;
-                } else {
-                    popupMessage += `\n- No base currency rewards this time.`;
-                }
-                if (gainedItemsSummary.length > 0) {
-                    popupMessage += `\n\nItems Found/Fetched:`;
-                    gainedItemsSummary.forEach(itemStr => {
-                        popupMessage += `\n  - ${itemStr}`;
-                    });
-                }
-                showCustomPopup(popupMessage, "Dungeon Complete!");
-
-                // Update UI and save state
-                renderActiveTasksInSidebar();
-                if (document.getElementById('dungeons-page').classList.contains('active')) {
-                    renderDungeonsPage();
-                }
-                if (gainedItemsSummary.length > 0) { // Re-render inventory if items were gained
-                    renderInventory();
-                }
-                renderMaterials(); // If $DOG fetched a material
-                updateStatsDisplay(); 
-
-                if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+    // --- Currency Rewards (from placeholderReward string) ---
+    if (dungeonMasterData && dungeonMasterData.placeholderReward) {
+        const rewardParts = dungeonMasterData.placeholderReward.split(',').map(s => s.trim());
+        rewardParts.forEach(part => {
+            const pvMatch = part.match(/(\d+)\s*PV/i);
+            const goldMatch = part.match(/(\d+)\s*Gold/i);
+            const diamondMatch = part.match(/(\d+)\s*Diamond/i);
+            if (pvMatch) {
+                const earnedPV = parseInt(pvMatch[1]) * pvMultiplier;
+                currentPvTokens += earnedPV;
+                gainedCurrencySummary.push(`${earnedPV} PV${poisyDaggsEquipped ? ' (x2)' : ''}`);
+            } else if (goldMatch) {
+                currentGold += parseInt(goldMatch[1]);
+                gainedCurrencySummary.push(goldMatch[0]);
+            } else if (diamondMatch) {
+                currentDiamonds += parseInt(diamondMatch[1]);
+                gainedCurrencySummary.push(diamondMatch[0]);
             }
+        });
+    }
+
+    // --- Item Drops (from dungeonMasterData.drops array) ---
+    if (dungeonMasterData && Array.isArray(dungeonMasterData.drops)) {
+        dungeonMasterData.drops.forEach(dropAttempt => {
+            if (Math.random() < dropAttempt.chance) {
+                const itemMaster = craftableItemsData.find(ci => ci.id === dropAttempt.id);
+                if (itemMaster && !playerInventory.some(invItem => invItem.id === itemMaster.id)) {
+                    playerInventory.push({ id: itemMaster.id, level: 0, uniqueInstanceId: `item_${nextUniqueInstanceId++}` });
+                    gainedItemsSummary.push(`1x ${itemMaster.name}`);
+                }
+            }
+        });
+    }
+    
+    // --- $DOG Pet Perk ---
+    if (dogPetEquipped) {
+        const allPossibleAdventureMaterials = Object.values(adventuresData).flatMap(adv => adv.drops ? adv.drops.map(d => d.name) : []);
+        if (allPossibleAdventureMaterials.length > 0) {
+            const fetchedMaterial = allPossibleAdventureMaterials[Math.floor(Math.random() * allPossibleAdventureMaterials.length)];
+            if (playerMaterials.hasOwnProperty(fetchedMaterial)) { // Make sure it's a valid material
+                playerMaterials[fetchedMaterial] = (playerMaterials[fetchedMaterial] || 0) + 1;
+                gainedItemsSummary.push(`$DOG fetched: 1x ${fetchedMaterial}`);
+                gainedMaterialsForEcho[fetchedMaterial] = (gainedMaterialsForEcho[fetchedMaterial] || 0) + 1;
+            }
+        }
+    }
+    
+    // --- Echo Bat Pet Perk ---
+    if (echoBatEquipped && echoBatPerk && Math.random() < echoBatPerk.chance) {
+        let echoSummary = [];
+        Object.keys(gainedMaterialsForEcho).forEach(matName => {
+            const amount = gainedMaterialsForEcho[matName];
+            playerMaterials[matName] += amount;
+            echoSummary.push(`${amount}x ${matName}`);
+        });
+
+        if(echoSummary.length > 0) {
+            gainedItemsSummary.push(`Echo Bat duplicated: ${echoSummary.join(', ')}!`);
+        }
+    }
+
+    // --- Popup Message Construction ---
+    let partyCompositionMessage = `${completedDun.adventurers} player adventurer(s)`;
+    if (completedDun.npcCrawlers && completedDun.npcCrawlers.length > 0) {
+        const crawlerNames = completedDun.npcCrawlers.map(id => {
+            const npc = npcData.find(c => c.id === id);
+            return npc ? npc.name : "Unknown";
+        }).join(', ');
+        partyCompositionMessage += ` (and NPCs: ${crawlerNames})`;
+    }
+
+    let popupMessage = `${partyCompositionMessage} returned from ${completedDun.name}!\n\nRewards:\n- ${gainedCurrencySummary.join(', ')}`;
+    if (gainedItemsSummary.length > 0) {
+        popupMessage += `\n\nItems Found/Fetched:\n  - ${gainedItemsSummary.join('\n  - ')}`;
+    }
+    showCustomPopup(popupMessage, "Dungeon Complete!");
+
+    // --- Update UI and save state ---
+    renderActiveTasksInSidebar();
+    if (document.getElementById('dungeons-page').classList.contains('active')) {
+        renderDungeonsPage();
+    }
+    if (gainedItemsSummary.length > 0) {
+        renderInventory();
+    }
+    renderMaterials();
+    updateStatsDisplay(); 
+    if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+}
             
                       function completeAdventure(instanceId) {
                 if (!currentUser) return;
