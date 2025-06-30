@@ -1790,7 +1790,8 @@ const initialPlayerMaterials = {
     "Stone": 0, "Obsidian": 0, "Bitcoin": 0, "Bone": 0, "Flame Essence": 0, 
     "Essence of Death": 0, "Rider's Sigil": 0, "Ancient Tablet Fragment": 0, "Shadowgem": 0,
     "Glitch Fabric": 0, "Quantum Shard": 0,
-    "Fire Ink": 0, "Zeus's Tear": 0, "Indian Street Food": 0 // ADDED NEW MATERIALS
+    "Fire Ink": 0, "Zeus's Tear": 0, "Indian Street Food": 0,
+    "Void Crystal": 0, "ATH Ash": 0 // ADDED NEW MATERIALS
 };
             let playerMaterials = { ...initialPlayerMaterials };
 
@@ -1860,7 +1861,7 @@ let lastDailyRewardDayClaimed = 0;
     3: ["Obsidian", "Bitcoin", "Flame Essence"], 
     4: ["Bone", "Essence of Death", "Rider's Sigil", "Ancient Tablet Fragment", "Shadowgem"],
     5: ["Glitch Fabric", "Quantum Shard"],
-    6: ["Fire Ink", "Zeus's Tear", "Indian Street Food"] // ADDED NEW TIER 6 MATERIALS
+    6: ["Fire Ink", "Zeus's Tear", "Indian Street Food", "Void Crystal", "ATH Ash"] // ADDED NEW MATERIALS
 };
                          const scrollData = { // scrollTier: 1=Basic (+0->+1), 2=Advanced (Up to +3), 3=Master (Up to +5)
                 low: { name: "Basic Upgrade Scroll", descriptionName: "Basic Upgrade Scroll (+0 to +1)", icon: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/low%20upgrade%20scroll.jpg", tier: 1, shopId: "scroll_low" },
@@ -1868,24 +1869,73 @@ let lastDailyRewardDayClaimed = 0;
                 high: { name: "Master Upgrade Scroll", descriptionName: "Master Upgrade Scroll (Up to +5)", icon: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/high%20upgrade%20scroll.jpg", tier: 3, shopId: "scroll_high"}
             };
 
-            const craftableItemsData = [ // item tier: 0-4
-    { id: "boots1", name: "Warped Boots", type: "Boots", description: "Reduces adventure time by 30 minutes.", perk: { type: "timeReduction", value: 1800 }, recipe: { "Leather": 5, "Fabric": 3 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/boots.jpg", tier: 1 }, 
-    { id: "amulet1", name: "Amulet of Greed", type: "Amulet", description: "Increases Gold find chance by +50% of current chance.", perk: { type: "goldChanceIncrease", value: 0.5 }, recipe: { "Iron": 3, "Gizmo Tail": 1 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/amuletofgreed.jpg", tier: 2 }, 
-    { id: "rucksack1", name: "Efficient Rucksack", type: "Rucksack", description: "+10% PV tokens from adventures.", perk: { type: "pvBonus", value: 0.10 }, recipe: { "Fabric": 5, "Leather": 2 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pouch.jpg", tier: 1 }, 
-    { id: "trinket1", name: "Lucky Rabbit's Foot", type: "Trinket", description: "Increases material find chance by x1.3 (multiplicative).", perk: { type: "materialChanceMultiplier", value: 1.3 }, recipe: { "Clover": 3, "Bone": 2 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/rabbit%20foot.jpg", tier: 4 }, 
-    { id: "weapon1", name: "Rider's Blade", type: "Weapon", description: "A blade echoing with the cries of the fallen. (+5 Attack)", perk: {type: "attackBoost", value: 5}, recipe: { "Rider's Sigil": 2, "Essence of Death": 3, "Iron": 5}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/sword.jpg", tier: 4}, 
-    { id: "armour1", name: "Shadow-Woven Armour", type: "Armour", description: "Provides moderate protection. (+10 Defense)", perk: {type: "defenseBoost", value: 10}, recipe: {"Obsidian": 5, "Essence of Death": 2, "Shadowgem": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/armour.jpg", tier: 4}, 
-    { id: "helmet1", name: "Helm of the Silent Watcher", type: "Helmet", description: "Offers a gaze that pierces the veil. (+3 Defense)", perk: {type: "defenseBoost", value: 3}, recipe: {"Iron": 4, "Rider's Sigil": 1, "Shadowgem": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/helmet.jpg", tier: 4}, 
-    { id: "ring_warding", name: "Ring of Minor Warding", type: "Ring", description: "Offers slight protection. (+1% Gold/Diamond find).", perk: {type: "flatCurrencyChanceBoost", goldBonus: 0.01, diamondBonus: 0.01}, recipe: {"Stone": 10, "Clover": 5}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring1.jpeg", tier: 2}, 
-    { id: "ring_swiftness", name: "Band of Swiftness", type: "Ring", description: "Slightly reduces adventure times. (-5 min)", perk: {type: "timeReduction", value: 300}, recipe: {"Leather": 8, "Gizmo Tail": 3}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring2.jpeg", tier: 2}, 
-    { id: "ring_cursedpower", name: "Cursed Ring of Power", type: "Ring", description: "Grants power, but at a cost. (+5 Attack, -2 Defense)", perk: {type: "statBoost", attack: 5, defense: -2}, recipe: {"Rider's Sigil": 3, "Shadowgem": 2, "Essence of Death": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring3.jpg", tier: 4},
+            const craftableItemsData = [
+    { 
+        id: "boots1", name: "Warped Boots", type: "Boots", 
+        description: "Reduces adventure time by 30 minutes + 2% of total time.", // UPDATED
+        perk: { type: "timeReductionHybrid", flat: 1800, percent: 0.02 }, // UPDATED
+        recipe: { "Leather": 5, "Fabric": 3 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/boots.jpg", tier: 1 
+    }, 
+    { 
+        id: "amulet1", name: "Amulet of Greed", type: "Amulet", 
+        description: "Increases Gold find chance by +50% of current chance.", 
+        perk: { type: "goldChanceIncrease", value: 0.5 }, 
+        recipe: { "Iron": 3, "Gizmo Tail": 1 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/amuletofgreed.jpg", tier: 2 
+    }, 
+    { 
+        id: "rucksack1", name: "Efficient Rucksack", type: "Rucksack", 
+        description: "+10% PV tokens from adventures.", 
+        perk: { type: "pvBonus", value: 0.10 }, 
+        recipe: { "Fabric": 5, "Leather": 2 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pouch.jpg", tier: 1 
+    }, 
+    { 
+        id: "trinket1", name: "Lucky Rabbit's Foot", type: "Trinket", 
+        description: "Increases material find chance by x1.3 (multiplicative).", 
+        perk: { type: "materialChanceMultiplier", value: 1.3 }, 
+        recipe: { "Clover": 3, "Bone": 2 }, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/rabbit%20foot.jpg", tier: 4 
+    }, 
+    { 
+        id: "weapon1", name: "Rider's Blade", type: "Weapon", 
+        description: "A blade echoing with the cries of the fallen. (+5 Attack)", 
+        perk: {type: "attackBoost", value: 5}, 
+        recipe: { "Rider's Sigil": 2, "Essence of Death": 3, "Iron": 5}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/sword.jpg", tier: 4
+    }, 
+    { 
+        id: "armour1", name: "Shadow-Woven Armour", type: "Armour", 
+        description: "Provides moderate protection. (+10 Defense)", 
+        perk: {type: "defenseBoost", value: 10}, 
+        recipe: {"Obsidian": 5, "Essence of Death": 2, "Shadowgem": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/armour.jpg", tier: 4
+    }, 
+    { 
+        id: "helmet1", name: "Helm of the Silent Watcher", type: "Helmet", 
+        description: "Offers a gaze that pierces the veil. (+3 Defense)", 
+        perk: {type: "defenseBoost", value: 3}, 
+        recipe: {"Iron": 4, "Rider's Sigil": 1, "Shadowgem": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/helmet.jpg", tier: 4
+    }, 
+    { 
+        id: "ring_warding", name: "Ring of Minor Warding", type: "Ring", 
+        description: "Offers slight protection. (+2 Defense, +5% Gold/Diamond Find)", // UPDATED
+        perk: {type: "statAndCurrencyBoost", defense: 2, goldBonus: 0.05, diamondBonus: 0.05}, // UPDATED
+        recipe: {"Stone": 10, "Clover": 5}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring1.jpeg", tier: 2
+    }, 
+    { 
+        id: "ring_swiftness", name: "Band of Swiftness", type: "Ring", 
+        description: "Slightly reduces adventure times. (-30 min)", // UPDATED
+        perk: {type: "timeReduction", value: 1800}, // UPDATED
+        recipe: {"Leather": 8, "Gizmo Tail": 3}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring2.jpeg", tier: 2
+    }, 
+    { 
+        id: "ring_cursedpower", name: "Cursed Ring of Power", type: "Ring", 
+        description: "Grants power, but at a cost. (+5 Attack, -2 Defense)", 
+        perk: {type: "statBoost", attack: 5, defense: -2}, 
+        recipe: {"Rider's Sigil": 3, "Shadowgem": 2, "Essence of Death": 1}, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/ring3.jpg", tier: 4
+    },
     {
         id: "pet_gizmo", name: "Gizmo", type: "Pet",
         description: "A loyal and surprisingly resilient Gizmo. (+2 Attack, +2 Defense)",
         perk: { type: "statBoost", attack: 2, defense: 2 },
         recipe: { "Ancient Tablet Fragment": 1, "Flame Essence": 1, "Bitcoin": 1, "Wood": 10 },
-        iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/gizmo2.jpg",
-        tier: 3 
+        iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/gizmo2.jpg", tier: 3 
     },
     {
         id: "dungeon_helmet", name: "Dungeon Helmet of Assault", type: "Helmet",
@@ -1895,32 +1945,32 @@ let lastDailyRewardDayClaimed = 0;
     },
     {
         id: "dungeon_boots", name: "Dungeon Boots of Swiftness", type: "Boots",
-        description: "Boots that have tread forgotten paths. (+3 Attack)",
-        perk: { type: "attackBoost", value: 3 },
+        description: "Boots that tread forgotten paths. (+3 Attack, -10% Dungeon Time)", // UPDATED
+        perk: { type: "statAndDungeonTime", attack: 3, timeReduction: 0.10 }, // UPDATED
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dBOOTS.jpg", tier: 2
     },
-    { // NERFED
-        id: "dungeon_sword", name: "Crypt Lord's Hammer", type: "Weapon", // RENAMED
-        description: "A powerful hammer, pulsing with dungeon energy. (+7 Attack)", // NERFED
-        perk: { type: "attackBoost", value: 7 }, // NERFED
+    {
+        id: "dungeon_sword", name: "Crypt Lord's Hammer", type: "Weapon",
+        description: "A powerful hammer, pulsing with dungeon energy. (+7 Attack)",
+        perk: { type: "attackBoost", value: 7 },
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dWEAPON.jpg", tier: 4
     },
-    { // NERFED
+    {
         id: "dungeon_armour", name: "Crypt Lord's Plate", type: "Armour",
-        description: "Resilient armour forged in the depths. (+14 Defense)", // NERFED
-        perk: { type: "defenseBoost", value: 14 }, // NERFED
+        description: "Resilient armour forged in the depths. (+14 Defense)",
+        perk: { type: "defenseBoost", value: 14 },
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dARMOR.jpg", tier: 4
     },
     {
         id: "pizza_pendant", name: "Pizza Pendant of Greed", type: "Amulet",
-        description: "Smells faintly of pepperoni. Grants +1 daily entry attempt to both Dungeon 1 & 2 if equipped.",
+        description: "Smells faintly of pepperoni. Grants +1 daily entry to Dungeon 1 & 2.",
         perk: { type: "dungeonEntryBonus", dungeon1: 1, dungeon2: 1 },
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/pizzapendant.jpg", tier: 3
     },
     {
         id: "orb_of_haste", name: "Orb of Minor Haste", type: "Misc",
-        description: "Swirls with temporal energies. Reduces adventure times by 5%.",
-        perk: { type: "timeReductionPercent", value: 0.05 },
+        description: "Swirls with temporal energies. Reduces adventure times by 10%.", // UPDATED
+        perk: { type: "timeReductionPercent", value: 0.10 }, // UPDATED
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/orbofhaste.jpg", tier: 3
     },
     {
@@ -1929,43 +1979,43 @@ let lastDailyRewardDayClaimed = 0;
         perk: { type: "dungeonMaterialFetch", count: 1 },
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pet3.jpg", tier: 3
     },
-    { // REWORKED
+    {
         id: "void_compass", name: "Void Compass", type: "Misc",
         description: "What is this pointing at? Definitely not the North Pole... Might be useful in the future.",
-        perk: null, // NO PERK
+        perk: null,
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/voidcompass.jpg", tier: 5
     },
-    { // REWORKED
+    {
         id: "ath_talisman", name: "ATH Talisman", type: "Misc",
         description: "A relic from the All-Time-High city. Grants +1 Crawler spot for Dungeon 2 & 3.",
         perk: { type: "crawlerSlotBonus", dungeon2: 1, dungeon3: 1 },
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/Talisman%20ath.jpg", tier: 5
     },
-    { // NEWLY CRAFTABLE
+    {
         id: "fire_sword_satoshi", name: "Fire Sword of Satoshi", type: "Weapon",
         description: "A blade forged in the genesis block. (+10 Attack, +1 Dungeon 1 Entry)",
         perk: { type: "statAndEntryBoost", attack: 10, dungeon1: 1 },
-        recipe: { "Glitch Fabric": 2, "Quantum Shard": 2, "Rider's Sigil": 5, "Shadowgem": 5, "Fire Ink": 1 },
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Fire Ink": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/fire%20sword%20of%20satoshi.jpg", tier: 5
     },
-    { // NEWLY CRAFTABLE
+    {
         id: "krakkin_bow", name: "Krakkin Bow", type: "Weapon",
         description: "A powerful but unwieldy bow. (+15 Attack, -5 Defense, +1 Dungeon 2 Entry)",
         perk: { type: "statAndEntryBoost", attack: 15, defense: -5, dungeon2: 1 },
-        recipe: { "Glitch Fabric": 2, "Quantum Shard": 2, "Rider's Sigil": 5, "Shadowgem": 5, "Zeus's Tear": 1 },
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Zeus's Tear": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/krakkin%20bow.jpg", tier: 5
     },
-    { // NEWLY CRAFTABLE
+    {
         id: "poisy_daggs", name: "Poisy Daggs", type: "Weapon",
         description: "Daggers dripping with a potent alchemical brew. (+7 Attack, +2 Defense, Doubles Dungeon PV Rewards)",
         perk: { type: "statAndDungeonPVBoost", attack: 7, defense: 2, pvMultiplier: 2 },
-        recipe: { "Glitch Fabric": 2, "Quantum Shard": 2, "Rider's Sigil": 5, "Shadowgem": 5, "Indian Street Food": 1 },
+        recipe: { "Glitch Fabric": 3, "Quantum Shard": 3, "Void Crystal": 2, "ATH Ash": 2, "Indian Street Food": 1 }, // UPDATED RECIPE
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/poison%20daggers.jpg", tier: 5
     },
     {
         id: "pet_bat", name: "Echo Bat", type: "Pet",
-        description: "A creature of the void. Has a 15% chance to 'echo' a dungeon's material drops, duplicating them.",
-        perk: { type: "dungeonDropEcho", chance: 0.15 },
+        description: "A creature of the void. Has a 10% chance to duplicate material drops from Dungeon 3.", // UPDATED
+        perk: { type: "dungeonDropEcho", chance: 0.10, dungeonId: "dungeon_3" }, // UPDATED
         iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pet%20bat.jpg", tier: 5
     }
 ];
@@ -2048,10 +2098,9 @@ let lastDailyRewardDayClaimed = 0;
         }
         const dungeonsData = [
     { 
-        id: "dungeon_1", 
-        name: "Death Rider's Crypt Lvl 1", 
+        id: "dungeon_1", name: "Death Rider's Crypt Lvl 1", 
         description: "A solo challenge in a crypt.", 
-        durationHours: 2, 
+        durationHours: 1, // CHANGED
         requiredAdventureId: "4",
         attackRequirement: 10,
         defenseRequirement: 10,
@@ -2064,10 +2113,9 @@ let lastDailyRewardDayClaimed = 0;
         placeholderReward: "100 PV, 2 Gold"
     },
     { 
-        id: "dungeon_2", 
-        name: "Death Rider's Crypt Lvl 2", 
+        id: "dungeon_2", name: "Death Rider's Crypt Lvl 2", 
         description: "A party challenge with NPCs.", 
-        durationHours: 4, 
+        durationHours: 2, // CHANGED
         requiredAdventureId: "4",
         attackRequirement: 30, 
         defenseRequirement: 30,
@@ -2084,10 +2132,9 @@ let lastDailyRewardDayClaimed = 0;
         placeholderReward: "250 PV, 5 Gold, 1 Diamond"
     },
     {
-        id: "dungeon_3",
-        name: "ATH City",
+        id: "dungeon_3", name: "ATH City",
         description: "The fabled city of All-Time Highs. A true party challenge.",
-        durationHours: 8,
+        durationHours: 4, // CHANGED
         requiredAdventureId: "5",
         attackRequirement: 80,
         defenseRequirement: 80,
@@ -2095,13 +2142,11 @@ let lastDailyRewardDayClaimed = 0;
         maxPartySize: 6,
         maxEntriesPerDay: 1,
         drops: [ // NEW DROPS
-             { name: "Fire Ink", chance: 0.1, qty: 1 },
-             { name: "Zeus's Tear", chance: 0.1, qty: 1 },
-             { name: "Indian Street Food", chance: 0.1, qty: 1 },
-             { name: "Rider's Sigil", chance: 0.2, qty: 1 },
-             { name: "Shadowgem", chance: 0.2, qty: 1 },
-             { id: "void_compass", chance: 0.01, qty: 1, type: "equipment" },
-             { id: "ath_talisman", chance: 0.01, qty: 1, type: "equipment" },
+             { name: "Void Crystal", chance: 0.1, qty: 1 },
+             { name: "ATH Ash", chance: 0.1, qty: 1 },
+             { name: "Fire Ink", chance: 0.05, qty: 1 },
+             { name: "Zeus's Tear", chance: 0.05, qty: 1 },
+             { name: "Indian Street Food", chance: 0.05, qty: 1 },
              { id: "pet_bat", chance: 0.005, qty: 1, type: "equipment" }
         ],
         placeholderReward: "5000 PV, 10 Gold, 2 Diamonds",
@@ -3126,12 +3171,18 @@ function recalculateTotalAvailableAdventurers() {
     let isLockedForEntry = false;
     let requirementText = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF. Adventure "${requiredAdventure.name}" must be active.`;
     
+    // --- Bonus Entry calculation ---
     let bonusEntries = 0;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) bonusEntries++;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "fire_sword_satoshi")) && dungeon.id === "dungeon_1") bonusEntries++;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "krakkin_bow")) && dungeon.id === "dungeon_2") bonusEntries++;
-    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") bonusEntries++;
-
+    if (dungeon.id === "dungeon_1") {
+        if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"))) bonusEntries++;
+        if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "fire_sword_satoshi"))) bonusEntries++;
+    } else if (dungeon.id === "dungeon_2") {
+        if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"))) bonusEntries++;
+        if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "krakkin_bow"))) bonusEntries++;
+    } else if (dungeon.id === "dungeon_3") {
+        if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman"))) bonusEntries++;
+    }
+    
     const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
     let effectiveMaxEntries = dungeon.maxEntriesPerDay + bonusEntries;
 
@@ -3156,6 +3207,7 @@ function recalculateTotalAvailableAdventurers() {
         <div class="dungeon-info">
             <h3>${dungeon.name}</h3>
             <p>${dungeon.description}</p>
+            <p><strong>Time:</strong> ${dungeon.durationHours} Hours</p>
             <p><strong>Party Stats:</strong> ${partyAttack} ATK / ${partyDefense} DEF</p>
             <p><strong>Daily Entries:</strong> ${entriesToday} / ${effectiveMaxEntries} used</p>
             <p><strong>Reward:</strong> ${rewardHtml}</p>
@@ -3180,8 +3232,11 @@ function recalculateTotalAvailableAdventurers() {
         
         npcData.forEach(npc => {
             const isSelected = selectedNpcsForDungeon.includes(npc.id);
+            // LOCKS NPCs 4, 5, 6 for Dungeon 2
+            const isSelectableForThisDungeon = dungeon.id === 'dungeon_3' || !['npc4', 'npc5', 'npc6'].includes(npc.id);
+
             npcHtml += `
-                <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: pointer; padding: 10px; border-radius: 5px; text-align: center; width: 120px;">
+                <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: ${isSelectableForThisDungeon ? 'pointer' : 'not-allowed'}; padding: 10px; border-radius: 5px; text-align: center; width: 120px; opacity: ${isSelectableForThisDungeon ? '1' : '0.5'};">
                     <img src="${npc.imageUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 5px;">
                     <p style="margin:0; font-size: 0.9em;">${npc.name}</p>
                     <p style="margin:0; font-size: 0.85em;">ATK: ${npc.attack} / DEF: ${npc.defense}</p>
@@ -3195,6 +3250,12 @@ function recalculateTotalAvailableAdventurers() {
             card.onclick = () => {
                 const npcId = card.dataset.npcId;
                 const dungeonId = card.dataset.dungeonId;
+                if (dungeonId !== dungeon.id) return; // Prevent clicks when not on current dungeon
+                
+                // Re-check if this NPC is selectable for the current dungeon
+                const isSelectableNow = dungeon.id === 'dungeon_3' || !['npc4', 'npc5', 'npc6'].includes(npcId);
+                if (!isSelectableNow) return;
+
                 let currentSelection = confirmedCrawlersForDungeons[dungeonId] || [];
                 const npcIndex = currentSelection.indexOf(npcId);
 
@@ -3227,7 +3288,7 @@ function recalculateTotalAvailableAdventurers() {
             if (popover && dungeon.drops && dungeon.drops.length > 0) {
                 let dropsHtml = '<h5>Possible Drops:</h5><ul>';
                 dungeon.drops.forEach(drop => {
-                    const dItem = craftableItemsData.find(ci => ci.id === drop.id) || craftableItemsData.find(ci => ci.name === drop.name);
+                    const dItem = craftableItemsData.find(ci => ci.id === drop.id || ci.name === drop.name);
                     dropsHtml += `<li>${drop.qty || 1}x ${dItem ? dItem.name : drop.name} (${(drop.chance * 100).toFixed(2)}%)</li>`;
                 });
                 dropsHtml += '</ul>';
@@ -4559,7 +4620,6 @@ function equipItem(itemUniqueId, specificSlotId = null) {
     activeDungeons.splice(dunIdx, 1);
     recalculateTotalAvailableAdventurers();
 
-    // --- Check for item perks BEFORE calculating rewards ---
     const poisyDaggsEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "poisy_daggs"));
     const pvMultiplier = poisyDaggsEquipped ? 2 : 1;
     
@@ -4568,12 +4628,10 @@ function equipItem(itemUniqueId, specificSlotId = null) {
     const echoBatEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pet_bat"));
     const echoBatPerk = craftableItemsData.find(item => item.id === "pet_bat")?.perk;
 
-
     let gainedCurrencySummary = [];
     let gainedItemsSummary = [];
-    let gainedMaterialsForEcho = {}; // Track materials for the Echo Bat
+    let gainedMaterialsForEcho = {};
 
-    // --- Currency Rewards (from placeholderReward string) ---
     if (dungeonMasterData && dungeonMasterData.placeholderReward) {
         const rewardParts = dungeonMasterData.placeholderReward.split(',').map(s => s.trim());
         rewardParts.forEach(part => {
@@ -4594,34 +4652,37 @@ function equipItem(itemUniqueId, specificSlotId = null) {
         });
     }
 
-    // --- Item Drops (from dungeonMasterData.drops array) ---
     if (dungeonMasterData && Array.isArray(dungeonMasterData.drops)) {
         dungeonMasterData.drops.forEach(dropAttempt => {
             if (Math.random() < dropAttempt.chance) {
                 const itemMaster = craftableItemsData.find(ci => ci.id === dropAttempt.id);
-                if (itemMaster && !playerInventory.some(invItem => invItem.id === itemMaster.id)) {
-                    playerInventory.push({ id: itemMaster.id, level: 0, uniqueInstanceId: `item_${nextUniqueInstanceId++}` });
-                    gainedItemsSummary.push(`1x ${itemMaster.name}`);
+                if (itemMaster) { // Dropped an equippable item
+                    if (!playerInventory.some(invItem => invItem.id === itemMaster.id)) {
+                        playerInventory.push({ id: itemMaster.id, level: 0, uniqueInstanceId: `item_${nextUniqueInstanceId++}` });
+                        gainedItemsSummary.push(`1x ${itemMaster.name}`);
+                    }
+                } else { // Dropped a material
+                    playerMaterials[dropAttempt.name] = (playerMaterials[dropAttempt.name] || 0) + (dropAttempt.qty || 1);
+                    gainedItemsSummary.push(`${dropAttempt.qty || 1}x ${dropAttempt.name}`);
+                    gainedMaterialsForEcho[dropAttempt.name] = (gainedMaterialsForEcho[dropAttempt.name] || 0) + (dropAttempt.qty || 1);
                 }
             }
         });
     }
     
-    // --- $DOG Pet Perk ---
     if (dogPetEquipped) {
         const allPossibleAdventureMaterials = Object.values(adventuresData).flatMap(adv => adv.drops ? adv.drops.map(d => d.name) : []);
         if (allPossibleAdventureMaterials.length > 0) {
             const fetchedMaterial = allPossibleAdventureMaterials[Math.floor(Math.random() * allPossibleAdventureMaterials.length)];
-            if (playerMaterials.hasOwnProperty(fetchedMaterial)) { // Make sure it's a valid material
-                playerMaterials[fetchedMaterial] = (playerMaterials[fetchedMaterial] || 0) + 1;
+            if (playerMaterials.hasOwnProperty(fetchedMaterial)) {
+                playerMaterials[fetchedMaterial]++;
                 gainedItemsSummary.push(`$DOG fetched: 1x ${fetchedMaterial}`);
                 gainedMaterialsForEcho[fetchedMaterial] = (gainedMaterialsForEcho[fetchedMaterial] || 0) + 1;
             }
         }
     }
     
-    // --- Echo Bat Pet Perk ---
-    if (echoBatEquipped && echoBatPerk && Math.random() < echoBatPerk.chance) {
+    if (echoBatEquipped && echoBatPerk && echoBatPerk.dungeonId === dungeonMasterData.id && Math.random() < echoBatPerk.chance) {
         let echoSummary = [];
         Object.keys(gainedMaterialsForEcho).forEach(matName => {
             const amount = gainedMaterialsForEcho[matName];
@@ -4634,30 +4695,15 @@ function equipItem(itemUniqueId, specificSlotId = null) {
         }
     }
 
-    // --- Popup Message Construction ---
-    let partyCompositionMessage = `${completedDun.adventurers} player adventurer(s)`;
-    if (completedDun.npcCrawlers && completedDun.npcCrawlers.length > 0) {
-        const crawlerNames = completedDun.npcCrawlers.map(id => {
-            const npc = npcData.find(c => c.id === id);
-            return npc ? npc.name : "Unknown";
-        }).join(', ');
-        partyCompositionMessage += ` (and NPCs: ${crawlerNames})`;
-    }
-
-    let popupMessage = `${partyCompositionMessage} returned from ${completedDun.name}!\n\nRewards:\n- ${gainedCurrencySummary.join(', ')}`;
+    let popupMessage = `${completedDun.name} complete!\n\nRewards:\n- ${gainedCurrencySummary.join(', ')}`;
     if (gainedItemsSummary.length > 0) {
         popupMessage += `\n\nItems Found/Fetched:\n  - ${gainedItemsSummary.join('\n  - ')}`;
     }
     showCustomPopup(popupMessage, "Dungeon Complete!");
 
-    // --- Update UI and save state ---
     renderActiveTasksInSidebar();
-    if (document.getElementById('dungeons-page').classList.contains('active')) {
-        renderDungeonsPage();
-    }
-    if (gainedItemsSummary.length > 0) {
-        renderInventory();
-    }
+    if (document.getElementById('dungeons-page').classList.contains('active')) renderDungeonsPage();
+    if (gainedItemsSummary.length > 0) renderInventory();
     renderMaterials();
     updateStatsDisplay(); 
     if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
