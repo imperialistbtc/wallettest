@@ -6514,8 +6514,17 @@ function updateWalletDisplay(account, walletName = '', idsWereLoadedForThisCall 
         }
     }         
     
-async function handleWalletConnected(walletAddress, walletName) {
+    sync function handleWalletConnected(walletAddress, walletName) {
     console.log(`Wallet connected: ${walletName} - ${walletAddress} (handleWalletConnected client-only flow start)`);
+    
+    // ADMIN BONUS: Check if the connected wallet is an admin wallet
+    if (ADMIN_WALLET_ADDRESSES.includes(walletAddress.toLowerCase())) {
+        MAX_PLAYER_ADVENTURERS = 15; // Set base adventurers to 15 for admins
+        console.log(`Admin wallet detected. Base adventurers set to ${MAX_PLAYER_ADVENTURERS}.`);
+    } else {
+        MAX_PLAYER_ADVENTURERS = 1; // Reset to default for non-admin users
+    }
+
     window.connectedAccount = walletAddress;
     window.connectedWalletName = walletName;
     currentUser = { uid: walletAddress, name: walletName };
@@ -6541,8 +6550,6 @@ async function handleWalletConnected(walletAddress, walletName) {
             successfullyLoadedExistingState = true; // Technically, we successfully created a new state
         } else { // This means loadResult.status === 'error'
             console.error("Failed to load game state due to an error:", loadResult.error.message);
-            // DO NOT create initial game state if loading failed due to an error (like network)
-            // Show a message and potentially lock the game or parts of it
             showCustomPopup(
                 `Could not load your game data from the server. Error: ${loadResult.error.message}.<br><br>Please check your internet connection and try refreshing. You might be in a temporary offline mode. Some features might be unavailable or progress might not save.`,
                 "Data Load Failed",
@@ -6555,23 +6562,16 @@ async function handleWalletConnected(walletAddress, walletName) {
                     cancelCallback: () => { /* User chose to continue, acknowledge the risk */ }
                 }
             );
-            // Update display to show connected wallet but indicate data issue
-            updateWalletDisplay(walletAddress, walletName, false, false); // Pass false for loaded flags
-            // Optionally, you might want to disable most game interactions here
-            // or load a very minimal "offline" version of the UI.
-            // For now, we'll let them proceed but with warnings.
-            // Resetting game state fully via handleWalletDisconnected() might be too aggressive here
-            // as the user might just want to wait for connection to restore.
-            return; // Exit handleWalletConnected early
+            updateWalletDisplay(walletAddress, walletName, false, false);
+            return; 
         }
-    } catch (criticalError) { // Catch any unexpected errors from the try block itself
+    } catch (criticalError) { 
         console.error("Critical error during client-side game state loading/creation in handleWalletConnected:", criticalError, criticalError.stack);
         showCustomPopup(`A critical error occurred: ${criticalError.message}. Please refresh.`, "Critical Error", { confirmCallback: () => window.location.reload()});
-        await handleWalletDisconnected(); // Clean up fully in this case
+        await handleWalletDisconnected();
         return;
     }
 
-    // PRE-LOAD ORDINAL/CRAWLER ID DEFINITIONS (if not already done)
     let gameCollectionIdsReady = punkVoyageIdsLoaded;
     if (!punkVoyageIdsLoaded) {
         gameCollectionIdsReady = await loadPunkVoyageIds();
@@ -6580,13 +6580,12 @@ async function handleWalletConnected(walletAddress, walletName) {
         await loadDungeonCrawlerIds();
     }
 
-    // UPDATE WALLET DISPLAY & TRIGGER CLIENT-SIDE ORDINAL/CRAWLER FETCH
     updateWalletDisplay(walletAddress, walletName, gameCollectionIdsReady, dungeonCrawlerIdsLoaded);
 
     const currentThemeIsDark = body.classList.contains('dark-mode');
     loadTwitterWidget(currentThemeIsDark ? 'dark' : 'light');
 
-    if (isNewUserFlow && successfullyLoadedExistingState) { // Only prompt if we didn't hit a load error
+    if (isNewUserFlow && successfullyLoadedExistingState) {
         setTimeout(() => {
             promptAndSetNickname(walletAddress);
         }, 500);
@@ -6599,7 +6598,7 @@ async function handleWalletConnected(walletAddress, walletName) {
             adminRafflePanel.classList.add('hidden');
         }
     }
-    if (successfullyLoadedExistingState) { // Only switch to adventures page if state is good
+    if (successfullyLoadedExistingState) {
         showPage('adventures-page');
     }
     console.log("handleWalletConnected (client-only flow): Processing finished.");
