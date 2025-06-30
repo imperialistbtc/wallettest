@@ -3084,10 +3084,10 @@ function recalculateTotalAvailableAdventurers() {
     const playerDefense = parseInt(playerDefenseStatElement.textContent) || 0;
     let partyAttack = playerAttack;
     let partyDefense = playerDefense;
+    const selectedNpcsForDungeon = confirmedCrawlersForDungeons[dungeon.id] || [];
     
     if (dungeon.type === 'party_npc') {
-        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
-        selectedNpcs.forEach(npcId => {
+        selectedNpcsForDungeon.forEach(npcId => {
             const npc = npcData.find(n => n.id === npcId);
             if (npc) {
                 partyAttack += npc.attack;
@@ -3102,38 +3102,25 @@ function recalculateTotalAvailableAdventurers() {
     let isLockedForEntry = false;
     let displayLockReason = "";
     
-    // Check for Pizza Pendant for D1/D2 and ATH Talisman for D3
     let bonusEntries = 0;
-    const pizzaPendantEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"));
-    const athTalismanEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman"));
-
-    if ((dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") && pizzaPendantEquipped) {
-        bonusEntries = 1;
-    } else if (dungeon.id === "dungeon_3" && athTalismanEquipped) {
-        bonusEntries = 1;
-    }
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) bonusEntries = 1;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") bonusEntries = 1;
     
     const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
     let effectiveMaxEntries = dungeon.maxEntriesPerDay + bonusEntries;
 
     if (dungeon.isLockedContent) {
-        isLockedForEntry = true;
-        displayLockReason = "Content Coming Soon!";
+        isLockedForEntry = true; displayLockReason = "Content Coming Soon!";
     } else if (!dungeonsGloballyUnlocked) {
-        isLockedForEntry = true;
-        displayLockReason = "Unlock Requirement: Adventure 4 must be active.";
+        isLockedForEntry = true; displayLockReason = "Unlock Requirement: Adventure 4 must be active.";
     } else if (entriesToday >= effectiveMaxEntries) {
-        isLockedForEntry = true;
-        displayLockReason = `Daily limit reached.`;
+        isLockedForEntry = true; displayLockReason = `Daily limit reached.`;
     } else if (partyAttack < dungeon.attackRequirement || partyDefense < dungeon.defenseRequirement) {
-        isLockedForEntry = true;
-        displayLockReason = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF.`;
+        isLockedForEntry = true; displayLockReason = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF.`;
     } else if (totalAvailableAdventurers < 1) {
-        isLockedForEntry = true;
-        displayLockReason = `Requires 1 available adventurer.`;
+        isLockedForEntry = true; displayLockReason = `Requires 1 available adventurer.`;
     }
 
-    // --- Create and append the dungeon HTML ---
     const imageUrls = {
         "dungeon_1": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon1.jpg",
         "dungeon_2": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon2.jpg",
@@ -3142,9 +3129,7 @@ function recalculateTotalAvailableAdventurers() {
     
     const dungeonDiv = document.createElement('div');
     dungeonDiv.className = `dungeon-entry ${isLockedForEntry ? 'locked' : ''}`;
-    // CORRECTED: Reward text now uses the variable for yellow color
     const rewardHtml = `<span style="color: var(--highlight-color-gold);">${dungeon.placeholderReward}</span>`;
-    // CORRECTED: Status text is now green when ready
     const statusHtml = isLockedForEntry ? displayLockReason : `<span style="color: var(--highlight-color-connected);">Ready to Enter!</span>`;
     
     dungeonDiv.innerHTML = `
@@ -3167,16 +3152,19 @@ function recalculateTotalAvailableAdventurers() {
     `;
     entryContainer.appendChild(dungeonDiv);
 
-    // --- Render NPC Selection UI if it's a party dungeon ---
     if (dungeon.type === 'party_npc' && !dungeon.isLockedContent) {
-        let npcHtml = `<h4 style="text-align:center; color: var(--label-color);">Select Party Members (Max ${dungeon.maxPartySize})</h4>
+        let npcHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                           <h4 style="margin:0; color: var(--label-color);">Select Party Members (Max ${dungeon.maxPartySize})</h4>
+                           <button id="reset-party-btn" class="action-button" style="background-color: var(--highlight-color-danger); color: white;">Reset Party</button>
+                       </div>
                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">`;
-        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
         
-        npcData.slice(0, dungeon.maxPartySize).forEach(npc => {
-            const isSelected = selectedNpcs.includes(npc.id);
+        npcData.slice(0, 6).forEach(npc => { // Always show all 6 NPCs
+            const isSelected = selectedNpcsForDungeon.includes(npc.id);
+            // Gray out if not selectable for this specific dungeon
+            const isSelectable = dungeon.maxPartySize >= (npcData.indexOf(npc) + 1);
             npcHtml += `
-                <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: pointer; padding: 10px; border-radius: 5px; text-align: center; width: 120px;">
+                <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: ${isSelectable ? 'pointer' : 'not-allowed'}; padding: 10px; border-radius: 5px; text-align: center; width: 120px; opacity: ${isSelectable ? '1' : '0.5'};">
                     <img src="${npc.imageUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 5px;">
                     <p style="margin:0; font-size: 0.9em;">${npc.name}</p>
                     <p style="margin:0; font-size: 0.85em;">ATK: ${npc.attack} / DEF: ${npc.defense}</p>
@@ -3190,27 +3178,38 @@ function recalculateTotalAvailableAdventurers() {
             card.onclick = () => {
                 const npcId = card.dataset.npcId;
                 const dungeonId = card.dataset.dungeonId;
+                const currentDungeonData = dungeonsData.find(d => d.id === dungeonId);
+
+                // Check if this NPC is even allowed for this dungeon
+                if (!currentDungeonData || npcData.indexOf(npcData.find(n => n.id === npcId)) >= currentDungeonData.maxPartySize) {
+                    return; // Do nothing if card is for an NPC not in this dungeon's pool
+                }
+                
                 let currentSelection = confirmedCrawlersForDungeons[dungeonId] || [];
                 const npcIndex = currentSelection.indexOf(npcId);
 
                 if (npcIndex > -1) {
                     currentSelection.splice(npcIndex, 1);
                 } else {
-                    if (currentSelection.length < dungeon.maxPartySize) { // Use current dungeon's maxPartySize
+                    if (currentSelection.length < currentDungeonData.maxPartySize) {
                         currentSelection.push(npcId);
                     } else {
-                        showCustomPopup(`You can only select up to ${dungeon.maxPartySize} party members for this dungeon.`, "Party Full");
+                        showCustomPopup(`You can only select up to ${currentDungeonData.maxPartySize} party members for this dungeon.`, "Party Full");
                     }
                 }
                 confirmedCrawlersForDungeons[dungeonId] = currentSelection;
                 renderDungeonsPage();
             };
         });
+
+        document.getElementById('reset-party-btn').onclick = () => {
+            confirmedCrawlersForDungeons[dungeon.id] = [];
+            renderDungeonsPage();
+        };
     }
 
     dungeonDiv.querySelector('.enter-dungeon-btn').onclick = handleEnterDungeon;
     
-    // --- DROPS POPOVER LOGIC (FIXED) ---
     const dropsButton = dungeonDiv.querySelector('.dungeon-drops-button');
     if (dropsButton) {
         dropsButton.addEventListener('mouseenter', (event) => {
@@ -3840,139 +3839,89 @@ function renderInventory() {
                 if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
             }
 
-                 function handleEnterDungeon(event) {
-                if (!currentUser) {
-                    showCustomPopup("You must be logged in to enter a dungeon.", "Login Required");
-                    return;
-                }
-                const dungeonId = event.target.dataset.dungeonId;
-                const dungeon = dungeonsData.find(d => d.id === dungeonId);
+            function handleEnterDungeon(event) {
+    if (!currentUser) {
+        showCustomPopup("You must be logged in to enter a dungeon.", "Login Required");
+        return;
+    }
+    const dungeonId = event.target.dataset.dungeonId;
+    const dungeon = dungeonsData.find(d => d.id === dungeonId);
 
-                if (!dungeon) {
-                    console.error("Dungeon data not found for ID:", dungeonId);
-                    showCustomPopup("Error finding dungeon data.", "Dungeon Error");
-                    return;
-                }
-                const isDungeonAlreadyActive = activeDungeons.some(ad => ad.dungeonId === dungeon.id);
-                if (isDungeonAlreadyActive) {
-                    showCustomPopup(`You already have a party in "${dungeon.name}". Please wait for it to complete or cancel it.`, "Dungeon Already Active");
-                    return; // Stop further processing
-                }
-                // 1. General Dungeon Unlock Check (Adventure 4 Active)
-                const adventure4Active = activeAdventures.find(adv => adv.originalAdventureId === "4");
-                if (!adventure4Active) {
-                    showCustomPopup(`Dungeons are locked. You need an adventurer on Adventure 4.`, "Dungeon Locked");
-                    renderDungeonsPage(); return;
-                }
+    if (!dungeon) {
+        console.error("Dungeon data not found for ID:", dungeonId);
+        showCustomPopup("Error finding dungeon data.", "Dungeon Error");
+        return;
+    }
+    if (activeDungeons.some(ad => ad.dungeonId === dungeon.id)) {
+        showCustomPopup(`You already have a party in "${dungeon.name}".`, "Dungeon Already Active");
+        return;
+    }
+    if (!activeAdventures.find(adv => adv.originalAdventureId === "4")) {
+        showCustomPopup(`Dungeons are locked. You need an adventurer on Adventure 4.`, "Dungeon Locked");
+        return;
+    }
 
-                // 2. Stat Requirements Check
-                 // 2. Stat Requirements Check (with party contributions for party_npc dungeons)
-               const playerBaseAttack = parseInt(playerAttackStatElement.textContent) || 0;
-                const playerBaseDefense = parseInt(playerDefenseStatElement.textContent) || 0;
-                let currentPartyAttack = playerBaseAttack;
-                let currentPartyDefense = playerBaseDefense;
-
-                if (dungeon.type === "party_npc") {
-                    const confirmedCrawlers = confirmedCrawlersForDungeons[dungeon.id] || [];
-                    if (dungeon.id === "dungeon_2") { // Specific logging for Dungeon 2
-                        console.log(`D2 Enter Check: Confirmed Crawlers:`, JSON.parse(JSON.stringify(confirmedCrawlers)));
-                        console.log(`D2 Enter Check: Full playerDungeonCrawlers list:`, JSON.parse(JSON.stringify(playerDungeonCrawlers)));
-                    }
-                    confirmedCrawlers.forEach(crawlerInstanceId => {
-                        const crawlerData = playerDungeonCrawlers.find(c => c.uniqueInstanceId === crawlerInstanceId);
-                        if (crawlerData) {
-                            if (dungeon.id === "dungeon_2") console.log(`D2 Enter Check: Found crawler data for ${crawlerInstanceId}: ATK=${crawlerData.attack}, DEF=${crawlerData.defense}`);
-                            currentPartyAttack += (parseInt(crawlerData.attack) || 0); // Ensure parsing
-                            currentPartyDefense += (parseInt(crawlerData.defense) || 0); // Ensure parsing
-                        } else {
-                             if (dungeon.id === "dungeon_2") console.log(`D2 Enter Check: No crawler data found in playerDungeonCrawlers for instance ID: ${crawlerInstanceId}`);
-                        }
-                    });
-                    if (dungeon.id === "dungeon_2") console.log(`D2 Enter Check: Final Party ATK/DEF: ${currentPartyAttack}/${currentPartyDefense}`);
-                }
-
-                if (currentPartyAttack < dungeon.attackRequirement || currentPartyDefense < dungeon.defenseRequirement) {
-                    showCustomPopup(`Cannot enter ${dungeon.name}. Requires ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF. Your current party total is ${currentPartyAttack} ATK & ${currentPartyDefense} DEF.`, "Requirements Not Met");
-                    renderDungeonsPage(); 
-                    return;
-                }
-
-                // 3. Daily Entry Limit Check (with Pizza Pendant bonus)
-                let effectiveMaxEntries = dungeon.maxEntriesPerDay;
-                const pizzaPendantEquipped = Object.values(equippedItems).some(instanceId => {
-                    if (!instanceId) return false;
-                    const item = playerInventory.find(invItem => invItem.uniqueInstanceId === instanceId);
-                    return item && item.id === "pizza_pendant";
-                });
-                if (pizzaPendantEquipped) {
-                    if (dungeon.id === "dungeon_1") effectiveMaxEntries++;
-                    if (dungeon.id === "dungeon_2") effectiveMaxEntries++;
-                }
-
-                const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
-                if (entriesToday >= effectiveMaxEntries) {
-                    showCustomPopup(`Daily limit for ${dungeon.name} reached (${entriesToday}/${effectiveMaxEntries}). Resets daily.`, "Limit Reached");
-                    renderDungeonsPage(); return;
-                }
-                
-                // 4. Available Adventurers Check
-                if (totalAvailableAdventurers < 1) { // All dungeons currently cost 1 player adventurer
-                    showCustomPopup("Not enough adventurers available to enter the dungeon.", "Adventurers Needed");
-                    renderDungeonsPage(); return;
-                }
-
-                // For Dungeon 2 (party_npc):
-                // For now, we simulate using 1 player adventurer and acknowledge future NPC/multiplayer.
-                // Actual NPC selection and stat contribution will be a later feature.
-                let adventurersForThisDungeon = 1; // Player always contributes 1
-                let partyMembersInfo = "";
-                if (dungeon.type === "party_npc") {
-                    // In the future, `selectedCrawlers` would be an array of objects from a selection modal.
-                    // For now, we can just acknowledge it.
-                    // let selectedCrawlers = getCurrentlySelectedCrawlersForDungeon(dungeon.id); // Imaginary function
-                    // adventurersForThisDungeon += selectedCrawlers.length; // If NPCs counted against a separate pool
-                    partyMembersInfo = ` (Future: plus selected NPC crawlers)`;
-                }
-                
-                // Dungeon entry cost confirmed, proceed
-                playerDungeonEntriesToday[dungeon.id] = (playerDungeonEntriesToday[dungeon.id] || 0) + 1;
-
-                let calculatedDurationMs = dungeon.durationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
-                // Dungeon set bonus does NOT apply to dungeon duration, only adventures.
-                // Orb of Haste does not apply to dungeon duration for now.
-
-                const returnTime = Date.now() + calculatedDurationMs;
-
-                const newActiveDungeon = {
-                    id: nextActiveAdventureId++,
-                    dungeonId: dungeon.id,
-                    name: dungeon.name,
-                    adventurers: adventurersForThisDungeon, // Player's adventurer
-                    returnTime: returnTime,
-                    // Include the instance IDs of confirmed NPC crawlers for this dungeon run
-                    npcCrawlers: (dungeon.type === "party_npc" ? (confirmedCrawlersForDungeons[dungeon.id] || []) : []) 
-                };
-console.log("--- PREPARING TO START DUNGEON ---");
-console.log("Dungeon Data:", JSON.parse(JSON.stringify(dungeon)));
-console.log("Calculated Duration (ms):", calculatedDurationMs);
-console.log("Return Time:", new Date(returnTime).toLocaleString());
-console.log("newActiveDungeon object to be pushed:", JSON.parse(JSON.stringify(newActiveDungeon)));
-console.log("Current activeAdventures BEFORE dungeon push:", JSON.parse(JSON.stringify(activeAdventures)));
-console.log("Current activeDungeons BEFORE dungeon push:", JSON.parse(JSON.stringify(activeDungeons)));
-                activeDungeons.push(newActiveDungeon);
-                // +++ ADD LOGS HERE +++
-                console.log("New dungeon pushed:", JSON.parse(JSON.stringify(newActiveDungeon)));
-                console.log("Current activeDungeons array:", JSON.parse(JSON.stringify(activeDungeons)));
-
-                console.log("Calling recalculateTotalAvailableAdventurers after new dungeon push...");
-                recalculateTotalAvailableAdventurers(); 
-
-                console.log("Explicitly calling renderActiveTasksInSidebar after new dungeon...");
-                renderActiveTasksInSidebar(); 
-                renderDungeonsPage(); 
-                
-                if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+    // --- NEW: Correct Stat Calculation ---
+    const playerBaseAttack = parseInt(playerAttackStatElement.textContent) || 0;
+    const playerBaseDefense = parseInt(playerDefenseStatElement.textContent) || 0;
+    let currentPartyAttack = playerBaseAttack;
+    let currentPartyDefense = playerBaseDefense;
+    
+    if (dungeon.type === "party_npc") {
+        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
+        selectedNpcs.forEach(npcId => {
+            const npc = npcData.find(n => n.id === npcId);
+            if (npc) {
+                currentPartyAttack += npc.attack;
+                currentPartyDefense += npc.defense;
             }
+        });
+    }
+
+    if (currentPartyAttack < dungeon.attackRequirement || currentPartyDefense < dungeon.defenseRequirement) {
+        showCustomPopup(`Cannot enter ${dungeon.name}. Requires ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF. Your current party total is ${currentPartyAttack} ATK & ${currentPartyDefense} DEF.`, "Requirements Not Met");
+        return;
+    }
+    // --- END: Correct Stat Calculation ---
+
+    // Daily Entry Limit Check
+    let effectiveMaxEntries = dungeon.maxEntriesPerDay;
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant")) && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2")) {
+        effectiveMaxEntries++;
+    }
+    if (Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman")) && dungeon.id === "dungeon_3") {
+        effectiveMaxEntries++;
+    }
+
+    if ((playerDungeonEntriesToday[dungeon.id] || 0) >= effectiveMaxEntries) {
+        showCustomPopup(`Daily limit for ${dungeon.name} reached.`, "Limit Reached");
+        return;
+    }
+
+    if (totalAvailableAdventurers < 1) {
+        showCustomPopup("Not enough adventurers available.", "Adventurers Needed");
+        return;
+    }
+
+    playerDungeonEntriesToday[dungeon.id] = (playerDungeonEntriesToday[dungeon.id] || 0) + 1;
+    let calculatedDurationMs = dungeon.durationHours * GAME_HOUR_IN_REAL_SECONDS * 1000;
+    const returnTime = Date.now() + calculatedDurationMs;
+
+    const newActiveDungeon = {
+        id: nextActiveAdventureId++,
+        dungeonId: dungeon.id,
+        name: dungeon.name,
+        adventurers: 1,
+        returnTime: returnTime,
+        npcCrawlers: (dungeon.type === "party_npc" ? (confirmedCrawlersForDungeons[dungeon.id] || []) : [])
+    };
+
+    activeDungeons.push(newActiveDungeon);
+    recalculateTotalAvailableAdventurers();
+    renderActiveTasksInSidebar();
+    renderDungeonsPage();
+    if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+}
 
 function usePetWhistleUnlock(itemUniqueId) {
     if (!currentUser) return;
