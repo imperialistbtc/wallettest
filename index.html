@@ -3645,12 +3645,13 @@ async function showPage(pageIdToShow) {
     if (targetPage) {
         targetPage.classList.add('active');
         if (pageIdToShow === 'quests-page') {
-            renderQuests();
+            setupQuestUI(); // THIS IS THE FIX
+            applyQuestFiltersAndRender(); // THIS IS THE FIX
         } else if (pageIdToShow === 'shop-page') {
             renderShopItems();
         } else if (pageIdToShow === 'crafting-page') {
-            setupCraftingUI(); // Setup buttons and listeners
-            applyCraftingFiltersAndRender(); // Apply default filter and render
+            setupCraftingUI();
+            applyCraftingFiltersAndRender();
         } else if (pageIdToShow === 'inventory-page') {
             renderInventory();
         } else if (pageIdToShow === 'daily-rewards-page') {
@@ -6168,7 +6169,45 @@ async function fetchPlayerDungeonCrawlers(userAddress, walletName) {
         saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
     }
 }
+function updateUpgradeSuccessRateDisplay() {
+    if (!upgradeSuccessRateDisplay) return;
+    if (!selectedItemForUpgrade || !selectedScrollForUpgrade) {
+        upgradeSuccessRateDisplay.textContent = ""; return;
+    }
+    
+    const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier; // Item's intrinsic tier (0-4)
+    const scrollTier = selectedScrollForUpgrade.scrollTier; // Scroll's tier (1=Low, 2=Mid, 3=High)
+    const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0; // Item's +X level
+    
+    let compatibleForLevel = false;
+    if (scrollTier === 1 && itemCurrentLevel === 0) compatibleForLevel = true; // Low scroll only for +0 items
+    else if (scrollTier === 2 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 2)) compatibleForLevel = true; // Mid scroll for +0, +1, +2 items
+    else if (scrollTier === 3 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 4)) compatibleForLevel = true; // High scroll for +0 to +4 items
 
+    if (!compatibleForLevel) { 
+        if (scrollTier === 1 && itemCurrentLevel > 0) {
+            upgradeSuccessRateDisplay.textContent = `Basic Upgrade Scrolls can only be used on +0 items. This item is +${itemCurrentLevel}.`;
+        } else {
+            upgradeSuccessRateDisplay.textContent = `This scroll (${selectedScrollForUpgrade.name}) is not for upgrading an item at +${itemCurrentLevel}.`; 
+        }
+        return; 
+    }
+    
+    if (itemCurrentLevel >= 5) { upgradeSuccessRateDisplay.textContent = "Item is at max level (+5)."; return; }
+    
+    let successChance = upgradeChances[itemCurrentLevel]; // Base chance for the item's current level
+    let bonusText = "";
+    if (scrollTier > itemBaseTier) { // Check if scroll tier is higher than item's base tier
+         // Specific tier conditions for bonus:
+        if ((scrollTier === 2 && itemBaseTier <= 1) || // Mid scroll on Tier 0 or 1 item
+            (scrollTier === 3 && itemBaseTier <= 2)) { // High scroll on Tier 0, 1, or 2 item
+            successChance += 0.10;
+            successChance = Math.min(successChance, 1); 
+            bonusText = " (+10% bonus)";
+        }
+    }
+    upgradeSuccessRateDisplay.textContent = `Upgrade Success Chance: ${(successChance * 100).toFixed(0)}%${bonusText}`;
+}
        
 function openItemSelectionModal(purpose) {
     if (upgradeResultDisplay) upgradeResultDisplay.textContent = ''; // Clear previous results on any new selection
