@@ -231,6 +231,11 @@ body.dark-mode {
     color: black;
     border-color: var(--highlight-color-gold);
 }
+.upgrade-booster-text {
+    color: #FF69B4; /* Hot Pink */
+    text-shadow: 0 0 5px #32CD32, 0 0 10px #32CD32; /* Lime Green Neon Glow */
+    font-weight: bold;
+}
 
 .craftable-toggle-checkmark {
     margin-left: 8px;
@@ -1346,10 +1351,9 @@ body.dark-mode {
                              <li><strong>Rider Scroll (Unlock):</strong> A one-time purchase from the shop for <strong>50,000 PV</strong>. This item goes to your inventory. You then "Use" it from the locked Ring 2 slot in your Equipment (Inventory page) to permanently unlock it.</li>
                              <li><strong>Upgrade Scrolls:</strong> Basic, Advanced, and Master scrolls are available for item upgrades. You can buy these in quantities of 1 to 10. Purchasing these adds to your scroll count (visible in "MY MATERIALS"). Scroll prices are 125 PV (Basic), 250 PV (Advanced), and 500 PV (Master).
                                 <ul>
-                                    <li><strong>Basic Upgrade Scroll (Tier 1 Scroll):</strong> Used for upgrading items from level +0 to +1. Cannot be used on items that are already +1 or higher.</li>
-                                    <li><strong>Advanced Upgrade Scroll (Tier 2 Scroll):</strong> Used for upgrading items that are currently level +0, +1, or +2 (to become +1, +2, or +3 respectively).</li>
-                                    <li><strong>Master Upgrade Scroll (Tier 3 Scroll):</strong> Used for upgrading items that are currently level +0, +1, +2, +3, or +4 (to become +1 up to +5 respectively).</li>
-                                    <li>A +10% success chance bonus is applied if you use a scroll of a higher tier (Advanced or Master) on an item whose base tier is lower than the scroll's effective tier, provided the scroll is compatible with the item's current level. (e.g., Advanced Scroll on a Tier 0/1 item, or Master Scroll on a Tier 0/1/2 item).</li>
+                                    <li><strong>Basic Upgrade Scroll:</strong> Can only be used to upgrade an item from +0 to +1.</li>
+                                    <li><strong>Advanced Upgrade Scroll:</strong> Can be used on items that are level +0, +1, or +2. Grants a **+10% success bonus** if the item is level +0 or +1.</li>
+                                    <li><strong>Master Upgrade Scroll:</strong> Can be used on items from level +0 up to +4. Grants a **+10% success bonus** if the item is level +0, +1, or +2.</li>
                                 </ul>
                              </li>
                                 </ul>
@@ -2043,9 +2047,25 @@ let lastDailyRewardDayClaimed = 0;
                 { id: "potion2", name: "PV Doubler (1 Use)", description: "Doubles PV rewards from NEXT adventure.", price: 200, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pv%20doubler.jpg", type: "buff", durationAdventures: 1, effect: { type: "pvMultiplier", value: 2 } }, 
                 { id: "potion3", name: "Gold Magnet (3 Adventures)", description: "Adds +1% FLAT chance of finding gold on next 3 adventures.", price: 400, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/gold%20magnet.jpg", type: "buff", durationAdventures: 3, effect: { type: "goldChanceBonus", flatValue: 0.01 } }, 
                 { id: "scroll_low", name: scrollData.low.descriptionName, description: "Used for upgrading items from level +0 to +1.", price: 125, iconUrlOrColor: scrollData.low.icon, type: "upgrade_scroll_purchase", scrollTypeKey: "low"},
-                { id: "scroll_mid", name: scrollData.middle.descriptionName, description: "Used for items at +0, +1, or +2. Grants +10% success bonus if item's base tier is 0 or 1.", price: 250, iconUrlOrColor: scrollData.middle.icon, type: "upgrade_scroll_purchase", scrollTypeKey: "middle"},
-                { id: "scroll_high", name: scrollData.high.descriptionName, description: "Used for items at +0 up to +4. Grants +10% success bonus if item's base tier is 0, 1, or 2.", price: 500, iconUrlOrColor: scrollData.high.icon, type: "upgrade_scroll_purchase", scrollTypeKey: "high"},
-            { id: "rider_scroll_unlock", name: "Rider Scroll (Unlock)", description: "Permanently unlocks your second Ring Slot. One-time purchase, consumed on use from Equipment Slot.", price: 5000, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/riders%20scroll.jpg", type: "unlockable_consumable" },
+                { 
+    id: "scroll_mid", 
+    name: scrollData.middle.descriptionName, 
+    description: "Used for items at +0, +1, or +2. Grants +10% success bonus if item's level is +0 or +1.", // CORRECTED TEXT
+    price: 250, 
+    iconUrlOrColor: scrollData.middle.icon, 
+    type: "upgrade_scroll_purchase", 
+    scrollTypeKey: "middle"
+},
+{ 
+    id: "scroll_high", 
+    name: scrollData.high.descriptionName, 
+    description: "Used for items at +0 up to +4. Grants +10% success bonus if item's level is +0, +1 or +2.", // CORRECTED TEXT
+    price: 500, 
+    iconUrlOrColor: scrollData.high.icon, 
+    type: "upgrade_scroll_purchase", 
+    scrollTypeKey: "high"
+},
+                { id: "rider_scroll_unlock", name: "Rider Scroll (Unlock)", description: "Permanently unlocks your second Ring Slot. One-time purchase, consumed on use from Equipment Slot.", price: 5000, iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/riders%20scroll.jpg", type: "unlockable_consumable" },
                 { // ADD THIS NEW ITEM
                 id: "pet_whistle_unlock",
                 name: "Ancient Pet Whistle (Unlock)",
@@ -6190,7 +6210,6 @@ function updateUpgradeSuccessRateDisplay() {
         upgradeSuccessRateDisplay.textContent = ""; return;
     }
     
-    const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier;
     const scrollTier = selectedScrollForUpgrade.scrollTier;
     const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0;
     
@@ -6213,8 +6232,8 @@ function updateUpgradeSuccessRateDisplay() {
     let successChance = upgradeChances[itemCurrentLevel];
     let bonusText = "";
 
-    // Scroll tier bonus
-    if (scrollTier > itemBaseTier && ((scrollTier === 2 && itemBaseTier <= 1) || (scrollTier === 3 && itemBaseTier <= 2))) {
+    // Scroll level bonus (NEW LOGIC)
+    if ((scrollTier === 2 && itemCurrentLevel <= 1) || (scrollTier === 3 && itemCurrentLevel <= 2)) {
         successChance += 0.10;
         bonusText += " (+10% scroll bonus)";
     }
@@ -6223,11 +6242,11 @@ function updateUpgradeSuccessRateDisplay() {
     const booster = activePotions.find(p => p.id === 'upgrade_booster');
     if (booster) {
         successChance += booster.effect.flatValue;
-        bonusText += " (+10% booster)";
+        bonusText += ` <span class="upgrade-booster-text">(+10% booster)</span>`; // USE THE NEW STYLE
     }
 
     successChance = Math.min(successChance, 1);
-    upgradeSuccessRateDisplay.textContent = `Success Chance: ${(successChance * 100).toFixed(0)}%${bonusText}`;
+    upgradeSuccessRateDisplay.innerHTML = `Success Chance: ${(successChance * 100).toFixed(0)}%${bonusText}`; // Use innerHTML for the span
 }
        
 function openItemSelectionModal(purpose) {
