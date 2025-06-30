@@ -5625,94 +5625,189 @@ async function loadPunkVoyageIds() {
         }
     }
 
-        function renderActiveSpecialties() {
-            if (!specialtiesListContainer) {
-                console.warn("Specialties list container not found.");
-                return;
-            }
+    function renderActiveSpecialties() {
+    if (!specialtiesListContainer) {
+        console.warn("Specialties list container not found.");
+        return;
+    }
 
-            specialtiesListContainer.innerHTML = ''; // Clear previous
-            let specialtiesHtml = '<ul>';
-            let foundSpecialties = false;
+    specialtiesListContainer.innerHTML = ''; // Clear previous
+    let specialtiesHtml = '<ul>';
+    let foundSpecialties = false;
 
-            // 1. Perks from equipped items
-            Object.keys(equippedItems).forEach(slotId => {
-                const equippedInstanceId = equippedItems[slotId];
-                if (!equippedInstanceId) return;
+    // 1. Perks from equipped items
+    Object.keys(equippedItems).forEach(slotId => {
+        const equippedInstanceId = equippedItems[slotId];
+        if (!equippedInstanceId) return;
 
-                const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                if (invItem) {
-                    const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                    if (itemMaster && itemMaster.perk) {
-                        const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                        let perkText = '';
-                        let perkIsSpecialty = true; // Assume it's a displayable specialty
+        const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
+        if (invItem) {
+            const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
+            if (itemMaster && itemMaster.perk) {
+                const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
+                let perkText = '';
+                let perkIsSpecialty = true; // Assume it's a displayable specialty
 
-                        switch (scaledPerk.type) {
-                            case "timeReduction":
-                                perkText = `Adventure Time Reduction: ${scaledPerk.value / 60} minutes`;
-                                break;
-                            case "goldChanceIncrease":
-                                perkText = `Gold Find Chance Multiplier: +${(scaledPerk.value * 100).toFixed(1)}%`;
-                                break;
-                            case "pvBonus":
-                                perkText = `PV Token Bonus (Adventures): +${(scaledPerk.value * 100).toFixed(1)}%`;
-                                break;
-                            case "materialChanceMultiplier":
-                                perkText = `Material Find Chance Multiplier: x${scaledPerk.value.toFixed(2)}`;
-                                break;
-                            case "flatCurrencyChanceBoost":
-                                let currencyBonuses = [];
-                                if (scaledPerk.goldBonus) currencyBonuses.push(`Gold Find (Flat): +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
-                                if (scaledPerk.diamondBonus) currencyBonuses.push(`Diamond Find (Flat): +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
-                                perkText = currencyBonuses.join('<br>');
-                                break;
-                            case "dungeonEntryBonus": // Pizza Pendant
-                                let entryBonuses = [];
-                                if (scaledPerk.dungeon1) entryBonuses.push(`Dungeon 1: +${scaledPerk.dungeon1} daily entry`);
-                                if (scaledPerk.dungeon2) entryBonuses.push(`Dungeon 2: +${scaledPerk.dungeon2} daily entry`);
-                                perkText = entryBonuses.join('<br>');
-                                break;
-                            case "timeReductionPercent": // Orb of Haste
-                                perkText = `Adventure Time Reduction: ${(scaledPerk.value * 100).toFixed(0)}%`;
-                                break;
-                            case "dungeonMaterialFetch": // $DOG Pet
-                                perkText = `$DOG Pet: Fetches ${scaledPerk.count} random material(s) after dungeon.`;
-                                break;
-                            // These perks directly contribute to Attack/Defense, not listed as separate "specialties" here
-                            case "attackBoost":
-                            case "defenseBoost":
-                            case "statBoost":
-                                perkIsSpecialty = false;
-                                break;
-                            default:
-                                console.warn("Unknown perk type for specialty display:", scaledPerk.type);
-                                perkIsSpecialty = false;
-                                break;
-                        }
-
-                        if (perkText && perkIsSpecialty) {
-                            const itemLevelText = (invItem.level || 0) > 0 ? ` +${invItem.level}` : '';
-                            specialtiesHtml += `<li>${perkText} <span class="specialty-source">(from ${itemMaster.name}${itemLevelText})</span></li>`;
-                            foundSpecialties = true;
-                        }
-                    }
+                switch (scaledPerk.type) {
+                    case "timeReduction":
+                        perkText = `Adventure Time Reduction: ${scaledPerk.value / 60} minutes`;
+                        break;
+                    case "goldChanceIncrease":
+                        perkText = `Gold Find Chance Multiplier: +${(scaledPerk.value * 100).toFixed(1)}%`;
+                        break;
+                    case "pvBonus":
+                        perkText = `PV Token Bonus (Adventures): +${(scaledPerk.value * 100).toFixed(1)}%`;
+                        break;
+                    case "materialChanceMultiplier":
+                        perkText = `Material Find Chance Multiplier: x${scaledPerk.value.toFixed(2)}`;
+                        break;
+                    case "flatCurrencyChanceBoost":
+                        let currencyBonuses = [];
+                        if (scaledPerk.goldBonus) currencyBonuses.push(`Gold Find (Flat): +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
+                        if (scaledPerk.diamondBonus) currencyBonuses.push(`Diamond Find (Flat): +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
+                        perkText = currencyBonuses.join('<br>');
+                        break;
+                    case "dungeonEntryBonus": // Pizza Pendant
+                        let entryBonuses = [];
+                        if (scaledPerk.dungeon1) entryBonuses.push(`Dungeon 1: +${scaledPerk.dungeon1} daily entry`);
+                        if (scaledPerk.dungeon2) entryBonuses.push(`Dungeon 2: +${scaledPerk.dungeon2} daily entry`);
+                        perkText = entryBonuses.join('<br>');
+                        break;
+                    case "timeReductionPercent": // Orb of Haste
+                        perkText = `Adventure Time Reduction: ${(scaledPerk.value * 100).toFixed(0)}%`;
+                        break;
+                    case "dungeonMaterialFetch": // $DOG Pet
+                        perkText = `$DOG Pet: Fetches ${scaledPerk.count} random material(s) after dungeon.`;
+                        break;
+                    // These perks directly contribute to Attack/Defense, not listed as separate "specialties" here
+                    case "attackBoost":
+                    case "defenseBoost":
+                    case "statBoost":
+                        perkIsSpecialty = false;
+                        break;
+                    default:
+                        console.warn("Unknown perk type for specialty display:", scaledPerk.type);
+                        perkIsSpecialty = false;
+                        break;
                 }
-            });
 
-            // 2. Dungeon Set Bonus
-            const dungeonSetReduction = getDungeonSetBonusTimeReduction(); // You already have this function
-            if (dungeonSetReduction > 0) {
-                specialtiesHtml += `<li>Dungeon Set Bonus: Adventure Time Reduction: ${(dungeonSetReduction * 100).toFixed(0)}%</li>`;
-                foundSpecialties = true;
+                if (perkText && perkIsSpecialty) {
+                    const itemLevelText = (invItem.level || 0) > 0 ? ` +${invItem.level}` : '';
+                    specialtiesHtml += `<li>${perkText} <span class="specialty-source">(from ${itemMaster.name}${itemLevelText})</span></li>`;
+                    foundSpecialties = true;
+                }
             }
-
-            if (!foundSpecialties) {
-                specialtiesHtml += '<li>No active specialty perks. Equip items or complete sets!</li>';
-            }
-            specialtiesHtml += '</ul>';
-            specialtiesListContainer.innerHTML = specialtiesHtml;
         }
+    });
+
+    // 2. Dungeon Set Bonus
+    const dungeonSetReduction = getDungeonSetBonusTimeReduction(); // You already have this function
+    if (dungeonSetReduction > 0) {
+        specialtiesHtml += `<li>Dungeon Set Bonus: Adventure Time Reduction: ${(dungeonSetReduction * 100).toFixed(0)}%</li>`;
+        foundSpecialties = true;
+    }
+
+    if (!foundSpecialties) {
+        specialtiesHtml += '<li>No active specialty perks. Equip items or complete sets!</li>';
+    }
+    specialtiesHtml += '</ul>';
+    specialtiesListContainer.innerHTML = specialtiesHtml;
+}
+
+async function fetchWalletInscriptions(userAddress, walletName) {
+    if (!punkVoyageIdsLoaded) {
+        console.warn("fetchWalletInscriptions: Punk Voyage ID list (game definition) not loaded. Cannot calculate bonus or display.");
+        if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
+        if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Loading game's collection definitions...</p>`;
+        return;
+    }
+
+    if (userOrdinalsDisplayElement) userOrdinalsDisplayElement.style.display = 'block';
+    if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Loading your inscriptions...</p>`;
+
+    let actualWalletInscriptionIds = [];
+    let inscriptionDetailsForRendering = [];
+    let previousBonusAdventurers = ordinalBonusAdventurers;
+
+    try {
+        if (walletName === 'UniSat' && typeof window.unisat !== 'undefined') {
+            const unisatInscriptions = await window.unisat.getInscriptions(0, 200);
+            if (unisatInscriptions && unisatInscriptions.list) {
+                actualWalletInscriptionIds = unisatInscriptions.list.map(insc => insc.inscriptionId);
+            }
+        } else if (walletName === 'Xverse' || walletName === 'UniSat') {
+            let currentOffset = 0; const pageLimit = 60; let hasMore = true;
+            const tempIds = [];
+            while (hasMore && tempIds.length < 500) {
+                const hiroApiUrl = `https://api.hiro.so/ordinals/v1/inscriptions?address=${userAddress}&limit=${pageLimit}&offset=${currentOffset}`;
+                const response = await fetch(hiroApiUrl);
+                if (!response.ok) {
+                     if (tempIds.length === 0 && userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Error fetching inscriptions via public API. Status: ${response.statusText}</p>`;
+                    break;
+                }
+                const data = await response.json();
+                if (data.results && data.results.length > 0) tempIds.push(...data.results.map(insc => insc.id));
+                if (data.total > tempIds.length && data.results && data.results.length === pageLimit) currentOffset += pageLimit;
+                else hasMore = false;
+            }
+            actualWalletInscriptionIds = tempIds;
+        } else {
+            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Wallet type not supported for inscription listing.</p>`;
+            ordinalBonusAdventurers = 0;
+            recalculateTotalAvailableAdventurers();
+            if (previousBonusAdventurers !== 0 && currentUser && currentUser.uid) await saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+            return;
+        }
+
+        if (actualWalletInscriptionIds.length === 0) {
+            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>No inscriptions found in this wallet.</p>`;
+            ordinalBonusAdventurers = 0;
+        } else {
+            const ownedPunkVoyageForBonus = actualWalletInscriptionIds.filter(id => PUNK_VOYAGE_IDS_SET.has(id));
+            ordinalBonusAdventurers = ownedPunkVoyageForBonus.length;
+
+            if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>Found ${ownedPunkVoyageForBonus.length} Punk Voyage Ordinal(s). You get ${ordinalBonusAdventurers} bonus adventurer(s)! Fetching details for display...</p>`;
+
+            for (const inscriptionId of ownedPunkVoyageForBonus) {
+                if (PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]) {
+                    inscriptionDetailsForRendering.push(PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]);
+                    continue;
+                }
+                try {
+                    const detailUrl = `https://api.hiro.so/ordinals/v1/inscriptions/${inscriptionId}`;
+                    const contentUrl = `https://api.hiro.so/ordinals/v1/inscriptions/${inscriptionId}/content`;
+                    let name = `#${inscriptionId.slice(0,4)}...`;
+                    try {
+                        const detailResponse = await fetch(detailUrl);
+                        if(detailResponse.ok){
+                            const detailData = await detailResponse.json();
+                            name = `#${detailData.number || inscriptionId.slice(0,4)}`;
+                        }
+                    } catch (nameFetchError) { console.warn("Could not fetch name for display", nameFetchError); }
+                    PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId] = { id: inscriptionId, name: name, imageUrl: contentUrl };
+                    inscriptionDetailsForRendering.push(PUNK_VOYAGE_ID_IMAGE_CACHE[inscriptionId]);
+                } catch (detailError) {
+                    console.error(`Error processing inscription ${inscriptionId} for display:`, detailError);
+                    inscriptionDetailsForRendering.push({ id: inscriptionId, name: `ID ${inscriptionId.slice(0,6)}... (Error)`, imageUrl: null });
+                }
+            }
+        }
+        renderOwnedPunkVoyageOrdinals(inscriptionDetailsForRendering);
+
+    } catch (error) {
+        console.error(`Error in fetchWalletInscriptions (Client-Side Bonus) for ${walletName}:`, error);
+        if (userOrdinalsListElement) userOrdinalsListElement.innerHTML = `<p>An error occurred while checking your Ordinals.</p>`;
+        ordinalBonusAdventurers = 0;
+    } finally {
+        recalculateTotalAvailableAdventurers();
+        if (ordinalBonusAdventurers !== previousBonusAdventurers && currentUser && currentUser.uid) {
+            console.log(`Ordinal bonus changed from ${previousBonusAdventurers} to ${ordinalBonusAdventurers}. Saving game state.`);
+            await saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
+        } else if (ordinalBonusAdventurers === previousBonusAdventurers) {
+            console.log(`Ordinal bonus unchanged (${ordinalBonusAdventurers}). No save triggered by fetchWalletInscriptions.`);
+        }
+    }
+}
 
             function openItemSelectionModal(purpose) { 
                 itemSelectionModalList.innerHTML = '';
