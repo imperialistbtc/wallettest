@@ -3298,78 +3298,97 @@ function recalculateTotalAvailableAdventurers() {
     nextBtn.onclick = () => { if (currentDungeonIndex < dungeonsData.length - 1) { currentDungeonIndex++; renderDungeonsPage(); } };
 }
 
-        function renderActiveTasksInSidebar() {
-                // Get all the necessary elements from the HTML
-                const sidebarAdventuresContainer = document.getElementById('sidebarActiveAdventuresDisplay');
-                const sidebarAdventuresList = document.getElementById('sidebarActiveAdventuresList');
-                const sidebarDungeonsContainer = document.getElementById('sidebarActiveDungeonsDisplay');
-                const sidebarDungeonsList = document.getElementById('sidebarActiveDungeonsList');
+function renderActiveTasksInSidebar() {
+    const sidebarAdventuresList = document.getElementById('sidebarActiveAdventuresList');
+    const sidebarDungeonsList = document.getElementById('sidebarActiveDungeonsList');
+    const sidebarDungeonsContainer = document.getElementById('sidebarActiveDungeonsDisplay');
 
-                if (!sidebarAdventuresList || !sidebarDungeonsList) return; // Exit if elements not found
+    if (!sidebarAdventuresList || !sidebarDungeonsList || !sidebarDungeonsContainer) return;
 
-                // --- 1. Render Active Adventures ---
-                sidebarAdventuresList.innerHTML = ''; // Clear previous list
-                if (activeAdventures.length === 0) {
-                    sidebarAdventuresList.innerHTML = '<p style="text-align:center; font-size:0.9em;">No active adventures.</p>';
-                } else {
-                    activeAdventures.sort((a, b) => a.returnTime - b.returnTime).forEach(adv => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'active-adventure-item';
-                        itemDiv.dataset.instanceId = adv.id;
-                        const timeLeftMs = adv.returnTime - Date.now();
-                        itemDiv.innerHTML = `
-                            <div class="active-adventure-item-info">
-                                <p><strong>${adv.name}</strong></p>
-                                <p>Adventurers: ${adv.adventurers}</p>
-                                <p>Time Left: <span class="timer">${formatTimeLeft(timeLeftMs)}</span></p>
-                            </div>
-                            <button class="cancel-adventure-btn" data-task-instance-id="${adv.id}" data-task-type="adventure" title="Cancel Adventure">×</button>
-                        `;
-                        sidebarAdventuresList.appendChild(itemDiv);
-                    });
-                }
+    // --- Check if the current user is an admin ---
+    const isAdmin = currentUser && ADMIN_WALLET_ADDRESSES.includes(currentUser.uid.toLowerCase());
 
-                // --- 2. Render Active Dungeons ---
-                sidebarDungeonsList.innerHTML = ''; // Clear previous list
-                if (activeDungeons.length === 0) {
-                    sidebarDungeonsContainer.classList.add('hidden'); // Hide the whole section if no dungeons
-                } else {
-                    sidebarDungeonsContainer.classList.remove('hidden'); // Show the section
-                    activeDungeons.sort((a, b) => a.returnTime - b.returnTime).forEach(dun => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'active-adventure-item'; // Reuse the same style
-                        itemDiv.dataset.instanceId = dun.id;
-                        const timeLeftMs = dun.returnTime - Date.now();
-                        itemDiv.innerHTML = `
-                            <div class="active-adventure-item-info">
-                                <p><strong>${dun.name}</strong></p>
-                                <p>Dungeon Party: ${dun.adventurers}</p>
-                                <p>Time Left: <span class="timer">${formatTimeLeft(timeLeftMs)}</span></p>
-                            </div>
-                            <button class="cancel-adventure-btn" data-task-instance-id="${dun.id}" data-task-type="dungeon" title="Cancel Dungeon">×</button>
-                        `;
-                        sidebarDungeonsList.appendChild(itemDiv);
-                    });
-                }
+    // --- Render Active Adventures ---
+    sidebarAdventuresList.innerHTML = '';
+    if (activeAdventures.length === 0) {
+        sidebarAdventuresList.innerHTML = '<p style="text-align:center; font-size:0.9em;">No active adventures.</p>';
+    } else {
+        activeAdventures.sort((a, b) => a.returnTime - b.returnTime).forEach(adv => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'active-adventure-item';
+            const timeLeftMs = adv.returnTime - Date.now();
+            
+            // Create the admin button if the user is an admin
+            const adminFinishBtn = isAdmin ? `<button class="action-button finish-now-btn" data-task-id="${adv.id}" data-task-type="adventure" style="font-size:0.8em; padding: 2px 4px; margin-right: 5px; background-color: var(--highlight-color-gold); color: black;">Finish</button>` : '';
 
-                // --- 3. Attach Event Listeners for Cancel Buttons (works for both lists) ---
-                document.querySelectorAll('.right-sidebar-menu .cancel-adventure-btn').forEach(b => {
-                    const oldListener = b._cancelTaskListener;
-                    if(oldListener) b.removeEventListener('click', oldListener);
-                    
-                    const listener = () => {
-                        const instanceId = parseInt(b.dataset.taskInstanceId);
-                        const taskType = b.dataset.taskType;
-                        if (taskType === 'adventure') {
-                            handleCancelAdventure(instanceId);
-                        } else if (taskType === 'dungeon') {
-                            handleCancelDungeon(instanceId);
-                        }
-                    };
-                    b.addEventListener('click', listener);
-                    b._cancelTaskListener = listener; 
-                });
+            itemDiv.innerHTML = `
+                <div class="active-adventure-item-info">
+                    <p><strong>${adv.name}</strong></p>
+                    <p>Adventurers: ${adv.adventurers}</p>
+                    <p>Time Left: <span class="timer">${formatTimeLeft(timeLeftMs)}</span></p>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    ${adminFinishBtn}
+                    <button class="cancel-adventure-btn" data-task-instance-id="${adv.id}" data-task-type="adventure" title="Cancel Adventure">×</button>
+                </div>
+            `;
+            sidebarAdventuresList.appendChild(itemDiv);
+        });
+    }
+
+    // --- Render Active Dungeons ---
+    sidebarDungeonsList.innerHTML = '';
+    if (activeDungeons.length === 0) {
+        sidebarDungeonsContainer.classList.add('hidden');
+    } else {
+        sidebarDungeonsContainer.classList.remove('hidden');
+        activeDungeons.sort((a, b) => a.returnTime - b.returnTime).forEach(dun => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'active-adventure-item';
+            const timeLeftMs = dun.returnTime - Date.now();
+
+            // Create the admin button if the user is an admin
+            const adminFinishBtn = isAdmin ? `<button class="action-button finish-now-btn" data-task-id="${dun.id}" data-task-type="dungeon" style="font-size:0.8em; padding: 2px 4px; margin-right: 5px; background-color: var(--highlight-color-gold); color: black;">Finish</button>` : '';
+
+            itemDiv.innerHTML = `
+                <div class="active-adventure-item-info">
+                    <p><strong>${dun.name}</strong></p>
+                    <p>Dungeon Party: ${dun.adventurers}</p>
+                    <p>Time Left: <span class="timer">${formatTimeLeft(timeLeftMs)}</span></p>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    ${adminFinishBtn}
+                    <button class="cancel-adventure-btn" data-task-instance-id="${dun.id}" data-task-type="dungeon" title="Cancel Dungeon">×</button>
+                </div>
+            `;
+            sidebarDungeonsList.appendChild(itemDiv);
+        });
+    }
+
+    // --- Attach Event Listeners ---
+    // Cancel Buttons
+    document.querySelectorAll('.cancel-adventure-btn').forEach(b => {
+        b.onclick = () => {
+            const instanceId = parseInt(b.dataset.taskInstanceId);
+            const taskType = b.dataset.taskType;
+            if (taskType === 'adventure') handleCancelAdventure(instanceId);
+            else if (taskType === 'dungeon') handleCancelDungeon(instanceId);
+        };
+    });
+
+    // Admin "Finish Now" Buttons
+    document.querySelectorAll('.finish-now-btn').forEach(b => {
+        b.onclick = () => {
+            const taskId = parseInt(b.dataset.taskId);
+            const taskType = b.dataset.taskType;
+            if (taskType === 'adventure') {
+                completeAdventure(taskId);
+            } else if (taskType === 'dungeon') {
+                completeDungeon(taskId);
             }
+        };
+    });
+}
             
             
 function handleCancelDungeon(dungeonInstanceId) {
