@@ -2197,39 +2197,40 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
         case "pvBonus":
         case "goldChanceIncrease":
         case "timeReductionPercent":
-            scaledPerk.value = parseFloat((itemMaster.perk.value * scaleFactor).toFixed(4));
-            break;
         case "materialChanceMultiplier":
              scaledPerk.value = parseFloat((itemMaster.perk.value * scaleFactor).toFixed(4));
-            break;
-        case "flatCurrencyChanceBoost":
-            if (scaledPerk.goldBonus !== undefined) scaledPerk.goldBonus = parseFloat((itemMaster.perk.goldBonus * scaleFactor).toFixed(4));
-            if (scaledPerk.diamondBonus !== undefined) scaledPerk.diamondBonus = parseFloat((itemMaster.perk.diamondBonus * scaleFactor).toFixed(4));
             break;
         case "statBoost":
             if (scaledPerk.attack !== undefined) scaledPerk.attack = Math.round(itemMaster.perk.attack * scaleFactor);
             if (scaledPerk.defense !== undefined) scaledPerk.defense = Math.round(itemMaster.perk.defense * scaleFactor);
             break;
-        // --- NEW AND UPDATED PERK LOGIC ---
-        case "statAndDungeonTime": // For Dungeon Boots
+        case "statAndDungeonTime":
             if (scaledPerk.attack !== undefined) scaledPerk.attack = Math.round(itemMaster.perk.attack * scaleFactor);
             if (scaledPerk.timeReduction !== undefined) scaledPerk.timeReduction = parseFloat((itemMaster.perk.timeReduction * scaleFactor).toFixed(4));
             break;
-        case "timeReductionHybrid": // For Warped Boots
+        case "timeReductionHybrid":
             if (scaledPerk.flat !== undefined) scaledPerk.flat = Math.round(itemMaster.perk.flat * scaleFactor);
             if (scaledPerk.percent !== undefined) scaledPerk.percent = parseFloat((itemMaster.perk.percent * scaleFactor).toFixed(4));
             break;
-        case "statAndCurrencyBoost": // For Ring of Warding
+        case "statAndCurrencyBoost":
             if (scaledPerk.defense !== undefined) scaledPerk.defense = Math.round(itemMaster.perk.defense * scaleFactor);
             if (scaledPerk.goldBonus !== undefined) scaledPerk.goldBonus = parseFloat((itemMaster.perk.goldBonus * scaleFactor).toFixed(4));
             if (scaledPerk.diamondBonus !== undefined) scaledPerk.diamondBonus = parseFloat((itemMaster.perk.diamondBonus * scaleFactor).toFixed(4));
             break;
-        // --- END NEW LOGIC ---
+        
+        // --- THIS IS THE NEW FIX ---
+        case "statAndEntryBoost": 
+        case "statAndDungeonPVBoost":
+            if (scaledPerk.attack !== undefined) scaledPerk.attack = Math.round(itemMaster.perk.attack * scaleFactor);
+            if (scaledPerk.defense !== undefined) scaledPerk.defense = Math.round(itemMaster.perk.defense * scaleFactor);
+            // Dungeon entry and PV multiplier perks do not scale with level
+            break;
+        // --- END OF THE FIX ---
+
         case "dungeonEntryBonus":
         case "dungeonMaterialFetch":
         case "dungeonDropEcho":
-        case "statAndEntryBoost":
-        case "statAndDungeonPVBoost":
+        case "crawlerSlotBonus":
             // These perks do not scale with level by default
             break;
         default:
