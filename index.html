@@ -2152,12 +2152,14 @@ let lastDailyRewardDayClaimed = 0;
         maxPartySize: 6,
         maxEntriesPerDay: 1,
         drops: [
-     { name: "Void Crystal", chance: 0.08, qty: 1 },         
-     { name: "ATH Ash", chance: 0.08, qty: 1 },            
-     { name: "Fire Ink", chance: 0.03, qty: 1 },           
-     { name: "Zeus's Tear", chance: 0.03, qty: 1 },        
-     { name: "Indian Street Food", chance: 0.03, qty: 1 }, 
-     { id: "pet_bat", chance: 0.005, qty: 1, type: "equipment" } 
+     { name: "Void Crystal", chance: 0.08, qty: 1 },
+     { name: "ATH Ash", chance: 0.08, qty: 1 },
+     { name: "Fire Ink", chance: 0.03, qty: 1 },
+     { name: "Zeus's Tear", chance: 0.03, qty: 1 },
+     { name: "Indian Street Food", chance: 0.03, qty: 1 },
+     { id: "void_compass", chance: 0.01, qty: 1, type: "equipment" },   // ADDED
+     { id: "ath_talisman", chance: 0.01, qty: 1, type: "equipment" },   // ADDED
+     { id: "pet_bat", chance: 0.005, qty: 1, type: "equipment" }
 ],
         placeholderReward: "5000 PV, 10 Gold, 2 Diamonds",
         isLockedContent: false
@@ -2258,16 +2260,18 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
         // This function now systematically checks for all possible effects in a perk
         if (scaledPerk.attack) perkDetails.push(`Attack: +${scaledPerk.attack}`);
         if (scaledPerk.defense) perkDetails.push(`Defense: ${scaledPerk.defense > 0 ? '+' : ''}${scaledPerk.defense}`);
+        
         if (scaledPerk.value && scaledPerk.type === 'attackBoost') perkDetails.push(`Attack: +${scaledPerk.value}`);
         if (scaledPerk.value && scaledPerk.type === 'defenseBoost') perkDetails.push(`Defense: +${scaledPerk.value}`);
         
         if (scaledPerk.pvBonus) perkDetails.push(`PV Bonus: +${(scaledPerk.pvBonus * 100).toFixed(1)}%`);
+        if (scaledPerk.goldChanceIncrease) perkDetails.push(`Gold Find Chance: +${(scaledPerk.value * 100).toFixed(1)}%`);
         if (scaledPerk.goldBonus) perkDetails.push(`Gold Find: +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
         if (scaledPerk.diamondBonus) perkDetails.push(`Diamond Find: +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
         if (scaledPerk.pvMultiplier) perkDetails.push(`Dungeon PV x${scaledPerk.pvMultiplier}`);
 
-        if (scaledPerk.timeReduction) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.timeReduction / 60)} min`);
-        if (scaledPerk.timeReductionPercent) perkDetails.push(`Adventure Time: -${(scaledPerk.timeReductionPercent * 100).toFixed(0)}%`);
+        if (scaledPerk.timeReduction) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.value / 60)} min`);
+        if (scaledPerk.timeReductionPercent) perkDetails.push(`Adventure Time: -${(scaledPerk.value * 100).toFixed(0)}%`);
         if (scaledPerk.flat && scaledPerk.percent) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
         if (scaledPerk.statAndDungeonTime) perkDetails.push(`Dungeon Time: -${(scaledPerk.timeReduction * 100).toFixed(0)}%`);
 
@@ -3992,6 +3996,31 @@ function renderInventory() {
     renderDungeonsPage();
     if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState());
 }
+
+adventureDropButtons.forEach(button => {
+    button.addEventListener('mouseenter', (event) => {
+        const adventureId = event.target.dataset.adventureId;
+        const popover = document.getElementById(`drops-popover-${adventureId}`);
+        const adventureInfo = adventuresData[adventureId];
+        if (popover && adventureInfo && adventureInfo.drops) {
+            let dropsHtml = '<h5>Possible Drops:</h5><ul>';
+            adventureInfo.drops.forEach(drop => {
+                const dItem = craftableItemsData.find(cd => cd.id === drop.name);
+                dropsHtml += `<li>${drop.qty || 1}x ${dItem ? dItem.name : drop.name} (${(drop.chance * 100).toFixed(3)}%)</li>`;
+            });
+            dropsHtml += '</ul>';
+            popover.innerHTML = dropsHtml;
+            popover.style.display = 'block';
+        }
+    });
+    button.addEventListener('mouseleave', (event) => {
+        const adventureId = event.target.dataset.adventureId;
+        const popover = document.getElementById(`drops-popover-${adventureId}`);
+        if (popover) {
+            popover.style.display = 'none';
+        }
+    });
+});
 
 function usePetWhistleUnlock(itemUniqueId) {
     if (!currentUser) return;
