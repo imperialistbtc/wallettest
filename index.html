@@ -1420,6 +1420,13 @@ body.dark-mode {
                         <p>Good luck on your voyages, Voyager! May your hauls be plentiful and your Punks legendary!</p>
                     </div> 
                 </section>
+                <section id="pvp-page" class="page-content" style="align-items: center;">
+                    <h2 class="page-title">PLAYER VS PLAYER</h2>
+                    <div style="text-align:center; max-width: 600px;">
+                        <p>PvP is not yet implemented.</p>
+                        <p>By unlocking this scroll, you have flagged your account as ready for combat. When the feature goes live, you will be able to participate in battles for glory and rewards!</p>
+                    </div>
+                </section>
             </div>
 <aside class="right-sidebar-menu"> <nav class="main-menu-nav"> <div class="sidebar-content-area" id="sidebarContentArea"> <ul class="main-menu-nav-list" id="mainMenuList"> 
                 <li data-page="adventures-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/adventures.jpg" alt="" class="menu-item-icon">ADVENTURES</li>  
@@ -1433,7 +1440,8 @@ body.dark-mode {
                 <li data-page="leaderboard-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/leaderboard.jpg" alt="" class="menu-item-icon">LEADERBOARD</li> 
                 <li data-page="whitelist-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/star.jpg" alt="" class="menu-item-icon">GIVEAWAYS</li> 
                 <li data-page="help-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/help.jpg" alt="" class="menu-item-icon">HELP</li> 
-                </ul> <div class="sidebar-active-adventures-container" id="sidebarActiveAdventuresDisplay"> <h3>ACTIVE ADVENTURES</h3> <div id="sidebarActiveAdventuresList"></div> </div> 
+                <li data-page="pvp-page" class="menu-list-item" style="display: none;" id="pvp-menu-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pvp.jpg" alt="" class="menu-item-icon">PVP</li>    
+            </ul> <div class="sidebar-active-adventures-container" id="sidebarActiveAdventuresDisplay"> <h3>ACTIVE ADVENTURES</h3> <div id="sidebarActiveAdventuresList"></div> </div> 
                               <div class="sidebar-active-adventures-container" id="sidebarActiveDungeonsDisplay" style="margin-top: 15px;">
                     <h3>ACTIVE DUNGEONS</h3>
                     <div id="sidebarActiveDungeonsList"></div>
@@ -1785,6 +1793,7 @@ function updateAdventureCardPvDisplay() {
             let craftingCurrentPage = 1;
             let craftingShowOnlyCraftable = false;
             let currentDungeonIndex = 0;
+            let playerHasPurchasedPvpScroll = false;
 
 const craftingItemsPerPage = 5;
 let craftingFilterType = 'all';
@@ -2044,7 +2053,28 @@ let lastDailyRewardDayClaimed = 0;
                 price: 5000,
                 iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/petwhistle.jpg", // <-- UPDATED ICON
                 type: "unlockable_consumable"
-            }
+            },
+            {
+    id: "upgrade_booster",
+    name: "Upgrade Booster",
+    description: "Consumed on purchase. Grants +10% FLAT success chance to your NEXT item upgrade attempt.",
+    price: 5000, // PV cost
+    goldPrice: 2, // Gold cost
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/booster.jpg",
+    type: "buff",
+    durationUpgrades: 1, // Lasts for 1 upgrade
+    effect: { type: "upgradeChanceBonus", flatValue: 0.10 }
+},
+{
+    id: "pvp_scroll_unlock",
+    name: "Mastery Scroll (PvP)",
+    description: "Permanently enables PvP. You can attack and be attacked by other players. One-time purchase, consumed on use.",
+    price: 250000, // PV cost
+    goldPrice: 50, // Gold cost
+    diamondPrice: 5, // Diamond cost
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pvp.jpg",
+    type: "unlockable_consumable"
+}
         ];
 
 
@@ -2604,6 +2634,7 @@ function resetGameStateToDefaults() {
     playerHasPurchasedPetWhistle = false;
     totalAdventuresCompleted = 0;
     ordinalBonusAdventurers = 0; // <<< ADDED THIS LINE
+    playerHasPurchasedPvpScroll = false;
 
     equippedItems = { Armour: null, Helmet: null, Boots: null, Amulet: null, Ring1: null, Ring2: null, Weapon: null, Pet: null, Misc1: null, Misc2: null };
     playerAdventurerLevel = 1;
@@ -2835,6 +2866,7 @@ function getCurrentGameState() {
         playerMaterials: playerMaterials || { ...initialPlayerMaterials },
         playerScrolls: playerScrolls || { low: 0, middle: 0, high: 0 },
         playerHasPurchasedRiderScroll: playerHasPurchasedRiderScroll || false,
+        playerHasPurchasedPvpScroll: playerHasPurchasedPvpScroll || false,
         totalAdventuresCompleted: totalAdventuresCompleted || 0,
         equippedItems: equippedItems || { Armour: null, Helmet: null, Boots: null, Amulet: null, Ring1: null, Ring2: null, Weapon: null, Pet: null, Misc1: null, Misc2: null },
         quests: Array.isArray(quests) ? quests.map(q => ({ id: q.id, text: q.text || "UKN", reward: q.reward || "0", completed: q.completed || false, progress: q.progress || 0, target: q.target || 0, adventureName: q.adventureName || null, metric: q.metric || null, claimed: q.claimed || false })) : [],
@@ -2973,6 +3005,7 @@ function applyLoadedGameState(loadedState) {
         playerScrolls = loadedState.playerScrolls || { low: 0, middle: 0, high: 0 };
         playerHasPurchasedRiderScroll = loadedState.playerHasPurchasedRiderScroll || false;
         playerHasPurchasedPetWhistle = loadedState.playerHasPurchasedPetWhistle || false;
+        playerHasPurchasedPvpScroll = loadedState.playerHasPurchasedPvpScroll || false;
         // ordinalBonusAdventurers is handled above based on wallet connection state
 
 
@@ -3068,6 +3101,10 @@ function applyLoadedGameState(loadedState) {
     } catch (error) {
         console.error("Error during applyLoadedGameState:", error, error.stack);
         showCustomPopup("Error applying loaded game data. Please try logging in again or contact support if this persists.", "Apply State Error");
+    }
+    const pvpMenuItem = document.getElementById('pvp-menu-item');
+    if (pvpMenuItem) {
+        pvpMenuItem.style.display = playerHasPurchasedPvpScroll ? 'flex' : 'none';
     }
 }
             
@@ -4420,101 +4457,117 @@ function checkAndResetDailyDungeonEntries() {
     if (dungeonResetCountdownElement) dungeonResetCountdownElement.textContent = displayText;
     if (pageDungeonResetCountdownElement) pageDungeonResetCountdownElement.textContent = displayText;
 }
-            function renderShopItems() { 
-                if (!shopItemsDiv) return; 
-                shopItemsDiv.innerHTML = ''; 
-                shopItemsData.forEach(item => { 
-                    const ie = document.createElement('div'); 
-                    ie.classList.add('shop-item'); 
-                    let buyButtonDisabled = '';
-                    let buyButtonText = 'Buy';
-                if (item.id === 'rider_scroll_unlock' && (playerHasPurchasedRiderScroll || playerInventory.some(invItem => invItem.id === 'rider_scroll_unlock'))) {
-                    buyButtonDisabled = 'disabled title="You have already purchased this."';
-                    buyButtonText = 'Owned';
-                } else if (item.id === 'pet_whistle_unlock' && (playerHasPurchasedPetWhistle || playerInventory.some(invItem => invItem.id === 'pet_whistle_unlock'))) { // NEW ELSE IF
-                    buyButtonDisabled = 'disabled title="You have already purchased this."';
-                    buyButtonText = 'Owned';
-                }
+function renderShopItems() { 
+    if (!shopItemsDiv) return; 
+    shopItemsDiv.innerHTML = ''; 
+    shopItemsData.forEach(item => { 
+        const ie = document.createElement('div'); 
+        ie.classList.add('shop-item'); 
 
-                    let quantityInputHtml = '';
-                    if (item.type === "upgrade_scroll_purchase") {
-                        quantityInputHtml = `<input type="number" class="quantity-selector scroll-quantity-input" data-item-id="${item.id}" min="1" max="10" value="1">`;
-                    }
+        let buyButtonDisabled = '';
+        let buyButtonText = 'Buy';
 
-                    ie.innerHTML = `
-                        <div class="item-icon-placeholder">${getItemIconHTML(item.iconUrlOrColor, item.name)}</div>
-                        <div>
-                            <p><strong>${item.name}</strong></p>
-                            <p><small>${item.description}</small></p>
-                        </div>
-                        <div class="shop-details" style="display:flex; align-items:center;">
-                            ${quantityInputHtml}
-                            <span class="shop-price" style="margin-right:10px;">${item.price} PV</span>
-                            <button class="action-button buy-item-btn" data-item-id="${item.id}" data-price="${item.price}" ${buyButtonDisabled}>${buyButtonText}</button>
-                        </div>`; 
-                    shopItemsDiv.appendChild(ie); 
-                     ie.addEventListener('mousemove', (e) => showItemTooltip(e, item));
-                     ie.addEventListener('mouseleave', hideItemTooltip);
-                }); 
-                document.querySelectorAll('.buy-item-btn:not([disabled])').forEach(b => { b.addEventListener('click', (e) => { 
-                    if(!currentUser) return; 
-                    const itemId = e.target.dataset.itemId; 
-                    const itemPrice = parseInt(e.target.dataset.price); 
-                    const itemData = shopItemsData.find(it => it.id === itemId); 
-                    if (!itemData) return; 
+        if (item.id === 'rider_scroll_unlock' && (playerHasPurchasedRiderScroll || playerInventory.some(invItem => invItem.id === 'rider_scroll_unlock'))) {
+            buyButtonDisabled = 'disabled title="You have already purchased this."';
+            buyButtonText = 'Owned';
+        } else if (item.id === 'pet_whistle_unlock' && (playerHasPurchasedPetWhistle || playerInventory.some(invItem => invItem.id === 'pet_whistle_unlock'))) {
+            buyButtonDisabled = 'disabled title="You have already purchased this."';
+            buyButtonText = 'Owned';
+        } else if (item.id === 'pvp_scroll_unlock' && playerHasPurchasedPvpScroll) { // PvP Scroll Check
+            buyButtonDisabled = 'disabled title="You have already purchased this."';
+            buyButtonText = 'Owned';
+        } else if (item.id === 'upgrade_booster' && activePotions.some(p => p.id === 'upgrade_booster')) { // Upgrade Booster Check
+            buyButtonDisabled = 'disabled title="An Upgrade Booster is already active."';
+            buyButtonText = 'Active';
+        }
 
-                    let quantity = 1;
-                    if (itemData.type === "upgrade_scroll_purchase") {
-                        const quantityInput = e.target.closest('.shop-details').querySelector(`.scroll-quantity-input[data-item-id="${itemId}"]`);
-                        if (quantityInput) quantity = parseInt(quantityInput.value) || 1;
-                    }
-                    const totalCost = itemPrice * quantity;
+        let quantityInputHtml = '';
+        if (item.type === "upgrade_scroll_purchase") {
+            quantityInputHtml = `<input type="number" class="quantity-selector scroll-quantity-input" data-item-id="${item.id}" min="1" max="10" value="1">`;
+        }
 
-                    if (currentPvTokens >= totalCost) { 
-                        currentPvTokens -= totalCost; updateStatsDisplay(); 
-                        showCustomPopup(`Successfully bought ${quantity}x ${itemData.name} for ${totalCost} PV.`, "Purchase Complete"); 
-                        
-                        if (itemData.type === "buff" && itemData.effect) { 
-                            const existingPotion = activePotions.find(p => p.id === itemData.id && (p.endTime || p.adventuresLeft)); 
-                            if (existingPotion) { 
-                                showCustomPopup(`${itemData.name} is already active or you have one of its kind. Finish it first.`, "Potion Active"); 
-                                currentPvTokens += totalCost; updateStatsDisplay(); return; 
-                            } 
-                            let newPotion = { id: itemData.id, name: itemData.name, description: itemData.description, effect: itemData.effect }; 
-                            if (itemData.durationSeconds) { 
-                                const originalHours = itemData.durationSeconds / 3600;
-                                newPotion.endTime = Date.now() + (originalHours * GAME_HOUR_IN_REAL_SECONDS * 1000);
-                            } else if (itemData.durationAdventures) { newPotion.adventuresLeft = itemData.durationAdventures; } 
-                            activePotions.push(newPotion); 
-                            renderActivePotions(); 
-                            quests.forEach(q => { if (q.metric === `potionUsed_${itemData.id}` && !q.completed && !q.claimed) {q.progress = (q.progress || 0) + 1; if (q.progress >= q.target) { q.completed = true; showCustomPopup(`Quest Completed: ${q.text}`, "Quest Complete!");}} });
-                            if(document.getElementById('quests-page').classList.contains('active')) renderQuests();
-                        } else if (itemData.type === "upgrade_scroll_purchase" && itemData.scrollTypeKey) { 
-                            playerScrolls[itemData.scrollTypeKey] = (playerScrolls[itemData.scrollTypeKey] || 0) + quantity;
-                            renderMaterials(); 
-                        } else if (itemData.type === "unlockable_consumable" && itemData.id === "rider_scroll_unlock") {
-                             if (!playerHasPurchasedRiderScroll && !playerInventory.some(invItem => invItem.id === 'rider_scroll_unlock')) {
-                                playerInventory.push({ id: "rider_scroll_unlock", uniqueInstanceId: `unlock_${nextUniqueInstanceId++}` });
-                            playerHasPurchasedRiderScroll = true; 
-                            renderInventory(); 
-                            e.target.disabled = true; 
-                            e.target.textContent = 'Owned';
-                        }
-                    } else if (itemData.id === "pet_whistle_unlock") { // NEW ELSE IF
-                        if (!playerHasPurchasedPetWhistle && !playerInventory.some(invItem => invItem.id === 'pet_whistle_unlock')) {
-                            playerInventory.push({ id: "pet_whistle_unlock", uniqueInstanceId: `unlock_pet_${nextUniqueInstanceId++}` });
-                            playerHasPurchasedPetWhistle = true; // Mark as purchased
-                            renderInventory(); // Update inventory display
-                            e.target.disabled = true; // Disable buy button
-                            e.target.textContent = 'Owned';
-                        }
-                    }
-                    if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState()); 
-                    } else { 
-                        showCustomPopup(`Not enough PV Tokens to buy ${quantity}x ${itemData.name}! You need ${totalCost} PV.`, "Transaction Failed"); 
-                    } 
-                }); }); 
+        // Build price string with multiple currencies
+        let priceHtml = '';
+        if(item.price) priceHtml += `${item.price} <span class="pv">PV</span> `;
+        if(item.goldPrice) priceHtml += `${item.goldPrice} <span class="gold">GOLD</span> `;
+        if(item.diamondPrice) priceHtml += `${item.diamondPrice} <span class="diamond">DIAMOND</span>`;
+
+        ie.innerHTML = `
+            <div class="item-icon-placeholder">${getItemIconHTML(item.iconUrlOrColor, item.name)}</div>
+            <div>
+                <p><strong>${item.name}</strong></p>
+                <p><small>${item.description}</small></p>
+            </div>
+            <div class="shop-details" style="display:flex; align-items:center;">
+                ${quantityInputHtml}
+                <span class="shop-price" style="margin-right:10px;">${priceHtml}</span>
+                <button class="action-button buy-item-btn" data-item-id="${item.id}" ${buyButtonDisabled}>${buyButtonText}</button>
+            </div>`; 
+        shopItemsDiv.appendChild(ie); 
+         ie.addEventListener('mousemove', (e) => showItemTooltip(e, item));
+         ie.addEventListener('mouseleave', hideItemTooltip);
+    }); 
+    
+    document.querySelectorAll('.buy-item-btn:not([disabled])').forEach(b => { 
+        b.onclick = (e) => { // Switched to onclick to prevent multiple listeners
+            if(!currentUser) return; 
+            const itemId = e.target.dataset.itemId; 
+            const itemData = shopItemsData.find(it => it.id === itemId); 
+            if (!itemData) return; 
+
+            const pvCost = itemData.price || 0;
+            const goldCost = itemData.goldPrice || 0;
+            const diamondCost = itemData.diamondPrice || 0;
+            
+            let quantity = 1;
+            if (itemData.type === "upgrade_scroll_purchase") {
+                const quantityInput = e.target.closest('.shop-details').querySelector(`.scroll-quantity-input`);
+                if (quantityInput) quantity = parseInt(quantityInput.value) || 1;
             }
+            const totalPvCost = pvCost * quantity;
+            const totalGoldCost = goldCost * quantity;
+            const totalDiamondCost = diamondCost * quantity;
+
+            if (currentPvTokens >= totalPvCost && currentGold >= totalGoldCost && currentDiamonds >= totalDiamondCost) { 
+                currentPvTokens -= totalPvCost; 
+                currentGold -= totalGoldCost;
+                currentDiamonds -= totalDiamondCost;
+                updateStatsDisplay(); 
+                
+                showCustomPopup(`Successfully bought ${quantity > 1 ? quantity + 'x' : ''} ${itemData.name}!`, "Purchase Complete"); 
+                
+                if (itemData.type === "buff" && itemData.effect) { 
+                    let newPotion = { 
+                        id: itemData.id, 
+                        name: itemData.name, 
+                        description: itemData.description, 
+                        effect: itemData.effect,
+                        adventuresLeft: itemData.durationAdventures,
+                        upgradesLeft: itemData.durationUpgrades // Added for upgrade booster
+                    }; 
+                    activePotions.push(newPotion); 
+                    renderActivePotions(); 
+                } else if (itemData.type === "upgrade_scroll_purchase" && itemData.scrollTypeKey) { 
+                    playerScrolls[itemData.scrollTypeKey] = (playerScrolls[itemData.scrollTypeKey] || 0) + quantity;
+                    renderMaterials(); 
+                } else if (itemData.id === "rider_scroll_unlock") {
+                    playerInventory.push({ id: "rider_scroll_unlock", uniqueInstanceId: `unlock_${nextUniqueInstanceId++}` });
+                    playerHasPurchasedRiderScroll = true; 
+                } else if (itemData.id === "pet_whistle_unlock") {
+                    playerInventory.push({ id: "pet_whistle_unlock", uniqueInstanceId: `unlock_pet_${nextUniqueInstanceId++}` });
+                    playerHasPurchasedPetWhistle = true;
+                } else if (itemData.id === "pvp_scroll_unlock") {
+                    playerHasPurchasedPvpScroll = true; // Set the flag
+                }
+                
+                renderShopItems(); // Re-render the shop to update button states
+                if (currentUser.uid) saveGameStateToFirebase(currentUser.uid, getCurrentGameState()); 
+            } else { 
+                showCustomPopup(`Not enough currency to buy ${itemData.name}!`, "Transaction Failed"); 
+            } 
+        }; 
+    }); 
+}
             
              function craftItem(itemId, fromPopup = false, originalSlotIdIfEquipped = null) { 
                 if(!currentUser) return false; 
@@ -6137,38 +6190,44 @@ function updateUpgradeSuccessRateDisplay() {
         upgradeSuccessRateDisplay.textContent = ""; return;
     }
     
-    const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier; // Item's intrinsic tier (0-4)
-    const scrollTier = selectedScrollForUpgrade.scrollTier; // Scroll's tier (1=Low, 2=Mid, 3=High)
-    const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0; // Item's +X level
+    const itemBaseTier = selectedItemForUpgrade.tier === undefined ? 0 : selectedItemForUpgrade.tier;
+    const scrollTier = selectedScrollForUpgrade.scrollTier;
+    const itemCurrentLevel = selectedItemForUpgrade.currentLevel || 0;
     
     let compatibleForLevel = false;
-    if (scrollTier === 1 && itemCurrentLevel === 0) compatibleForLevel = true; // Low scroll only for +0 items
-    else if (scrollTier === 2 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 2)) compatibleForLevel = true; // Mid scroll for +0, +1, +2 items
-    else if (scrollTier === 3 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 4)) compatibleForLevel = true; // High scroll for +0 to +4 items
+    if (scrollTier === 1 && itemCurrentLevel === 0) compatibleForLevel = true;
+    else if (scrollTier === 2 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 2)) compatibleForLevel = true;
+    else if (scrollTier === 3 && (itemCurrentLevel >= 0 && itemCurrentLevel <= 4)) compatibleForLevel = true;
 
     if (!compatibleForLevel) { 
         if (scrollTier === 1 && itemCurrentLevel > 0) {
-            upgradeSuccessRateDisplay.textContent = `Basic Upgrade Scrolls can only be used on +0 items. This item is +${itemCurrentLevel}.`;
+            upgradeSuccessRateDisplay.textContent = `Basic Scrolls are only for +0 items.`;
         } else {
-            upgradeSuccessRateDisplay.textContent = `This scroll (${selectedScrollForUpgrade.name}) is not for upgrading an item at +${itemCurrentLevel}.`; 
+            upgradeSuccessRateDisplay.textContent = `This scroll is not for an item at +${itemCurrentLevel}.`; 
         }
         return; 
     }
     
     if (itemCurrentLevel >= 5) { upgradeSuccessRateDisplay.textContent = "Item is at max level (+5)."; return; }
     
-    let successChance = upgradeChances[itemCurrentLevel]; // Base chance for the item's current level
+    let successChance = upgradeChances[itemCurrentLevel];
     let bonusText = "";
-    if (scrollTier > itemBaseTier) { // Check if scroll tier is higher than item's base tier
-         // Specific tier conditions for bonus:
-        if ((scrollTier === 2 && itemBaseTier <= 1) || // Mid scroll on Tier 0 or 1 item
-            (scrollTier === 3 && itemBaseTier <= 2)) { // High scroll on Tier 0, 1, or 2 item
-            successChance += 0.10;
-            successChance = Math.min(successChance, 1); 
-            bonusText = " (+10% bonus)";
-        }
+
+    // Scroll tier bonus
+    if (scrollTier > itemBaseTier && ((scrollTier === 2 && itemBaseTier <= 1) || (scrollTier === 3 && itemBaseTier <= 2))) {
+        successChance += 0.10;
+        bonusText += " (+10% scroll bonus)";
     }
-    upgradeSuccessRateDisplay.textContent = `Upgrade Success Chance: ${(successChance * 100).toFixed(0)}%${bonusText}`;
+
+    // Upgrade Booster bonus
+    const booster = activePotions.find(p => p.id === 'upgrade_booster');
+    if (booster) {
+        successChance += booster.effect.flatValue;
+        bonusText += " (+10% booster)";
+    }
+
+    successChance = Math.min(successChance, 1);
+    upgradeSuccessRateDisplay.textContent = `Success Chance: ${(successChance * 100).toFixed(0)}%${bonusText}`;
 }
        
 function openItemSelectionModal(purpose) {
