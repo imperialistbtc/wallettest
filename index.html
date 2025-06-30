@@ -1075,16 +1075,21 @@ body.dark-mode {
                 <section id="dungeons-page" class="page-content" style="align-items: center;">
                     <h2 class="page-title">DUNGEONS</h2>
                     
-                    <!-- This is the container for the new page-by-page view -->
-                    <div id="dungeon-carousel-container" style="width: 100%; max-width: 750px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <button id="dungeon-prev-btn" class="action-button" style="font-size: 1.5em; padding: 5px 15px;"><</button>
-                        <div id="dungeon-entry-container" style="flex-grow: 1; margin: 0 15px;">
-                            <!-- Single dungeon entry will be rendered here by JS -->
+                    <!-- This container is now wider -->
+                    <div id="dungeon-carousel-container" style="width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <button id="dungeon-prev-btn" class="action-button" style="font-size: 1.8em; padding: 8px 20px;"><</button>
+                        <div id="dungeon-entry-container" style="flex-grow: 1; margin: 0 20px;">
+                            <!-- Single dungeon entry will be rendered here -->
                         </div>
-                        <button id="dungeon-next-btn" class="action-button" style="font-size: 1.5em; padding: 5px 15px;">></button>
+                        <button id="dungeon-next-btn" class="action-button" style="font-size: 1.8em; padding: 8px 20px;">></button>
                     </div>
                     <div id="dungeon-dots-container" style="text-align: center; margin-bottom: 20px;">
-                        <!-- Page indicator dots will be added here by JS -->
+                        <!-- Page indicator dots will be added here -->
+                    </div>
+                
+                    <!-- NEW CONTAINER FOR NPC SELECTION -->
+                    <div id="dungeon-npc-selection-container" style="width: 100%; max-width: 900px; margin-bottom: 20px;">
+                        <!-- NPC selection UI will be rendered here -->
                     </div>
                 
                     <div id="dungeonResetTimerDisplay" style="text-align: center; margin-bottom: 15px; font-size: 1em;">
@@ -1095,6 +1100,7 @@ body.dark-mode {
                         Entering a Party Dungeon uses **one** adventurer from your available pool.
                     </p>
                 </section>
+
                 <section id="quests-page" class="page-content" style="align-items: center;">
                     <h2 class="page-title">QUESTS</h2>
                     
@@ -2005,7 +2011,7 @@ let lastDailyRewardDayClaimed = 0;
 
             dailyRewardsData.push({ day: day, reward: rewardsArray.join(', ') });
         }
-        const dungeonsData = [
+       const dungeonsData = [
     { 
         id: "dungeon_1", 
         name: "Death Rider's Crypt Lvl 1", 
@@ -2015,47 +2021,58 @@ let lastDailyRewardDayClaimed = 0;
         attackRequirement: 10,
         defenseRequirement: 10,
         type: "solo",
-        maxEntriesPerDay: 2, // CHANGED from 3 to 2
+        maxEntriesPerDay: 2,
         drops: [
-            { id: "dungeon_helmet", name: "Dungeon Helmet", chance: 0.10, qty: 1, type: "equipment" }, // CHANGED from 0.22 to 0.10
-            { id: "dungeon_boots", name: "Dungeon Boots", chance: 0.10, qty: 1, type: "equipment" }  // CHANGED from 0.22 to 0.10
+            { id: "dungeon_helmet", name: "Dungeon Helmet", chance: 0.10, qty: 1, type: "equipment" },
+            { id: "dungeon_boots", name: "Dungeon Boots", chance: 0.10, qty: 1, type: "equipment" }
         ],
-        placeholderReward: "100 PV, 2 Gold" // CHANGED from 5 Gold to 2
+        placeholderReward: "100 PV, 2 Gold"
     },
     { 
         id: "dungeon_2", 
         name: "Death Rider's Crypt Lvl 2", 
-        description: "A party challenge (offline NPCs for now). Player requires 30 Attack & 30 Defense. Can be attempted 1 time daily.", 
+        description: "A party challenge with NPCs. Player requires 30 Attack & 30 Defense. Can be attempted 1 time daily.", 
         durationHours: 4, 
         requiredAdventureId: "4",
         attackRequirement: 30, 
         defenseRequirement: 30,
         type: "party_npc", 
-        maxPartySize: 5,
-        maxEntriesPerDay: 1, // CHANGED from 2 to 1
+        maxPartySize: 3, // CHANGED: Can select up to 3 NPCs
+        maxEntriesPerDay: 1,
         drops: [
             { id: "dungeon_sword", name: "Dungeon Sword", chance: 0.06, qty: 1, type: "equipment" },
             { id: "dungeon_armour", name: "Dungeon Armour", chance: 0.08, qty: 1, type: "equipment" },
-            { id: "pizza_pendant", name: "Pizza Pendant", chance: 0.05, qty: 1, type: "equipment" }, // CHANGED from 0.095 to 0.05
+            { id: "pizza_pendant", name: "Pizza Pendant", chance: 0.05, qty: 1, type: "equipment" },
             { id: "orb_of_haste", name: "Orb of Haste", chance: 0.095, qty: 1, type: "equipment" },
-            { id: "pet_dog", name: "$DOG Pet", chance: 0.10, qty: 1, type: "equipment" } // CHANGED from 0.15 to 0.10
+            { id: "pet_dog", name: "$DOG Pet", chance: 0.10, qty: 1, type: "equipment" }
         ],
-        placeholderReward: "250 PV, 5 Gold, 1 Diamond" // CHANGED from 10 Gold to 5
+        placeholderReward: "250 PV, 5 Gold, 1 Diamond"
     },
     {
         id: "dungeon_3",
-        name: "ATH City (Coming Soon)",
-        description: "The fabled city of All-Time Highs. Only the most seasoned voyagers dare to dream of its riches. (Currently inaccessible)",
-        durationHours: 999,
-        requiredAdventureId: "99",
-        attackRequirement: 9999,
-        defenseRequirement: 9999,
-        type: "solo",
-        maxEntriesPerDay: 0,
-        drops: [],
-        placeholderReward: "??? PV, ??? Gold, ??? Diamonds",
-        isLockedContent: true
+        name: "ATH City", // CHANGED: Name updated
+        description: "The fabled city of All-Time Highs. A true party challenge. Requires 80 Attack & 80 Defense.", // CHANGED
+        durationHours: 8, // CHANGED
+        requiredAdventureId: "4", // CHANGED: Now unlocked with Adventure 4
+        attackRequirement: 80, // CHANGED
+        defenseRequirement: 80, // CHANGED
+        type: "party_npc", // CHANGED
+        maxPartySize: 6, // CHANGED: Can select up to 6 NPCs
+        maxEntriesPerDay: 1, // CHANGED
+        drops: [
+             { id: "pet_gizmo", name: "Gizmo", chance: 0.05, qty: 1, type: "equipment" } // Example drop
+        ],
+        placeholderReward: "500 PV, 10 Gold, 2 Diamonds", // CHANGED
+        isLockedContent: false // CHANGED: Now unlocked
     }
+    const npcData = [
+    { id: "npc1", name: "NPC 1", attack: 4, defense: 5, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230014.png" },
+    { id: "npc2", name: "NPC 2", attack: 4, defense: 6, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230328.png" },
+    { id: "npc3", name: "NPC 3", attack: 12, defense: 6, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230757.png" },
+    { id: "npc4", name: "NPC 4", attack: 4, defense: 16, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%231656.png" },
+    { id: "npc5", name: "NPC 5", attack: 20, defense: 20, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/bf3.png" },
+    { id: "npc6", name: "NPC 6", attack: 15, defense: 15, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230037.png" }
+];
 ];
             const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", unlockQuestId: null, unlockMessage: "" }, { id: "2", blockId: "adventure-2-block", unlockQuestId: 1, unlockMessage: "Complete 'Spirit Forest' 5 times to unlock." }, { id: "3", blockId: "adventure-3-block", unlockQuestId: 2, unlockMessage: "Complete 'Mountain of the Marowan' 5 times to unlock." }, { id: "4", blockId: "adventure-4-block", unlockQuestId: 3, unlockMessage: "Complete 'Fire Fields of Flyinals' 5 times to unlock." },{ id: "5", blockId: "adventure-5-block", unlockQuestId: 15, unlockMessage: "Complete 'Tomb of the Death Riders' 5 times to unlock." } ];
             const upgradeChances = [1, 0.85, 0.50, 0.35, 0.13]; // For +0->+1, +1->+2, ..., +4->+5
@@ -3011,19 +3028,19 @@ function recalculateTotalAvailableAdventurers() {
             
  // DELETE THE OLD renderDungeonsPage FUNCTION AND PASTE THIS NEW ONE
 
-function renderDungeonsPage() {
+ function renderDungeonsPage() {
     const entryContainer = document.getElementById('dungeon-entry-container');
     const dotsContainer = document.getElementById('dungeon-dots-container');
     const prevBtn = document.getElementById('dungeon-prev-btn');
     const nextBtn = document.getElementById('dungeon-next-btn');
+    const npcContainer = document.getElementById('dungeon-npc-selection-container');
 
-    if (!entryContainer || !dotsContainer || !prevBtn || !nextBtn) return;
+    if (!entryContainer || !dotsContainer || !prevBtn || !nextBtn || !npcContainer) return;
 
-    // Clear previous content
     entryContainer.innerHTML = '';
     dotsContainer.innerHTML = '';
+    npcContainer.innerHTML = '';
 
-    // Create dots for each dungeon
     dungeonsData.forEach((dungeon, index) => {
         const dot = document.createElement('span');
         dot.innerHTML = '•';
@@ -3031,93 +3048,134 @@ function renderDungeonsPage() {
         dot.style.fontSize = '2.5em';
         dot.style.margin = '0 5px';
         dot.style.color = (index === currentDungeonIndex) ? 'var(--highlight-color-gold)' : 'var(--label-color)';
-        dot.onclick = () => {
-            currentDungeonIndex = index;
-            renderDungeonsPage();
-        };
+        dot.onclick = () => { currentDungeonIndex = index; renderDungeonsPage(); };
         dotsContainer.appendChild(dot);
     });
     
-    // Get the current dungeon to display
     const dungeon = dungeonsData[currentDungeonIndex];
     if (!dungeon) return;
 
-    // --- Create the HTML for the single dungeon entry ---
-    const dungeonDiv = document.createElement('div');
-    dungeonDiv.classList.add('dungeon-entry');
-    dungeonDiv.dataset.dungeonId = dungeon.id;
+    // --- Calculate Party Stats ---
+    const playerAttack = parseInt(playerAttackStatElement.textContent) || 0;
+    const playerDefense = parseInt(playerDefenseStatElement.textContent) || 0;
+    let partyAttack = playerAttack;
+    let partyDefense = playerDefense;
     
-    // --- Image Logic ---
-    const imageUrls = {
-        "dungeon_1": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon1.jpg",
-        "dungeon_2": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon2.jpg",
-        "dungeon_3": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/imgnew%20(5).jpg"
-    };
-    const iconHtml = `<div class="dungeon-icon-placeholder" style="background-image: url('${imageUrls[dungeon.id]}'); background-size: cover; background-position: center; color: transparent; font-size: 0;"></div>`;
-    
+    if (dungeon.type === 'party_npc') {
+        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
+        selectedNpcs.forEach(npcId => {
+            const npc = npcData.find(n => n.id === npcId);
+            if (npc) {
+                partyAttack += npc.attack;
+                partyDefense += npc.defense;
+            }
+        });
+    }
+
     // --- Lock Status Logic ---
     const adventure4Active = activeAdventures.find(adv => adv.originalAdventureId === "4");
     const dungeonsGloballyUnlocked = !!adventure4Active;
     let isLockedForEntry = false;
     let displayLockReason = "";
+    
+    const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
+    const pizzaPendantEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"));
+    let effectiveMaxEntries = dungeon.maxEntriesPerDay + (pizzaPendantEquipped && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") ? 1 : 0);
 
     if (dungeon.isLockedContent) {
         isLockedForEntry = true;
         displayLockReason = "Content Coming Soon!";
     } else if (!dungeonsGloballyUnlocked) {
         isLockedForEntry = true;
-        displayLockReason = "Unlock Requirement: Adventure 4 active.";
-    } else {
-        const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
-        const pizzaPendantEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"));
-        let effectiveMaxEntries = dungeon.maxEntriesPerDay + (pizzaPendantEquipped && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") ? 1 : 0);
-
-        if (entriesToday >= effectiveMaxEntries) {
-            isLockedForEntry = true;
-            displayLockReason = `Daily limit reached (${entriesToday}/${effectiveMaxEntries}).`;
-        } else {
-            const playerAttack = parseInt(playerAttackStatElement.textContent) || 0;
-            const playerDefense = parseInt(playerDefenseStatElement.textContent) || 0;
-            if (playerAttack < dungeon.attackRequirement || playerDefense < dungeon.defenseRequirement) {
-                isLockedForEntry = true;
-                displayLockReason = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF.`;
-            } else if (totalAvailableAdventurers < 1) {
-                isLockedForEntry = true;
-                displayLockReason = `Requires 1 available adventurer.`;
-            }
-        }
+        displayLockReason = "Unlock Requirement: Adventure 4 must be active.";
+    } else if (entriesToday >= effectiveMaxEntries) {
+        isLockedForEntry = true;
+        displayLockReason = `Daily limit reached.`;
+    } else if (partyAttack < dungeon.attackRequirement || partyDefense < dungeon.defenseRequirement) {
+        isLockedForEntry = true;
+        displayLockReason = `Requires: ${dungeon.attackRequirement} ATK & ${dungeon.defenseRequirement} DEF.`;
+    } else if (totalAvailableAdventurers < 1) {
+        isLockedForEntry = true;
+        displayLockReason = `Requires 1 available adventurer.`;
     }
-    if (isLockedForEntry) dungeonDiv.classList.add('locked');
 
-    // --- Create and append the dungeon HTML ---
+    const imageUrls = {
+        "dungeon_1": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon1.jpg",
+        "dungeon_2": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon2.jpg",
+        "dungeon_3": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/imgnew%20(5).jpg"
+    };
+
+    const dungeonDiv = document.createElement('div');
+    dungeonDiv.className = `dungeon-entry ${isLockedForEntry ? 'locked' : ''}`;
     dungeonDiv.innerHTML = `
-        ${iconHtml}
+        <div class="dungeon-icon-placeholder" style="background-image: url('${imageUrls[dungeon.id]}'); background-size: cover; background-position: center;"></div>
         <div class="dungeon-info">
             <h3>${dungeon.name}</h3>
             <p>${dungeon.description}</p>
-            <p>Reward: ${dungeon.placeholderReward}</p>
-            ${displayLockReason ? `<p class="dungeon-requirements">${displayLockReason}</p>` : `<p class="dungeon-requirements" style="color:var(--highlight-color-connected);">Ready to Enter!</p>`}
+            <p><strong>Party Stats:</strong> ${partyAttack} ATK / ${partyDefense} DEF</p>
+            <p><strong>Daily Entries:</strong> ${entriesToday} / ${effectiveMaxEntries} used</p>
+            <p><strong>Reward:</strong> ${dungeon.placeholderReward}</p>
+            <p class="dungeon-requirements">${isLockedForEntry ? displayLockReason : 'Ready to Enter!'}</p>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 100px;">
             <button class="action-button enter-dungeon-btn" data-dungeon-id="${dungeon.id}" ${isLockedForEntry ? 'disabled' : ''}>Enter</button>
             <button class="action-button dungeon-drops-button" data-dungeon-id="${dungeon.id}">DROPS</button>
         </div>
     `;
     entryContainer.appendChild(dungeonDiv);
-    
-    // Add listeners to the new buttons
-    dungeonDiv.querySelector('.enter-dungeon-btn').addEventListener('click', handleEnterDungeon);
-    // You can add back the popover logic for drops if you wish
 
-    // Update nav button states
+    // --- Render NPC Selection UI if it's a party dungeon ---
+    if (dungeon.type === 'party_npc' && !dungeon.isLockedContent) {
+        let npcHtml = `<h4 style="text-align:center; color: var(--label-color);">Select Party Members (Max ${dungeon.maxPartySize})</h4>
+                       <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">`;
+        const selectedNpcs = confirmedCrawlersForDungeons[dungeon.id] || [];
+        
+        npcData.slice(0, dungeon.maxPartySize).forEach(npc => {
+            const isSelected = selectedNpcs.includes(npc.id);
+            npcHtml += `
+                <div class="npc-card" data-npc-id="${npc.id}" data-dungeon-id="${dungeon.id}" style="border: 2px solid ${isSelected ? 'var(--highlight-color-gold)' : 'var(--border-color)'}; cursor: pointer; padding: 10px; border-radius: 5px; text-align: center; width: 120px;">
+                    <img src="${npc.imageUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 5px;">
+                    <p style="margin:0; font-size: 0.9em;">${npc.name}</p>
+                    <p style="margin:0; font-size: 0.85em;">ATK: ${npc.attack} / DEF: ${npc.defense}</p>
+                </div>
+            `;
+        });
+        npcHtml += `</div>`;
+        npcContainer.innerHTML = npcHtml;
+
+        // Add click listeners to NPC cards
+        npcContainer.querySelectorAll('.npc-card').forEach(card => {
+            card.onclick = () => {
+                const npcId = card.dataset.npcId;
+                const dungeonId = card.dataset.dungeonId;
+                let currentSelection = confirmedCrawlersForDungeons[dungeonId] || [];
+                const npcIndex = currentSelection.indexOf(npcId);
+
+                if (npcIndex > -1) { // If already selected, deselect it
+                    currentSelection.splice(npcIndex, 1);
+                } else { // If not selected, add it (if there's space)
+                    if (currentSelection.length < dungeonsData[currentDungeonIndex].maxPartySize) {
+                        currentSelection.push(npcId);
+                    } else {
+                        showCustomPopup(`You can only select up to ${dungeonsData[currentDungeonIndex].maxPartySize} party members for this dungeon.`, "Party Full");
+                    }
+                }
+                confirmedCrawlersForDungeons[dungeonId] = currentSelection;
+                renderDungeonsPage(); // Re-render to update stats and borders
+            };
+        });
+    }
+
+    dungeonDiv.querySelector('.enter-dungeon-btn').onclick = handleEnterDungeon;
+    // ... (Your drops popover logic can be re-added here if desired) ...
+
     prevBtn.style.visibility = (currentDungeonIndex > 0) ? 'visible' : 'hidden';
     nextBtn.style.visibility = (currentDungeonIndex < dungeonsData.length - 1) ? 'visible' : 'hidden';
-
-    // Add listeners to nav buttons (use .onclick to prevent multiple listeners)
     prevBtn.onclick = () => { if (currentDungeonIndex > 0) { currentDungeonIndex--; renderDungeonsPage(); } };
     nextBtn.onclick = () => { if (currentDungeonIndex < dungeonsData.length - 1) { currentDungeonIndex++; renderDungeonsPage(); } };
 }
-                                function renderActiveTasksInSidebar() {
+
+        function renderActiveTasksInSidebar() {
                 // Get all the necessary elements from the HTML
                 const sidebarAdventuresContainer = document.getElementById('sidebarActiveAdventuresDisplay');
                 const sidebarAdventuresList = document.getElementById('sidebarActiveAdventuresList');
