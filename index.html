@@ -1096,11 +1096,28 @@ body.dark-mode {
                 <section id="crafting-page" class="page-content">
                     <h2 class="page-title">CRAFTING</h2>
                     <div class="crafting-gif-container">
-                    <img src="https://raw.githubusercontent.com/nvoiy/pvadventures/main/CRAFT.gif" alt="Crafting Anvil GIF">
+                        <img src="https://raw.githubusercontent.com/nvoiy/pvadventures/main/CRAFT.gif" alt="Crafting Anvil GIF">
                     </div>
+                
+                    <!-- START OF NEW FILTER BUTTONS -->
+                    <div id="craftingFilterContainer" style="text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+                        <!-- Filter buttons will be added here by JavaScript -->
+                    </div>
+                    <!-- END OF NEW FILTER BUTTONS -->
+                
                     <div class="crafting-section-wrapper"> 
-                        <h3 >Craft Items</h3> 
-                        <div class="crafting-items-container" id="craftingItemsContainer"> </div> 
+                        <h3>Craft Items</h3> 
+                        <div class="crafting-items-container" id="craftingItemsContainer"> 
+                            <!-- Crafting items will be rendered here -->
+                        </div> 
+                        
+                        <!-- START OF NEW PAGINATION CONTROLS -->
+                        <div id="craftingPaginationContainer" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px;">
+                            <button id="craftingPrevBtn" class="action-button">< Prev</button>
+                            <span id="craftingPageInfo">Page 1 / 1</span>
+                            <button id="craftingNextBtn" class="action-button">Next ></button>
+                        </div>
+                        <!-- END OF NEW PAGINATION CONTROLS -->
                     </div> 
                 </section>
 
@@ -1694,6 +1711,10 @@ function updateAdventureCardPvDisplay() {
             let totalAdventuresCompleted = 0;
             let ordinalBonusAdventurers = 0;
             let activeDungeons = [];
+            let craftingCurrentPage = 1;
+const craftingItemsPerPage = 5;
+let craftingFilterType = 'all';
+let craftableItemsDataFiltered = [];
 
 
             const initialPlayerMaterials = { 
@@ -3407,85 +3428,195 @@ function handleCancelDungeon(dungeonInstanceId) {
             }
 
 
-                        function renderCraftingItems() {
-                if (!craftingItemsContainer) return;
-                craftingItemsContainer.innerHTML = '';
-                craftableItemsData.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'craftable-item-card';
-                    let recipeHtml = '';
-                    let craftButtonHtml = '';
+            function applyCraftingFiltersAndRender() {
+    // Filter by type
+    let tempFiltered = craftableItemsData.filter(item => {
+        if (craftingFilterType === 'all' || craftingFilterType === 'craftable') {
+            return true;
+        }
+        // Handle 'Misc' as a special case for multiple types
+        if (craftingFilterType === 'Misc') {
+            return ['Trinket', 'Rucksack', 'Misc'].includes(item.type);
+        }
+        return item.type === craftingFilterType;
+    });
 
-                    if (item.recipe && Object.keys(item.recipe).length > 0) { // Check if recipe exists and is not empty
-                        recipeHtml = 'Requires: ';
-                        for (const mat in item.recipe) { recipeHtml += `${item.recipe[mat]} ${mat}, `; }
-                        recipeHtml = recipeHtml.slice(0, -2);
-                        recipeHtml = `<p class="crafting-cost"><small>${recipeHtml}</small></p>`;
-
-                        const alreadyOwned = playerInventory.some(invItem => invItem.id === item.id) ||
-                                           Object.values(equippedItems).some(equippedInstanceId => {
-                                               if (!equippedInstanceId) return false;
-                                               const eqItem = playerInventory.find(pi => pi.uniqueInstanceId === equippedInstanceId);
-                                               return eqItem && eqItem.id === item.id;
-                                           });
-
-                        let canCurrentlyCraft = true;
-                        for (const mat in item.recipe) {
-                            if ((playerMaterials[mat] || 0) < item.recipe[mat]) {
-                                canCurrentlyCraft = false;
-                                break;
-                            }
-                        }
-
-                        let buttonClasses = "action-button craft-button";
-                        let buttonText = "Craft";
-                        let buttonDisabledAttribute = "";
-                        let buttonTitle = "";
-
-                        if (alreadyOwned) {
-                            buttonClasses += " owned";
-                            buttonText = "Owned";
-                            buttonDisabledAttribute = "disabled";
-                            buttonTitle = 'title="You already own an instance of this base item."';
-                        } else if (canCurrentlyCraft) {
-                            buttonClasses += " craftable";
-                            // buttonText remains "Craft"
-                        } else {
-                            // Not owned, but cannot currently craft (missing materials)
-                            // buttonClasses remains base
-                            buttonDisabledAttribute = "disabled";
-                            buttonTitle = 'title="Not enough materials."';
-                        }
-                        craftButtonHtml = `<button class="${buttonClasses}" data-item-id="${item.id}" ${buttonDisabledAttribute} ${buttonTitle}>${buttonText}</button>`;
-
-                    } else {
-                        // Item is not craftable (e.g., dungeon drop), so don't show recipe or craft button
-                        recipeHtml = '<p class="crafting-cost"><small>Cannot be crafted. Found in Dungeons.</small></p>';
-                        // craftButtonHtml remains empty
-                    }
-
-                    card.innerHTML = `
-                        <div class="item-icon-placeholder">${getItemIconHTML(item.iconUrlOrColor, item.type)}</div>
-                        <div class="item-info">
-                            <p><strong>${item.name}</strong> (${item.type})</p>
-                            <small>${item.description}</small>
-                            ${recipeHtml}
-                        </div>
-                        ${craftButtonHtml}`;
-
-                    craftingItemsContainer.appendChild(card);
-                    card.addEventListener('mousemove', (e) => showItemTooltip(e, item, !!item.recipe)); // Pass true if recipe exists
-                    card.addEventListener('mouseleave', hideItemTooltip);
-                }); // End of craftableItemsData.forEach
-
-                // Re-add event listener for craft buttons if they exist and are not disabled
-                craftingItemsContainer.querySelectorAll('.craft-button:not([disabled])').forEach(b => {
-                   if (!b.listenerAttachedCraft) {
-                       b.addEventListener('click', e => craftItem(e.target.dataset.itemId));
-                       b.listenerAttachedCraft = true;
-                   }
-                });
+    // Further filter by 'craftable only' if selected
+    if (craftingFilterType === 'craftable') {
+        tempFiltered = tempFiltered.filter(item => {
+            if (!item.recipe) return false;
+            for (const mat in item.recipe) {
+                if ((playerMaterials[mat] || 0) < item.recipe[mat]) {
+                    return false; // Not enough materials
+                }
             }
+            return true; // Has enough materials
+        });
+    }
+    
+    craftableItemsDataFiltered = tempFiltered;
+    craftingCurrentPage = 1; // Reset to page 1 whenever a filter is applied
+    renderCraftingItems(); // Render the newly filtered and paginated list
+}
+
+// This new function just renders the items based on the pre-filtered list
+function renderCraftingItems() {
+    if (!craftingItemsContainer) return;
+    craftingItemsContainer.innerHTML = '';
+    
+    const totalPages = Math.ceil(craftableItemsDataFiltered.length / craftingItemsPerPage);
+    if (totalPages === 0) {
+        craftingItemsContainer.innerHTML = '<p style="text-align:center;">No items match the current filter.</p>';
+        document.getElementById('craftingPaginationContainer').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('craftingPaginationContainer').style.display = 'flex';
+    const startIndex = (craftingCurrentPage - 1) * craftingItemsPerPage;
+    const endIndex = startIndex + craftingItemsPerPage;
+    const itemsToRender = craftableItemsDataFiltered.slice(startIndex, endIndex);
+
+    itemsToRender.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'craftable-item-card';
+        let recipeHtml = '';
+        let craftButtonHtml = '';
+
+        if (item.recipe && Object.keys(item.recipe).length > 0) {
+            recipeHtml = 'Requires: ';
+            for (const mat in item.recipe) { recipeHtml += `${item.recipe[mat]} ${mat}, `; }
+            recipeHtml = recipeHtml.slice(0, -2);
+            recipeHtml = `<p class="crafting-cost"><small>${recipeHtml}</small></p>`;
+
+            const alreadyOwned = playerInventory.some(invItem => invItem.id === item.id);
+            let canCurrentlyCraft = true;
+            for (const mat in item.recipe) {
+                if ((playerMaterials[mat] || 0) < item.recipe[mat]) {
+                    canCurrentlyCraft = false;
+                    break;
+                }
+            }
+
+            let buttonClasses = "action-button craft-button";
+            let buttonText = "Craft";
+            let buttonDisabledAttribute = "";
+            if (alreadyOwned) {
+                buttonClasses += " owned"; buttonText = "Owned"; buttonDisabledAttribute = "disabled";
+            } else if (canCurrentlyCraft) {
+                buttonClasses += " craftable";
+            } else {
+                buttonDisabledAttribute = "disabled";
+            }
+            craftButtonHtml = `<button class="${buttonClasses}" data-item-id="${item.id}" ${buttonDisabledAttribute}>${buttonText}</button>`;
+        } else {
+            recipeHtml = '<p class="crafting-cost"><small>Cannot be crafted.</small></p>';
+        }
+
+        card.innerHTML = `
+            <div class="item-icon-placeholder">${getItemIconHTML(item.iconUrlOrColor, item.type)}</div>
+            <div class="item-info">
+                <p><strong>${item.name}</strong> (${item.type})</p>
+                <small>${item.description}</small>
+                ${recipeHtml}
+            </div>
+            ${craftButtonHtml}`;
+        craftingItemsContainer.appendChild(card);
+        card.addEventListener('mousemove', (e) => showItemTooltip(e, item, !!item.recipe));
+        card.addEventListener('mouseleave', hideItemTooltip);
+    });
+
+    // Update pagination controls
+    document.getElementById('craftingPageInfo').textContent = `Page ${craftingCurrentPage} / ${totalPages}`;
+    document.getElementById('craftingPrevBtn').disabled = (craftingCurrentPage === 1);
+    document.getElementById('craftingNextBtn').disabled = (craftingCurrentPage === totalPages);
+
+    // Add event listeners
+    craftingItemsContainer.querySelectorAll('.craft-button:not([disabled])').forEach(b => {
+       b.addEventListener('click', e => craftItem(e.target.dataset.itemId));
+    });
+}
+
+function setupCraftingUI() {
+    const filterContainer = document.getElementById('craftingFilterContainer');
+    const prevBtn = document.getElementById('craftingPrevBtn');
+    const nextBtn = document.getElementById('craftingNextBtn');
+    if (!filterContainer || !prevBtn || !nextBtn) return;
+
+    // --- Create Filter Buttons ---
+    const itemTypes = ['Armour', 'Helmet', 'Boots', 'Amulet', 'Ring', 'Weapon', 'Pet', 'Misc'];
+    const filterTypes = ['All', 'Craftable', ...itemTypes];
+    
+    filterContainer.innerHTML = ''; // Clear any existing buttons
+    filterTypes.forEach(type => {
+        const btn = document.createElement('button');
+        btn.className = 'action-button leaderboard-filter-btn'; // Reuse leaderboard style
+        btn.textContent = type === 'Craftable' ? 'Craftable Only' : `${type} Items`;
+        btn.dataset.filter = type.toLowerCase();
+        if (type.toLowerCase() === craftingFilterType) {
+            btn.classList.add('active');
+        }
+        btn.addEventListener('click', () => {
+            craftingFilterType = type.toLowerCase();
+            // Update active class on buttons
+            filterContainer.querySelectorAll('.leaderboard-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyCraftingFiltersAndRender();
+        });
+        filterContainer.appendChild(btn);
+    });
+
+    // --- Setup Pagination Listeners ---
+    prevBtn.onclick = () => {
+        if (craftingCurrentPage > 1) {
+            craftingCurrentPage--;
+            renderCraftingItems();
+        }
+    };
+    nextBtn.onclick = () => {
+        const totalPages = Math.ceil(craftableItemsDataFiltered.length / craftingItemsPerPage);
+        if (craftingCurrentPage < totalPages) {
+            craftingCurrentPage++;
+            renderCraftingItems();
+        }
+    };
+}
+
+// Lastly, modify the showPage function to initialize the crafting UI
+async function showPage(pageIdToShow) {
+    console.log("Switching to page:", pageIdToShow);
+    if (!pageContents || pageContents.length === 0) {
+        console.error("pageContents NodeList is empty or not found in showPage.");
+        return;
+    }
+    pageContents.forEach(page => {
+        page.classList.remove('active');
+    });
+    const targetPage = document.getElementById(pageIdToShow);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        if (pageIdToShow === 'quests-page') {
+            renderQuests();
+        } else if (pageIdToShow === 'shop-page') {
+            renderShopItems();
+        } else if (pageIdToShow === 'crafting-page') {
+            setupCraftingUI(); // Setup buttons and listeners
+            applyCraftingFiltersAndRender(); // Apply default filter and render
+        } else if (pageIdToShow === 'inventory-page') {
+            renderInventory();
+        } else if (pageIdToShow === 'daily-rewards-page') {
+            renderDailyRewards();
+        } else if (pageIdToShow === 'whitelist-page') {
+            await fetchAndDisplayRaffles();
+        } else if (pageIdToShow === 'leaderboard-page') {
+            await fetchAndDisplayLeaderboards('pvTokens');
+        } else if (pageIdToShow === 'dungeons-page') {
+            renderDungeonsPage();
+        }
+    } else {
+        console.error("Target page with ID '" + pageIdToShow + "' not found.");
+        showPage('adventures-page');
+    }
+}
             
     // DELETE THE OLD renderInventory FUNCTION AND PASTE THIS NEW ONE
 
