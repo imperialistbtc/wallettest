@@ -1099,6 +1099,15 @@ body.dark-mode {
                         Party Dungeons unlock when you have an adventurer on **Adventure 4 +**.<br> 
                         Entering a Party Dungeon uses **one** adventurer from your available pool.
                     </p>
+                    <p style="text-align:center; margin-top: 5px; margin-bottom:15px; font-size:0.9em; line-height: 1.6;">
+                        <strong style="color: var(--highlight-color-gold);">Dungeon Crawler NFT Frames multiply their stats!</strong><br>
+                        <span style="color: #CD7F32;">Bronze: x1</span> | 
+                        <span style="color: #C0C0C0;">Silver: x2</span> | 
+                        <span style="color: #FFD700;">Gold: x3</span> | 
+                        <span style="color: #00E676;">Emerald: x4</span> | 
+                        <span style="color: #00BFFF;">Diamond: x5</span> | 
+                        <span style="color: #FF0000;">Ruby: x6</span>
+                    </p>
                 </section>
 
                 <section id="quests-page" class="page-content" style="align-items: center;">
@@ -1932,7 +1941,21 @@ let lastDailyRewardDayClaimed = 0;
                 // NO RECIPE PROPERTY HERE
                 iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/pet3.jpg",
                 tier: 3
-            }
+            },
+            {
+    id: "void_compass", name: "Void Compass", type: "Misc",
+    description: "Points to lucrative echoes in the void. +10% PV, +5% Gold, +2% Diamond find on all adventures.",
+    perk: { type: "multiCurrencyBoost", pvBonus: 0.10, goldBonus: 0.05, diamondBonus: 0.02 },
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/compass.jpg",
+    tier: 5
+},
+{
+    id: "ath_talisman", name: "ATH Talisman", type: "Misc",
+    description: "A relic from the All-Time-High city. Grants +1 daily entry to ATH City (Dungeon 3) if equipped.",
+    perk: { type: "dungeonEntryBonus", dungeon3: 1 },
+    iconUrlOrColor: "https://raw.githubusercontent.com/nvoiy/pvadventures/main/talisman.jpg",
+    tier: 5
+}
 
         ];
             const shopItemsData = [ 
@@ -2011,7 +2034,7 @@ let lastDailyRewardDayClaimed = 0;
 
             dailyRewardsData.push({ day: day, reward: rewardsArray.join(', ') });
         }
-       const dungeonsData = [
+        const dungeonsData = [
     { 
         id: "dungeon_1", 
         name: "Death Rider's Crypt Lvl 1", 
@@ -2037,7 +2060,7 @@ let lastDailyRewardDayClaimed = 0;
         attackRequirement: 30, 
         defenseRequirement: 30,
         type: "party_npc", 
-        maxPartySize: 3, // CHANGED: Can select up to 3 NPCs
+        maxPartySize: 3,
         maxEntriesPerDay: 1,
         drops: [
             { id: "dungeon_sword", name: "Dungeon Sword", chance: 0.06, qty: 1, type: "equipment" },
@@ -2050,22 +2073,22 @@ let lastDailyRewardDayClaimed = 0;
     },
     {
         id: "dungeon_3",
-        name: "ATH City", // CHANGED: Name updated
-        description: "The fabled city of All-Time Highs. A true party challenge. Requires 80 Attack & 80 Defense.", // CHANGED
-        durationHours: 8, // CHANGED
-        requiredAdventureId: "4", // CHANGED: Now unlocked with Adventure 4
-        attackRequirement: 80, // CHANGED
-        defenseRequirement: 80, // CHANGED
-        type: "party_npc", // CHANGED
-        maxPartySize: 6, // CHANGED: Can select up to 6 NPCs
-        maxEntriesPerDay: 1, // CHANGED
-        drops: [
-             { id: "pet_gizmo", name: "Gizmo", chance: 0.05, qty: 1, type: "equipment" } // Example drop
+        name: "ATH City",
+        description: "The fabled city of All-Time Highs. A true party challenge. Requires 80 Attack & 80 Defense.",
+        durationHours: 8,
+        requiredAdventureId: "4",
+        attackRequirement: 80,
+        defenseRequirement: 80,
+        type: "party_npc",
+        maxPartySize: 6,
+        maxEntriesPerDay: 1,
+        drops: [ // ADDED NEW DROPS
+             { id: "void_compass", name: "Void Compass", chance: 0.03, qty: 1, type: "equipment" },
+             { id: "ath_talisman", name: "ATH Talisman", chance: 0.03, qty: 1, type: "equipment" }
         ],
-        placeholderReward: "500 PV, 10 Gold, 2 Diamonds", // CHANGED
-        isLockedContent: false // CHANGED: Now unlocked
+        placeholderReward: "5000 PV, 10 Gold, 2 Diamonds", // CHANGED PV REWARD
+        isLockedContent: false
     }
-
 ];
 const npcData = [
     { id: "npc1", name: "NPC 1", attack: 4, defense: 5, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230014.png" },
@@ -2074,8 +2097,8 @@ const npcData = [
     { id: "npc4", name: "NPC 4", attack: 4, defense: 16, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%231656.png" },
     { id: "npc5", name: "NPC 5", attack: 20, defense: 20, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/bf3.png" },
     { id: "npc6", name: "NPC 6", attack: 15, defense: 15, imageUrl: "https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/PVA%20Dungeon%20Crawlers%20%230037.png" }
-];
-            const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", unlockQuestId: null, unlockMessage: "" }, { id: "2", blockId: "adventure-2-block", unlockQuestId: 1, unlockMessage: "Complete 'Spirit Forest' 5 times to unlock." }, { id: "3", blockId: "adventure-3-block", unlockQuestId: 2, unlockMessage: "Complete 'Mountain of the Marowan' 5 times to unlock." }, { id: "4", blockId: "adventure-4-block", unlockQuestId: 3, unlockMessage: "Complete 'Fire Fields of Flyinals' 5 times to unlock." },{ id: "5", blockId: "adventure-5-block", unlockQuestId: 15, unlockMessage: "Complete 'Tomb of the Death Riders' 5 times to unlock." } ];
+];         
+const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", unlockQuestId: null, unlockMessage: "" }, { id: "2", blockId: "adventure-2-block", unlockQuestId: 1, unlockMessage: "Complete 'Spirit Forest' 5 times to unlock." }, { id: "3", blockId: "adventure-3-block", unlockQuestId: 2, unlockMessage: "Complete 'Mountain of the Marowan' 5 times to unlock." }, { id: "4", blockId: "adventure-4-block", unlockQuestId: 3, unlockMessage: "Complete 'Fire Fields of Flyinals' 5 times to unlock." },{ id: "5", blockId: "adventure-5-block", unlockQuestId: 15, unlockMessage: "Complete 'Tomb of the Death Riders' 5 times to unlock." } ];
             const upgradeChances = [1, 0.85, 0.50, 0.35, 0.13]; // For +0->+1, +1->+2, ..., +4->+5
             const dungeonSetItemIds = ["dungeon_helmet", "dungeon_boots", "dungeon_sword", "dungeon_armour"];
 
@@ -3079,9 +3102,19 @@ function recalculateTotalAvailableAdventurers() {
     let isLockedForEntry = false;
     let displayLockReason = "";
     
-    const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
+    // Check for Pizza Pendant for D1/D2 and ATH Talisman for D3
+    let bonusEntries = 0;
     const pizzaPendantEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "pizza_pendant"));
-    let effectiveMaxEntries = dungeon.maxEntriesPerDay + (pizzaPendantEquipped && (dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") ? 1 : 0);
+    const athTalismanEquipped = Object.values(equippedItems).some(id => id && playerInventory.find(i => i.uniqueInstanceId === id && i.id === "ath_talisman"));
+
+    if ((dungeon.id === "dungeon_1" || dungeon.id === "dungeon_2") && pizzaPendantEquipped) {
+        bonusEntries = 1;
+    } else if (dungeon.id === "dungeon_3" && athTalismanEquipped) {
+        bonusEntries = 1;
+    }
+    
+    const entriesToday = playerDungeonEntriesToday[dungeon.id] || 0;
+    let effectiveMaxEntries = dungeon.maxEntriesPerDay + bonusEntries;
 
     if (dungeon.isLockedContent) {
         isLockedForEntry = true;
@@ -3100,14 +3133,20 @@ function recalculateTotalAvailableAdventurers() {
         displayLockReason = `Requires 1 available adventurer.`;
     }
 
+    // --- Create and append the dungeon HTML ---
     const imageUrls = {
         "dungeon_1": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon1.jpg",
         "dungeon_2": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/dungeon2.jpg",
         "dungeon_3": "https://raw.githubusercontent.com/nvoiy/pvadventures/main/imgnew%20(5).jpg"
     };
-
+    
     const dungeonDiv = document.createElement('div');
     dungeonDiv.className = `dungeon-entry ${isLockedForEntry ? 'locked' : ''}`;
+    // CORRECTED: Reward text now uses the variable for yellow color
+    const rewardHtml = `<span style="color: var(--highlight-color-gold);">${dungeon.placeholderReward}</span>`;
+    // CORRECTED: Status text is now green when ready
+    const statusHtml = isLockedForEntry ? displayLockReason : `<span style="color: var(--highlight-color-connected);">Ready to Enter!</span>`;
+    
     dungeonDiv.innerHTML = `
         <div class="dungeon-icon-placeholder" style="background-image: url('${imageUrls[dungeon.id]}'); background-size: cover; background-position: center;"></div>
         <div class="dungeon-info">
@@ -3115,12 +3154,15 @@ function recalculateTotalAvailableAdventurers() {
             <p>${dungeon.description}</p>
             <p><strong>Party Stats:</strong> ${partyAttack} ATK / ${partyDefense} DEF</p>
             <p><strong>Daily Entries:</strong> ${entriesToday} / ${effectiveMaxEntries} used</p>
-            <p><strong>Reward:</strong> ${dungeon.placeholderReward}</p>
-            <p class="dungeon-requirements">${isLockedForEntry ? displayLockReason : 'Ready to Enter!'}</p>
+            <p><strong>Reward:</strong> ${rewardHtml}</p>
+            <p class="dungeon-requirements">${statusHtml}</p>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 100px;">
             <button class="action-button enter-dungeon-btn" data-dungeon-id="${dungeon.id}" ${isLockedForEntry ? 'disabled' : ''}>Enter</button>
-            <button class="action-button dungeon-drops-button" data-dungeon-id="${dungeon.id}">DROPS</button>
+            <div class="dungeon-drops-area">
+                <button class="action-button dungeon-drops-button" data-dungeon-id="${dungeon.id}">DROPS</button>
+                <div class="drops-popover" id="dungeon-drops-popover-${dungeon.id}"></div> 
+            </div>
         </div>
     `;
     entryContainer.appendChild(dungeonDiv);
@@ -3144,7 +3186,6 @@ function recalculateTotalAvailableAdventurers() {
         npcHtml += `</div>`;
         npcContainer.innerHTML = npcHtml;
 
-        // Add click listeners to NPC cards
         npcContainer.querySelectorAll('.npc-card').forEach(card => {
             card.onclick = () => {
                 const npcId = card.dataset.npcId;
@@ -3152,23 +3193,44 @@ function recalculateTotalAvailableAdventurers() {
                 let currentSelection = confirmedCrawlersForDungeons[dungeonId] || [];
                 const npcIndex = currentSelection.indexOf(npcId);
 
-                if (npcIndex > -1) { // If already selected, deselect it
+                if (npcIndex > -1) {
                     currentSelection.splice(npcIndex, 1);
-                } else { // If not selected, add it (if there's space)
-                    if (currentSelection.length < dungeonsData[currentDungeonIndex].maxPartySize) {
+                } else {
+                    if (currentSelection.length < dungeon.maxPartySize) { // Use current dungeon's maxPartySize
                         currentSelection.push(npcId);
                     } else {
-                        showCustomPopup(`You can only select up to ${dungeonsData[currentDungeonIndex].maxPartySize} party members for this dungeon.`, "Party Full");
+                        showCustomPopup(`You can only select up to ${dungeon.maxPartySize} party members for this dungeon.`, "Party Full");
                     }
                 }
                 confirmedCrawlersForDungeons[dungeonId] = currentSelection;
-                renderDungeonsPage(); // Re-render to update stats and borders
+                renderDungeonsPage();
             };
         });
     }
 
     dungeonDiv.querySelector('.enter-dungeon-btn').onclick = handleEnterDungeon;
-    // ... (Your drops popover logic can be re-added here if desired) ...
+    
+    // --- DROPS POPOVER LOGIC (FIXED) ---
+    const dropsButton = dungeonDiv.querySelector('.dungeon-drops-button');
+    if (dropsButton) {
+        dropsButton.addEventListener('mouseenter', (event) => {
+            const popover = document.getElementById(`dungeon-drops-popover-${dungeon.id}`);
+            if (popover && dungeon.drops && dungeon.drops.length > 0) {
+                let dropsHtml = '<h5>Possible Drops:</h5><ul>';
+                dungeon.drops.forEach(drop => {
+                    const dItem = craftableItemsData.find(ci => ci.id === drop.id);
+                    dropsHtml += `<li>${drop.qty || 1}x ${dItem ? dItem.name : drop.name} (${(drop.chance * 100).toFixed(2)}%)</li>`;
+                });
+                dropsHtml += '</ul>';
+                popover.innerHTML = dropsHtml;
+                popover.style.display = 'block';
+            }
+        });
+        dropsButton.addEventListener('mouseleave', () => {
+            const popover = document.getElementById(`dungeon-drops-popover-${dungeon.id}`);
+            if (popover) popover.style.display = 'none';
+        });
+    }
 
     prevBtn.style.visibility = (currentDungeonIndex > 0) ? 'visible' : 'hidden';
     nextBtn.style.visibility = (currentDungeonIndex < dungeonsData.length - 1) ? 'visible' : 'hidden';
