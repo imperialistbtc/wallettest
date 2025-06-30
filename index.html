@@ -3843,12 +3843,15 @@ async function showPage(pageIdToShow) {
     const targetPage = document.getElementById(pageIdToShow);
     if (targetPage) {
         targetPage.classList.add('active');
+        
+        // Always update the upgrade success display when changing pages, just in case.
+        updateUpgradeSuccessRateDisplay();
+
         if (pageIdToShow === 'quests-page') {
-            setupQuestUI(); // THIS IS THE FIX
-            applyQuestFiltersAndRender(); // THIS IS THE FIX
+            setupQuestUI();
+            applyQuestFiltersAndRender();
         } else if (pageIdToShow === 'shop-page') {
             renderShopItems();
-            updateUpgradeSuccessRateDisplay();
         } else if (pageIdToShow === 'crafting-page') {
             setupCraftingUI();
             applyCraftingFiltersAndRender();
