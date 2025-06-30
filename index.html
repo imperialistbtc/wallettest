@@ -2252,31 +2252,28 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
     if (baseItemMaster.perk) {
         const scaledPerk = getScaledItemPerk(baseItemMaster, currentItemLevel);
         
-        // --- FINALIZED PERK DISPLAY LOGIC ---
         let perkDetails = [];
-
-        // Stat boosts
+        
+        // This function now systematically checks for all possible effects in a perk
         if (scaledPerk.attack) perkDetails.push(`Attack: +${scaledPerk.attack}`);
         if (scaledPerk.defense) perkDetails.push(`Defense: ${scaledPerk.defense > 0 ? '+' : ''}${scaledPerk.defense}`);
+        if (scaledPerk.value && scaledPerk.type === 'attackBoost') perkDetails.push(`Attack: +${scaledPerk.value}`);
+        if (scaledPerk.value && scaledPerk.type === 'defenseBoost') perkDetails.push(`Defense: +${scaledPerk.value}`);
         
-        // PV and Currency boosts
         if (scaledPerk.pvBonus) perkDetails.push(`PV Bonus: +${(scaledPerk.pvBonus * 100).toFixed(1)}%`);
         if (scaledPerk.goldBonus) perkDetails.push(`Gold Find: +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
         if (scaledPerk.diamondBonus) perkDetails.push(`Diamond Find: +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
         if (scaledPerk.pvMultiplier) perkDetails.push(`Dungeon PV x${scaledPerk.pvMultiplier}`);
 
-        // Time reductions
         if (scaledPerk.timeReduction) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.timeReduction / 60)} min`);
         if (scaledPerk.timeReductionPercent) perkDetails.push(`Adventure Time: -${(scaledPerk.timeReductionPercent * 100).toFixed(0)}%`);
-        if (scaledPerk.timeReductionHybrid) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
+        if (scaledPerk.flat && scaledPerk.percent) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
         if (scaledPerk.statAndDungeonTime) perkDetails.push(`Dungeon Time: -${(scaledPerk.timeReduction * 100).toFixed(0)}%`);
 
-        // Dungeon Entry boosts
         if (scaledPerk.dungeon1) perkDetails.push(`Dungeon 1 Entry: +${scaledPerk.dungeon1}`);
         if (scaledPerk.dungeon2) perkDetails.push(`Dungeon 2 Entry: +${scaledPerk.dungeon2}`);
         if (scaledPerk.dungeon3) perkDetails.push(`Dungeon 3 Entry: +${scaledPerk.dungeon3}`);
         
-        // Other unique perks
         if (scaledPerk.materialChanceMultiplier) perkDetails.push(`Material Find: x${scaledPerk.value.toFixed(2)}`);
         if (scaledPerk.dungeonMaterialFetch) perkDetails.push(`Dungeon Material Fetch: +${scaledPerk.count}`);
         if (scaledPerk.dungeonDropEcho) perkDetails.push(`Dungeon Drop Echo: ${scaledPerk.chance * 100}%`);
@@ -2288,7 +2285,6 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
         if (perkDetails.length > 0) {
             contentHtml += `<p class="perk-info">Perk: ${perkDetails.join(', ')}</p>`;
         }
-        // --- END FINALIZED LOGIC ---
     }
     
     if (itemData.level > 0) contentHtml += `<p>Level: +${itemData.level}</p>`;
@@ -3428,33 +3424,39 @@ function handleCancelDungeon(dungeonInstanceId) {
             function renderActivePotions() { if (!activePotionsList || !activePotionsDisplay) return; activePotionsList.innerHTML = ''; if (activePotions.length === 0) { activePotionsDisplay.classList.add('hidden'); return; } activePotionsDisplay.classList.remove('hidden'); activePotions.forEach(potion => { const itemDiv = document.createElement('div'); itemDiv.classList.add('potion-item'); let details = ''; if (potion.endTime) { const timeLeftMs = potion.endTime - Date.now(); details = `Time Left: <span class="timer">${formatTimeLeft(timeLeftMs)}</span>`; } else if (potion.adventuresLeft !== undefined) { details = `Adventures Left: ${potion.adventuresLeft}`; } itemDiv.innerHTML = `<p><strong>${potion.name}</strong></p><p>${potion.description}</p><p>${details}</p>`; activePotionsList.appendChild(itemDiv); });}
             
             function updatePlayerCombatStatsDisplay() {
-                if (!playerAttackStatElement || !playerDefenseStatElement) return;
-                let totalAttack = 0;
-                let totalDefense = 0;
+    if (!playerAttackStatElement || !playerDefenseStatElement) return;
+    let totalAttack = 0;
+    let totalDefense = 0;
 
-                Object.values(equippedItems).forEach(equippedInstanceId => {
-                    if (!equippedInstanceId) return;
-                    const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
-                    if (invItem) {
-                        const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
-                        if (itemMaster && itemMaster.perk) {
-                            const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
-                            if (scaledPerk) {
-                                if (scaledPerk.type === "attackBoost") {
-                                    totalAttack += scaledPerk.value;
-                                } else if (scaledPerk.type === "defenseBoost") {
-                                    totalDefense += scaledPerk.value;
-                                } else if (scaledPerk.type === "statBoost") {
-                                    totalAttack += (scaledPerk.attack || 0);
-                                    totalDefense += (scaledPerk.defense || 0);
-                                }
-                            }
-                        }
+    Object.values(equippedItems).forEach(equippedInstanceId => {
+        if (!equippedInstanceId) return;
+        const invItem = playerInventory.find(i => i.uniqueInstanceId === equippedInstanceId);
+        if (invItem) {
+            const itemMaster = craftableItemsData.find(im => im.id === invItem.id);
+            if (itemMaster && itemMaster.perk) {
+                const scaledPerk = getScaledItemPerk(itemMaster, invItem.level || 0);
+                if (scaledPerk) {
+                    // This now checks for 'attack' or 'defense' properties in ANY perk object
+                    if (scaledPerk.attack) {
+                        totalAttack += scaledPerk.attack;
                     }
-                });
-                playerAttackStatElement.textContent = totalAttack;
-                playerDefenseStatElement.textContent = totalDefense;
+                    if (scaledPerk.defense) {
+                        totalDefense += scaledPerk.defense;
+                    }
+                    // This handles the old, simple perks
+                    if (scaledPerk.type === "attackBoost") {
+                        totalAttack += scaledPerk.value;
+                    } else if (scaledPerk.type === "defenseBoost") {
+                        totalDefense += scaledPerk.value;
+                    }
+                }
             }
+        }
+    });
+    playerAttackStatElement.textContent = totalAttack;
+    playerDefenseStatElement.textContent = totalDefense;
+}
+
             function getDungeonSetBonusTimeReduction() {
                 let equippedSetPieces = 0;
                 dungeonSetItemIds.forEach(setItemId => {
