@@ -2254,38 +2254,61 @@ const adventureProgressionConfig = [ { id: "1", blockId: "adventure-1-block", un
 
     if (baseItemMaster.perk) {
         const scaledPerk = getScaledItemPerk(baseItemMaster, currentItemLevel);
+        const basePerk = baseItemMaster.perk; // Get the original, unscaled perk
         
         let perkDetails = [];
+
+        // This function now systematically checks for all possible effects and shows base values
+        const addPerkDetail = (name, baseValue, scaledValue, unit = '', isTime = false) => {
+            let baseText = "";
+            // Only show base value if the item is upgraded and the value has changed
+            if (currentItemLevel > 0 && scaledValue !== baseValue) {
+                if (isTime) {
+                    baseText = ` (Base: ${Math.round(baseValue / 60)} min)`;
+                } else if (unit === '%') {
+                    baseText = ` (Base: ${(baseValue * 100).toFixed(1)}${unit})`;
+                } else {
+                    baseText = ` (Base: ${baseValue}${unit})`;
+                }
+            }
+            if (isTime) {
+                perkDetails.push(`${name}: -${Math.round(scaledValue / 60)} min${baseText}`);
+            } else if (unit === '%') {
+                 perkDetails.push(`${name}: +${(scaledValue * 100).toFixed(1)}${unit}${baseText}`);
+            } else if (unit === 'x') {
+                 perkDetails.push(`${name}: x${scaledValue.toFixed(2)}${baseText}`);
+            } else {
+                perkDetails.push(`${name}: ${scaledValue > 0 ? '+' : ''}${scaledValue}${unit}${baseText}`);
+            }
+        };
         
-        // This function now systematically checks for all possible effects in a perk
-        if (scaledPerk.attack) perkDetails.push(`Attack: +${scaledPerk.attack}`);
-        if (scaledPerk.defense) perkDetails.push(`Defense: ${scaledPerk.defense > 0 ? '+' : ''}${scaledPerk.defense}`);
+        if (scaledPerk.attack) addPerkDetail('Attack', basePerk.attack, scaledPerk.attack);
+        if (scaledPerk.defense) addPerkDetail('Defense', basePerk.defense, scaledPerk.defense);
+
+        if (scaledPerk.value && scaledPerk.type === 'attackBoost') addPerkDetail('Attack', basePerk.value, scaledPerk.value);
+        if (scaledPerk.value && scaledPerk.type === 'defenseBoost') addPerkDetail('Defense', basePerk.value, scaledPerk.value);
+
+        if (scaledPerk.pvBonus) addPerkDetail('PV Bonus', basePerk.pvBonus, scaledPerk.pvBonus, '%');
+        if (scaledPerk.goldChanceIncrease) addPerkDetail('Gold Find Chance', basePerk.value, scaledPerk.value, '%');
         
-        if (scaledPerk.value && scaledPerk.type === 'attackBoost') perkDetails.push(`Attack: +${scaledPerk.value}`);
-        if (scaledPerk.value && scaledPerk.type === 'defenseBoost') perkDetails.push(`Defense: +${scaledPerk.value}`);
-        
-        if (scaledPerk.pvBonus) perkDetails.push(`PV Bonus: +${(scaledPerk.pvBonus * 100).toFixed(1)}%`);
-        if (scaledPerk.goldChanceIncrease) perkDetails.push(`Gold Find Chance: +${(scaledPerk.value * 100).toFixed(1)}%`);
-        if (scaledPerk.goldBonus) perkDetails.push(`Gold Find: +${(scaledPerk.goldBonus * 100).toFixed(1)}%`);
-        if (scaledPerk.diamondBonus) perkDetails.push(`Diamond Find: +${(scaledPerk.diamondBonus * 100).toFixed(1)}%`);
+        if (scaledPerk.goldBonus) addPerkDetail('Gold Find', basePerk.goldBonus, scaledPerk.goldBonus, '%');
+        if (scaledPerk.diamondBonus) addPerkDetail('Diamond Find', basePerk.diamondBonus, scaledPerk.diamondBonus, '%');
         if (scaledPerk.pvMultiplier) perkDetails.push(`Dungeon PV x${scaledPerk.pvMultiplier}`);
 
-        if (scaledPerk.timeReduction) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.value / 60)} min`);
-        if (scaledPerk.timeReductionPercent) perkDetails.push(`Adventure Time: -${(scaledPerk.value * 100).toFixed(0)}%`);
-        if (scaledPerk.flat && scaledPerk.percent) perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
-        if (scaledPerk.statAndDungeonTime) perkDetails.push(`Dungeon Time: -${(scaledPerk.timeReduction * 100).toFixed(0)}%`);
+        if (scaledPerk.timeReduction) addPerkDetail('Adventure Time', basePerk.value, scaledPerk.value, '', true);
+        if (scaledPerk.timeReductionPercent) addPerkDetail('Adventure Time', basePerk.value, scaledPerk.value, '%');
+        if (scaledPerk.flat && scaledPerk.percent) {
+            perkDetails.push(`Adventure Time: -${Math.round(scaledPerk.flat / 60)} min & -${(scaledPerk.percent * 100).toFixed(0)}%`);
+        }
+        if (scaledPerk.statAndDungeonTime) addPerkDetail('Dungeon Time', basePerk.timeReduction, scaledPerk.timeReduction, '%');
 
         if (scaledPerk.dungeon1) perkDetails.push(`Dungeon 1 Entry: +${scaledPerk.dungeon1}`);
         if (scaledPerk.dungeon2) perkDetails.push(`Dungeon 2 Entry: +${scaledPerk.dungeon2}`);
         if (scaledPerk.dungeon3) perkDetails.push(`Dungeon 3 Entry: +${scaledPerk.dungeon3}`);
         
-        if (scaledPerk.materialChanceMultiplier) perkDetails.push(`Material Find: x${scaledPerk.value.toFixed(2)}`);
+        if (scaledPerk.materialChanceMultiplier) addPerkDetail('Material Find', basePerk.value, scaledPerk.value, 'x');
         if (scaledPerk.dungeonMaterialFetch) perkDetails.push(`Dungeon Material Fetch: +${scaledPerk.count}`);
         if (scaledPerk.dungeonDropEcho) perkDetails.push(`Dungeon Drop Echo: ${scaledPerk.chance * 100}%`);
-        if (scaledPerk.crawlerSlotBonus) {
-            if(scaledPerk.crawlerSlotBonus.dungeon2) perkDetails.push(`Dungeon 2 Crawler Slot: +1`);
-            if(scaledPerk.crawlerSlotBonus.dungeon3) perkDetails.push(`Dungeon 3 Crawler Slot: +1`);
-        }
         
         if (perkDetails.length > 0) {
             contentHtml += `<p class="perk-info">Perk: ${perkDetails.join(', ')}</p>`;
