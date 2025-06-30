@@ -6514,7 +6514,7 @@ function updateWalletDisplay(account, walletName = '', idsWereLoadedForThisCall 
         }
     }         
     
-    sync function handleWalletConnected(walletAddress, walletName) {
+    async function handleWalletConnected(walletAddress, walletName) {
     console.log(`Wallet connected: ${walletName} - ${walletAddress} (handleWalletConnected client-only flow start)`);
     
     // ADMIN BONUS: Check if the connected wallet is an admin wallet
@@ -6603,7 +6603,6 @@ function updateWalletDisplay(account, walletName = '', idsWereLoadedForThisCall 
     }
     console.log("handleWalletConnected (client-only flow): Processing finished.");
 }
-
 
 
          async function handleWalletDisconnected() { // Added "async" here
