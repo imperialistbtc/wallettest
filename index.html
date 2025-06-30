@@ -2888,7 +2888,7 @@ function getCurrentGameState() {
         totalAdventuresCompleted: totalAdventuresCompleted || 0,
         equippedItems: equippedItems || { Armour: null, Helmet: null, Boots: null, Amulet: null, Ring1: null, Ring2: null, Weapon: null, Pet: null, Misc1: null, Misc2: null },
         quests: Array.isArray(quests) ? quests.map(q => ({ id: q.id, text: q.text || "UKN", reward: q.reward || "0", completed: q.completed || false, progress: q.progress || 0, target: q.target || 0, adventureName: q.adventureName || null, metric: q.metric || null, claimed: q.claimed || false })) : [],
-        activePotions: Array.isArray(activePotions) ? activePotions.map(p => ({ id: p.id, endTime: p.endTime || null, adventuresLeft: p.adventuresLeft !== undefined ? p.adventuresLeft : null })).filter(p => p.id) : [],
+        activePotions: Array.isArray(activePotions) ? activePotions.map(p => ({ id: p.id, endTime: p.endTime || null, adventuresLeft: p.adventuresLeft, upgradesLeft: p.upgradesLeft })).filter(p => p.id) : [],
         playerAdventurerLevel: playerAdventurerLevel || 1,
         secondRingSlotUnlocked: secondRingSlotUnlocked || false,
         petSlotUnlocked: petSlotUnlocked || false,
@@ -3051,21 +3051,23 @@ function applyLoadedGameState(loadedState) {
             });
         }
         if (Array.isArray(loadedState.activePotions)) {
-            activePotions = loadedState.activePotions.map(pData => {
-                if (!pData || !pData.id) return null;
-                const potionBase = shopItemsData.find(shopItem => shopItem.id === pData.id);
-                if (!potionBase) return null;
-                return {
-                    id: pData.id,
-                    name: potionBase.name,
-                    description: potionBase.description,
-                    effect: potionBase.effect,
-                    endTime: typeof pData.endTime === 'number' ? pData.endTime : null,
-                    adventuresLeft: pData.adventuresLeft !== undefined ? pData.adventuresLeft : null
-                };
-            }).filter(p => p !== null);
-            activePotions = activePotions.filter(p => (p.endTime && Date.now() < p.endTime) || (p.adventuresLeft !== undefined && p.adventuresLeft > 0) || (!p.endTime && p.adventuresLeft === undefined));
-        }
+    activePotions = loadedState.activePotions.map(pData => {
+        if (!pData || !pData.id) return null;
+        const potionBase = shopItemsData.find(shopItem => shopItem.id === pData.id);
+        if (!potionBase) return null;
+        return {
+            id: pData.id,
+            name: potionBase.name,
+            description: potionBase.description,
+            effect: potionBase.effect,
+            endTime: typeof pData.endTime === 'number' ? pData.endTime : null,
+            adventuresLeft: pData.adventuresLeft,
+            upgradesLeft: pData.upgradesLeft // Correctly loads the upgrade counter
+        };
+    }).filter(p => p !== null);
+    // Filter out expired potions
+    activePotions = activePotions.filter(p => (p.endTime && Date.now() < p.endTime) || (p.adventuresLeft > 0) || (p.upgradesLeft > 0));
+}
 
         // +++ LOAD DUNGEON STATE +++
         playerDungeonEntriesToday = loadedState.playerDungeonEntriesToday || { dungeon_1: 0, dungeon_2: 0 };
@@ -3847,6 +3849,7 @@ async function showPage(pageIdToShow) {
             applyQuestFiltersAndRender(); // THIS IS THE FIX
         } else if (pageIdToShow === 'shop-page') {
             renderShopItems();
+            updateUpgradeSuccessRateDisplay();
         } else if (pageIdToShow === 'crafting-page') {
             setupCraftingUI();
             applyCraftingFiltersAndRender();
