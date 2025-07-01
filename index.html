@@ -1523,7 +1523,7 @@ body.dark-mode {
 
     <script type="module" id="firebaseModule">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, Timestamp, query, where, orderBy, getDocs, addDoc, runTransaction, updateDoc, deleteDoc, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"; 
+        import { getFirestore, doc, getDoc, setDoc, collection, Timestamp, query, where, orderBy, getDocs, addDoc, runTransaction, updateDoc, deleteDoc, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"; 
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
@@ -1548,7 +1548,7 @@ body.dark-mode {
             window.firebaseApp = app;
             window.firebaseDb = db;
             window.fbAuth = auth; 
-            window.firebaseFirestore = { doc, getDoc, setDoc, collection, Timestamp, query, where, orderBy, getDocs, addDoc, runTransaction, updateDoc, deleteDoc, limit };
+            window.firebaseFirestore = { doc, getDoc, setDoc, collection, Timestamp, query, where, orderBy, getDocs, addDoc, runTransaction, updateDoc, deleteDoc, limit, onSnapshot };
             window.firebaseAuthFunctions = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup }; 
             
             document.dispatchEvent(new CustomEvent('firebaseReady'));
