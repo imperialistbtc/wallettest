@@ -822,8 +822,21 @@ body.dark-mode {
             cursor: pointer;
             padding: 0 3px;
         }
-@media (max-width: 1024px) {
-            /* Show the menu button and its container on mobile */
+
+        /* --- Open World Map Styles --- */
+        #world-map-page {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        #worldMapCanvas {
+            border: 2px solid var(--border-color);
+            background-color: #000; /* Black background for the canvas */
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9; /* Maintain a widescreen aspect ratio */
+        }
+        @media (max-width: 1280px) {            /* Show the menu button and its container on mobile */
             .header-controls .menu-button-container-fixed {
                 display: block; /* Use block to show the container */
             }
@@ -1117,7 +1130,11 @@ body.dark-mode {
                         <em style="font-size: 0.9em; opacity: 0.8;">(Note: Current NPCs are placeholders and will be removed when the official Dungeon Crawler mint begins.)</em>
                     </p>
                 </section>
-
+ <section id="world-map-page" class="page-content" style="align-items: center;">
+                    <h2 class="page-title">WORLD MAP</h2>
+                    <p style="text-align:center; max-width: 600px;">Use the <strong>W, A, S, D</strong> or <strong>Arrow Keys</strong> to move your character.<br>This is a foundational open-world experience. More features like NPCs, quests, and interactive objects can be added!</p>
+                    <canvas id="worldMapCanvas" width="800" height="450"></canvas>
+                </section>
                 <section id="quests-page" class="page-content" style="align-items: center;">
                     <h2 class="page-title">QUESTS</h2>
                     
@@ -1431,7 +1448,8 @@ body.dark-mode {
                 </section>
             </div>
 <aside class="right-sidebar-menu"> <nav class="main-menu-nav"> <div class="sidebar-content-area" id="sidebarContentArea"> <ul class="main-menu-nav-list" id="mainMenuList"> 
-                <li data-page="adventures-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/adventures.jpg" alt="" class="menu-item-icon">ADVENTURES</li>  
+    <li data-page="world-map-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/main/map-icon.png" alt="" class="menu-item-icon">WORLD MAP</li>            
+    <li data-page="adventures-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/adventures.jpg" alt="" class="menu-item-icon">ADVENTURES</li>  
                 <li data-page="dungeons-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/dungeons.jpg" alt="" class="menu-item-icon">DUNGEONS</li> 
                 <li data-page="quests-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/quest.jpg" alt="" class="menu-item-icon">QUESTS</li> 
                 <li data-page="daily-rewards-page" class="menu-list-item"><img src="https://raw.githubusercontent.com/nvoiy/pvadventures/refs/heads/main/reward.jpg" alt="" class="menu-item-icon">DAILY LOGIN REWARDS</li> 
@@ -3833,6 +3851,16 @@ function setupCraftingUI() {
 // Lastly, modify the showPage function to initialize the crafting UI
 async function showPage(pageIdToShow) {
     console.log("Switching to page:", pageIdToShow);
+
+    // --- World Map Start/Stop Logic ---
+    if (pageIdToShow === 'world-map-page') {
+        // Check if the function exists before calling it
+        if (typeof startWorldMap === 'function') startWorldMap();
+    } else {
+        // Stop the map animation when switching to any other page
+        if (typeof stopWorldMap === 'function') stopWorldMap();
+    }
+
     if (!pageContents || pageContents.length === 0) {
         console.error("pageContents NodeList is empty or not found in showPage.");
         return;
@@ -7053,6 +7081,275 @@ async function connectUnisat() { // <<< MAKE SURE THIS LINE AND THE WHOLE FUNCTI
                 }
             });
         }
+                    // --- Open World Map Logic ---
+            const worldMapCanvas = document.getElementById('worldMapCanvas');
+            const worldMapCtx = worldMapCanvas ? worldMapCanvas.getContext('2d') : null;
+            let worldMapAnimationId;
+
+            const player = {
+                x: worldMapCanvas ? worldMapCanvas.width / 2 : 400,
+                y: worldMapCanvas ? worldMapCanvas.height / 2 : 225,
+                width: 32,
+                height: 32,
+                color: 'yellow',
+                speed: 4,
+                dx: 0,
+                dy: 0
+            };
+
+            const keys = {
+                w: { pressed: false },
+                a: { pressed: false },
+                s: { pressed: false },
+                d: { pressed: false },
+                ArrowUp: { pressed: false },
+                ArrowLeft: { pressed: false },
+                ArrowDown: { pressed: false },
+                ArrowRight: { pressed: false }
+            };
+
+            // Simple collision map (rectangles)
+            // x, y, width, height
+            const collisionBlocks = [
+                // Add some invisible walls for demonstration
+                { x: 0, y: 0, width: worldMapCanvas ? worldMapCanvas.width : 800, height: 10 }, // Top wall
+                { x: 0, y: worldMapCanvas ? worldMapCanvas.height - 10 : 440, width: worldMapCanvas ? worldMapCanvas.width : 800, height: 10 }, // Bottom wall
+                { x: 0, y: 0, width: 10, height: worldMapCanvas ? worldMapCanvas.height : 450 }, // Left wall
+                { x: worldMapCanvas ? worldMapCanvas.width - 10 : 790, y: 0, width: 10, height: worldMapCanvas ? worldMapCanvas.height : 450 }, // Right wall
+                // A sample block in the middle
+                { x: 300, y: 200, width: 100, height: 50 }
+            ];
+
+            // --- Multiplayer State ---
+            let otherPlayers = {}; // To store data of other players on the map
+            let firestoreUnsubscribe = null; // To hold the listener unsubscribe function
+            let lastUpdateTime = 0;
+            const updateInterval = 100; // ms, how often to send updates to Firestore
+
+
+            function drawPlayer() {
+                if (!worldMapCtx) return;
+                worldMapCtx.fillStyle = player.color;
+                worldMapCtx.fillRect(player.x, player.y, player.width, player.height);
+            }
+
+            function drawOtherPlayers() {
+                if (!worldMapCtx) return;
+                worldMapCtx.font = '12px VT323, monospace';
+                worldMapCtx.textAlign = 'center';
+
+                for (const id in otherPlayers) {
+                    // Don't draw ourself from this loop. We'll handle that separately.
+                    if (currentUser && id === currentUser.uid) continue; 
+
+                    const other = otherPlayers[id];
+                    // Draw other player's character
+                    worldMapCtx.fillStyle = 'red'; // A different color for other players
+                    worldMapCtx.fillRect(other.x, other.y, player.width, player.height);
+
+                    // Draw other player's nickname above them
+                    worldMapCtx.fillStyle = 'white';
+                    worldMapCtx.fillText(other.nickname, other.x + player.width / 2, other.y - 5);
+                }
+            }
+
+            function drawCollisionBlocks() {
+                if (!worldMapCtx) return;
+                worldMapCtx.fillStyle = 'rgba(255, 0, 0, 0.5)'; // Semi-transparent red for debugging
+                collisionBlocks.forEach(block => {
+                    worldMapCtx.fillRect(block.x, block.y, block.width, block.height);
+                });
+            }
+
+            // --- Firestore Multiplayer Functions ---
+            async function addPlayerToMap() {
+                if (!currentUser || !db) return;
+                const playerRef = doc(db, "worldMapPlayers", currentUser.uid);
+                try {
+                    await setDoc(playerRef, {
+                        nickname: userNickname || 'Voyager',
+                        x: player.x,
+                        y: player.y,
+                        lastSeen: Timestamp.now()
+                    });
+                    console.log("Player added to world map in Firestore.");
+                } catch (error) {
+                    console.error("Error adding player to map:", error);
+                }
+            }
+
+            async function removePlayerFromMap() {
+                if (!currentUser || !db) return;
+                const playerRef = doc(db, "worldMapPlayers", currentUser.uid);
+                try {
+                    await deleteDoc(playerRef);
+                    console.log("Player removed from world map in Firestore.");
+                } catch (error) {
+                    // This can be noisy on page close, so we don't log the error.
+                }
+            }
+
+            function listenForOtherPlayers() {
+                if (!db) return;
+                const playersCollection = collection(db, "worldMapPlayers");
+                if (firestoreUnsubscribe) firestoreUnsubscribe(); // Stop any previous listener
+
+                firestoreUnsubscribe = onSnapshot(playersCollection, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        const playerData = change.doc.data();
+                        const playerId = change.doc.id;
+
+                        if (change.type === "added" || change.type === "modified") {
+                            if (currentUser && playerId === currentUser.uid) return; // Don't add self
+                            otherPlayers[playerId] = playerData;
+                        }
+                        if (change.type === "removed") {
+                            delete otherPlayers[playerId];
+                        }
+                    });
+                });
+            }
+
+            function stopListeningForOtherPlayers() {
+                if (firestoreUnsubscribe) {
+                    firestoreUnsubscribe();
+                    firestoreUnsubscribe = null;
+                    console.log("Stopped listening for other players.");
+                }
+                otherPlayers = {}; // Clear the local list of players
+            }
+
+            async function updatePlayerPositionInFirestore() {
+                // Don't update if not logged in, not moving, or if db isn't ready.
+                // The (player.dx === 0 && player.dy === 0) check prevents sending updates when idle.
+                if (!currentUser || !db || (player.dx === 0 && player.dy === 0)) return;
+
+                const now = Date.now();
+                if (now - lastUpdateTime < updateInterval) {
+                    return; // Throttle updates to prevent spamming Firestore.
+                }
+                lastUpdateTime = now;
+
+                const playerRef = doc(db, "worldMapPlayers", currentUser.uid);
+                try {
+                    // Use updateDoc for efficiency, as we know the document should exist.
+                    await updateDoc(playerRef, {
+                        x: player.x,
+                        y: player.y,
+                        lastSeen: Timestamp.now()
+                    });
+                } catch (error) {
+                    console.warn("Could not update player position in Firestore (may happen on disconnect):", error.code);
+                }
+            }
+
+            function checkCollision(rect1, rect2) {
+                return (
+                    rect1.x < rect2.x + rect2.width &&
+                    rect1.x + rect1.width > rect2.x &&
+                    rect1.y < rect2.y + rect2.height &&
+                    rect1.y + rect1.height > rect2.y
+                );
+            }
+
+            function updatePlayerPosition() {
+                player.dx = 0;
+                player.dy = 0;
+                if (keys.w.pressed || keys.ArrowUp.pressed) player.dy = -player.speed;
+                if (keys.s.pressed || keys.ArrowDown.pressed) player.dy = player.speed;
+                if (keys.a.pressed || keys.ArrowLeft.pressed) player.dx = -player.speed;
+                if (keys.d.pressed || keys.ArrowRight.pressed) player.dx = player.speed;
+
+                // Check for horizontal collision
+                let nextX = player.x + player.dx;
+                let collidedX = false;
+                for (const block of collisionBlocks) {
+                    if (checkCollision({ ...player, x: nextX }, block)) {
+                        collidedX = true;
+                        break;
+                    }
+                }
+                if (!collidedX) {
+                    player.x = nextX;
+                }
+
+                // Check for vertical collision
+                let nextY = player.y + player.dy;
+                let collidedY = false;
+                for (const block of collisionBlocks) {
+                    if (checkCollision({ ...player, y: nextY }, block)) {
+                        collidedY = true;
+                        break;
+                    }
+                }
+                if (!collidedY) {
+                    player.y = nextY;
+                }
+            }
+
+            function gameLoop() {
+                if (!worldMapCtx || !worldMapCanvas) return;
+                worldMapAnimationId = requestAnimationFrame(gameLoop);
+                
+                // Clear the canvas
+                worldMapCtx.fillStyle = '#333'; // A dark grey background
+                worldMapCtx.fillRect(0, 0, worldMapCanvas.width, worldMapCanvas.height);
+
+                // Update and draw
+                updatePlayerPosition();
+                updatePlayerPositionInFirestore(); // Send position to other players
+                
+                // For debugging, you can draw the collision blocks
+                // drawCollisionBlocks();
+
+                drawOtherPlayers();
+                drawPlayer();
+            }
+
+            function startWorldMap() {
+                if (!currentUser) {
+                    showCustomPopup("You must connect your wallet to enter the world map.", "Wallet Required");
+                    showPage('adventures-page'); // Go back to a default page
+                    return;
+                }
+
+                if (worldMapAnimationId) {
+                    cancelAnimationFrame(worldMapAnimationId);
+                }
+                
+                // Start multiplayer listeners and add player to map
+                listenForOtherPlayers();
+                addPlayerToMap();
+                window.addEventListener('beforeunload', removePlayerFromMap); // For tab close
+
+                gameLoop();
+            }
+
+            function stopWorldMap() {
+                if (worldMapAnimationId) {
+                    cancelAnimationFrame(worldMapAnimationId);
+                    worldMapAnimationId = null;
+                }
+                
+                // Stop multiplayer listeners and remove player from map
+                removePlayerFromMap();
+                stopListeningForOtherPlayers();
+                window.removeEventListener('beforeunload', removePlayerFromMap);
+            }
+
+            // Keyboard event listeners
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.key)) {
+                    keys[e.key].pressed = true;
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.key)) {
+                    keys[e.key].pressed = false;
+                }
+            });
+
         }); // End of 'firebaseReady' event listener
     </script>
 </body>
