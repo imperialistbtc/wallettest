@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Mint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- This is the library that generates the QR code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #121212;
+            color: #EAEAEA;
+            margin: 0;
+            padding: 25px;
+            text-align: center;
+        }
+        .payment-container {
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        h2 {
+            color: #00ff9d;
+            margin-top: 0;
+        }
+        p { color: #A0A0A0; }
+        #qrCodeCanvas {
+            margin: 20px auto;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .payment-details { margin-top: 15px; }
+        .detail-item { margin-bottom: 15px; }
+        .detail-item span {
+            display: block;
+            font-size: 0.9em;
+            color: #A0A0A0;
+        }
+        .detail-value {
+            font-size: 1.1em;
+            word-wrap: break-word;
+            background-color: #121212;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 5px;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            border: none;
+            color: #EAEAEA;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="payment-container">
+        <h2>Complete Your Mint</h2>
+        <p>Send the exact amount to the address below. You can scan the QR code with your wallet.</p>
+        
+        <canvas id="qrCodeCanvas"></canvas>
+
+        <div class="payment-details">
+            <div class="detail-item">
+                <span>Amount</span>
+                <div class="detail-value" id="amountDisplay">
+                    <button class="copy-btn" onclick="copyToClipboard('amount')">Copy</button>
+                </div>
+            </div>
+            <div class="detail-item">
+                <span>Address</span>
+                <div class="detail-value" id="addressDisplay">
+                    <button class="copy-btn" onclick="copyToClipboard('address')">Copy</button>
+                </div>
+            </div>
+        </div>
+        <p style="font-size: 0.8em;">Your Ordinal will be sent to you after payment is confirmed on the blockchain. This window can be closed.</p>
+    </div>
+
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function copyToClipboard(type) {
+            const el = document.getElementById(type === 'amount' ? 'amountBtc' : 'addressValue');
+            navigator.clipboard.writeText(el.textContent).then(() => {
+                alert(`${type.charAt(0).toUpperCase() + type.slice(1)} copied!`);
+            });
+        }
+
+        window.onload = () => {
+            const address = getQueryParam('address');
+            const amountSats = parseInt(getQueryParam('amount'));
+            const amountBtc = (amountSats / 100_000_000).toFixed(8);
+
+            document.getElementById('addressDisplay').innerHTML = `<span id="addressValue">${address}</span>` + document.getElementById('addressDisplay').innerHTML;
+            document.getElementById('amountDisplay').innerHTML = `<span id="amountBtc">${amountBtc}</span> BTC` + document.getElementById('amountDisplay').innerHTML;
+
+            // Generate QR Code
+            const qrCanvas = document.getElementById('qrCodeCanvas');
+            const bip21Uri = `bitcoin:${address}?amount=${amountBtc}`;
+            QRCode.toCanvas(qrCanvas, bip21Uri, { width: 220 }, function (error) {
+                if (error) console.error(error);
+            });
+        };
+    </script>
+</body>
+</html>
