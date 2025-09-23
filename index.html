@@ -3,193 +3,494 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testnet Ordinal Minter</title>
-    <!-- We include the sats-connect library for wallet interaction -->
-    <script src="https://unpkg.com/@sats-connect/core@latest/dist/bundles/sats-connect.js"></script>
+    <title>Ordinal Voyager - Official Mint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --background-color: #121212;
+            --container-bg: #1E1E1E;
+            --primary-text: #EAEAEA;
+            --secondary-text: #A0A0A0;
+            --accent-color: #00ff9d;
+            --border-color: #333333;
+            --button-hover: #1cce8a;
+            --disabled-color: #555;
+        }
+        
         body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #111;
-            color: #0f0;
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--background-color);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 20px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
         }
-        .container {
-            border: 1px solid #0f0;
-            padding: 30px;
-            background-color: #1a1a1a;
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.3);
-            text-align: center;
-            max-width: 500px;
+
+        .main-container {
             width: 100%;
+            max-width: 900px;
+            display: flex;
+            gap: 30px;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
-        h1 {
-            color: #0f0;
-            text-shadow: 0 0 5px #0f0;
+
+        .left-panel {
+            flex: 1;
+            text-align: center;
         }
-        .testnet-warning {
-            color: #ff0;
-            border: 1px dashed #ff0;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        .manual-transfer-warning {
-            color: #f5a623;
-            font-size: 0.9em;
-            margin-top: 15px;
-            line-height: 1.4;
-        }
-        img#preview {
-            max-width: 100%;
+
+        .collection-image {
+            width: 100%;
             height: auto;
-            border: 1px solid #0a0;
-            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
-        button {
-            background-color: #050;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 12px 20px;
+
+        .collection-title {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 20px 0 10px 0;
+            color: var(--accent-color);
+        }
+
+        .collection-description {
+            font-size: 1.1em;
+            color: var(--secondary-text);
+            line-height: 1.6;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wallet-connector {
+            position: relative;
+        }
+
+        .connect-wallet-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: 500;
             font-family: inherit;
             cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            background-color: var(--accent-color);
+            color: #121212;
+        }
+        .connect-wallet-btn:hover {
+            background-color: var(--button-hover);
+        }
+
+        .wallet-dropdown {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 5px 0 0 0;
+            position: absolute;
+            background-color: #2c2c2c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            z-index: 10;
+            overflow: hidden;
+        }
+        .wallet-dropdown li {
+            padding: 12px 15px;
+            cursor: pointer;
+        }
+        .wallet-dropdown li:hover {
+            background-color: #383838;
+        }
+
+        #connectionDetails {
+            background-color: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        #connectionDetails h3 {
+            margin-top: 0;
             font-size: 1.1em;
-            margin-top: 20px;
-            transition: background-color 0.2s, box-shadow 0.2s;
+            color: var(--secondary-text);
         }
-        button:hover:not(:disabled) {
-            background-color: #080;
-            box-shadow: 0 0 10px #0f0;
+        #walletAddressDisplay, #walletBalanceDisplay {
+            word-wrap: break-word;
+            font-size: 0.9em;
+            margin-bottom: 5px;
         }
-        button:disabled {
-            color: #555;
-            border-color: #555;
-            background-color: #222;
+        #walletBalanceDisplay {
+            font-weight: 700;
+            color: var(--primary-text);
+        }
+        #signOutButton {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background: none;
+            border: 1px solid #ff4136;
+            color: #ff4136;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #signOutButton:hover {
+            background-color: #ff4136;
+            color: white;
+        }
+
+        #mintInterface {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        #mintInterface.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .mint-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: #333;
+            color: var(--primary-text);
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        #quantityInput {
+            width: 50px;
+            height: 30px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            background: var(--background-color);
+            color: var(--primary-text);
+            font-family: inherit;
+            border-radius: 4px;
+        }
+
+        #mintButton {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.4em;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            background-color: var(--accent-color);
+            color: #121212;
+            margin-top: auto; /* Pushes button to the bottom */
+        }
+        #mintButton:disabled {
+            background-color: var(--disabled-color);
             cursor: not-allowed;
         }
-        #status {
-            margin-top: 25px;
-            color: #00aaff;
-            font-size: 0.9em;
-            word-wrap: break-word;
-            line-height: 1.5;
-            min-height: 50px;
+
+        .hidden { display: none; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .collection-title {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Single-File Ordinal Minter</h1>
-        <div class="testnet-warning">
-            ⚠️ THIS ENTIRE PROCESS IS ON THE BITCOIN TESTNET ⚠️<br>
-            No real BTC will be used.
+    <div class="main-container">
+        <div class="left-panel">
+            <!-- Replace with your collection's image -->
+            <img src="https://via.placeholder.com/400x400.png/00ff9d/121212?text=Ordinal+Voyager" alt="Collection NFT Image" class="collection-image">
+            <h1 class="collection-title">Ordinal Voyagers</h1>
+            <p class="collection-description">A limited collection of 1,000 unique explorers inscribed forever on the Bitcoin blockchain. Join the voyage.</p>
         </div>
-
-        <!-- Replace this with a preview image of your Ordinal -->
-        <img id="preview" src="https://testnet.ordinalsbot.com/content/01413f0030322542075382a5c3c3a19233c5c460351146c1928676c93445103di0" alt="Ordinal Preview">
-
-        <button id="connect-btn">1. Connect Wallet</button>
-        <button id="mint-btn" disabled>2. Mint Now</button>
-
-        <p class="manual-transfer-warning">
-            <strong>Important:</strong> After minting, the Ordinal will be sent to the project creator's wallet. The creator will then manually transfer it to you. Please contact the creator with your transaction ID as proof.
-        </p>
         
-        <div id="status">Status: Please connect your Testnet wallet.</div>
+        <div class="right-panel">
+            <!-- This area is shown when DISCONNECTED -->
+            <div class="wallet-connector" id="walletConnector">
+                <button class="connect-wallet-btn" id="connectWalletBtn">Connect Wallet to Mint</button>
+                <ul class="wallet-dropdown" id="walletDropdown">
+                    <li data-wallet="xverse">Xverse</li>
+                    <li data-wallet="unisat">UniSat</li>
+                </ul>
+            </div>
+
+            <!-- This area is shown when CONNECTED -->
+            <div id="connectionDetails" class="hidden">
+                <h3>Connected Wallet</h3>
+                <div id="walletAddressDisplay"></div>
+                <div id="walletBalanceDisplay"></div>
+                <button id="signOutButton">Disconnect</button>
+            </div>
+
+            <div id="mintInterface" class="disabled">
+                <div class="mint-info-row">
+                    <span>Supply</span>
+                    <span>15 / 1000 MINTED</span>
+                </div>
+
+                <div class="mint-info-row">
+                    <span>Price</span>
+                    <span id="mintPrice">0.001 BTC</span>
+                </div>
+
+                <div class="mint-info-row">
+                    <span>Quantity</span>
+                    <div class="quantity-control">
+                        <button class="quantity-btn" id="decreaseQtyBtn">-</button>
+                        <input type="number" id="quantityInput" value="1" min="1" max="10">
+                        <button class="quantity-btn" id="increaseQtyBtn">+</button>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+
+                <div class="mint-info-row" style="font-weight: 700; font-size: 1.2em;">
+                    <span>Total</span>
+                    <span id="totalCost">0.001 BTC</span>
+                </div>
+
+                <button id="mintButton" disabled>Mint Now</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- CONFIGURATION: REPLACE THESE VALUES! --- //
-        // These are the values you got from OrdinalsBot in Part 1.
+        // --- Constants and State ---
+        const MINT_PRICE_BTC = 0.001;
+        let connectedAccount = null;
+        let connectedWalletName = null;
 
-        // The unique Testnet address OrdinalsBot told you to pay.
-        const PAYMENT_ADDRESS = "tb1p...your-unique-payment-address"; 
-        
-        // The exact amount in SATOSHIS. (e.g., if it's 0.00015 BTC, this is 15000)
-        const PAYMENT_AMOUNT_SATS = 15000; 
+        // --- DOM Element References ---
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const walletConnector = document.getElementById('walletConnector');
+        const walletDropdown = document.getElementById('walletDropdown');
+        const walletOptions = walletDropdown.querySelectorAll('li');
+        const connectionDetails = document.getElementById('connectionDetails');
+        const walletAddressDisplay = document.getElementById('walletAddressDisplay');
+        const walletBalanceDisplay = document.getElementById('walletBalanceDisplay');
+        const signOutButton = document.getElementById('signOutButton');
+        const mintInterface = document.getElementById('mintInterface');
+        const mintButton = document.getElementById('mintButton');
+        const quantityInput = document.getElementById('quantityInput');
+        const decreaseQtyBtn = document.getElementById('decreaseQtyBtn');
+        const increaseQtyBtn = document.getElementById('increaseQtyBtn');
+        const totalCostDisplay = document.getElementById('totalCost');
+        document.getElementById('mintPrice').innerText = `${MINT_PRICE_BTC} BTC`;
 
-        // --------------------------------------------- //
+        // --- Core Wallet Logic ---
 
-
-        const connectBtn = document.getElementById('connect-btn');
-        const mintBtn = document.getElementById('mint-btn');
-        const statusDiv = document.getElementById('status');
-        
-        const NETWORK = { type: "Testnet" }; // We are on Testnet
-        let paymentAddress = null;
-        let ordinalsAddress = null;
-
-        // Step 1: Connect Wallet
-        connectBtn.addEventListener('click', () => {
-            if (typeof SatsConnect === 'undefined') {
-                statusDiv.textContent = "Error: SatsConnect library not found. Please refresh.";
-                return;
-            }
-
-            SatsConnect.getAddresses({
-                payload: {
-                    purposes: ['ordinals', 'payment'],
-                    message: 'Connect to the Ordinal Minter',
-                    network: NETWORK,
-                },
-                onFinish: (response) => {
-                    const ordinalsAddrInfo = response.addresses.find(a => a.purpose === 'ordinals');
-                    if (ordinalsAddrInfo) {
-                        ordinalsAddress = ordinalsAddrInfo.address;
-                        statusDiv.textContent = `Wallet Connected!\nOrdinals Address: ${ordinalsAddress.substring(0,6)}...${ordinalsAddress.slice(-4)}`;
-                        connectBtn.disabled = true;
-                        connectBtn.textContent = 'Wallet Connected';
-                        mintBtn.disabled = false;
-                    } else {
-                        statusDiv.textContent = "Could not get a valid Ordinals address from your wallet.";
-                    }
-                },
-                onCancel: () => {
-                    statusDiv.textContent = "Connection cancelled by user.";
+        async function connectXverse() {
+            try {
+                if (typeof window.XverseProviders === 'undefined' || !window.XverseProviders.BitcoinProvider) {
+                    alert("Xverse is not installed. Please install the extension.");
+                    window.open('https://www.xverse.app/', '_blank');
+                    return;
                 }
+                const response = await window.XverseProviders.BitcoinProvider.request('wallet_connect', { addresses: ['ordinals', 'payment'] });
+                if (response.error) throw new Error(response.error.message);
+
+                const ordAddressInfo = response.result.addresses.find(a => a.purpose === 'ordinals');
+                if (ordAddressInfo && ordAddressInfo.address) {
+                    const balanceResponse = await window.XverseProviders.BitcoinProvider.request('get_balance', { address: ordAddressInfo.address });
+                    await handleWalletConnected(ordAddressInfo.address, 'Xverse', balanceResponse.result.total);
+                } else {
+                    throw new Error('Could not find Ordinals address.');
+                }
+            } catch (e) {
+                console.error('Xverse connection error:', e);
+                alert(`Failed to connect with Xverse: ${e.message}`);
+            }
+        }
+
+        async function connectUnisat() {
+            try {
+                if (typeof window.unisat === 'undefined') {
+                    alert("UniSat Wallet is not installed.");
+                    window.open('https://unisat.io/', '_blank');
+                    return;
+                }
+                const accounts = await window.unisat.requestAccounts();
+                if (accounts && accounts.length > 0) {
+                    const balance = await window.unisat.getBalance();
+                    await handleWalletConnected(accounts[0], 'UniSat', balance.total);
+
+                    window.unisat.on('accountsChanged', async (newAccounts) => {
+                        if (connectedWalletName === 'UniSat') {
+                            if (newAccounts && newAccounts.length > 0) {
+                                const newBalance = await window.unisat.getBalance();
+                                await handleWalletConnected(newAccounts[0], 'UniSat', newBalance.total);
+                            } else {
+                                await handleWalletDisconnected();
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('UniSat connection error:', e);
+                alert(`Failed to connect with UniSat: ${e.message}`);
+            }
+        }
+
+        async function handleWalletConnected(address, walletName, balanceInSats) {
+            connectedAccount = address;
+            connectedWalletName = walletName;
+            console.log(`Connected: ${walletName} - ${address} - Balance (sats): ${balanceInSats}`);
+            updateWalletUI(true, address, walletName, balanceInSats);
+            updateMintInterface(true);
+        }
+
+        async function handleWalletDisconnected() {
+            connectedAccount = null;
+            connectedWalletName = null;
+            console.log('Wallet disconnected.');
+            updateWalletUI(false);
+            updateMintInterface(false);
+        }
+
+        // --- UI Update Functions ---
+
+        function updateWalletUI(isConnected, address = '', walletName = '', balanceInSats = 0) {
+            if (isConnected) {
+                walletConnector.classList.add('hidden');
+                connectionDetails.classList.remove('hidden');
+                
+                const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                const balanceInBtc = (balanceInSats / 100_000_000).toFixed(8);
+
+                walletAddressDisplay.innerText = `Address: ${shortAddress}`;
+                walletBalanceDisplay.innerText = `Balance: ${balanceInBtc} BTC`;
+            } else {
+                walletConnector.classList.remove('hidden');
+                connectionDetails.classList.add('hidden');
+            }
+        }
+
+        function updateMintInterface(isEnabled) {
+             if (isEnabled) {
+                mintInterface.classList.remove('disabled');
+                mintButton.disabled = false;
+             } else {
+                mintInterface.classList.add('disabled');
+                mintButton.disabled = true;
+                quantityInput.value = 1;
+                updateTotalCost();
+             }
+        }
+        
+        function updateTotalCost() {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const total = quantity * MINT_PRICE_BTC;
+            totalCostDisplay.innerText = `${total.toFixed(4)} BTC`;
+        }
+
+        // --- Event Listeners ---
+
+        connectWalletBtn.addEventListener('click', () => {
+            walletDropdown.style.display = walletDropdown.style.display === 'block' ? 'none' : 'block';
+        });
+
+        walletOptions.forEach(option => {
+            option.addEventListener('click', (event) => {
+                const walletType = event.target.dataset.wallet;
+                walletDropdown.style.display = 'none';
+                if (walletType === 'unisat') connectUnisat();
+                else if (walletType === 'xverse') connectXverse();
             });
         });
 
-        // Step 2: Pay for the Mint
-        mintBtn.addEventListener('click', () => {
-            if (!ordinalsAddress) {
-                statusDiv.textContent = "Please connect your wallet first.";
-                return;
+        signOutButton.addEventListener('click', handleWalletDisconnected);
+        
+        document.addEventListener('click', (event) => {
+            if (!walletConnector.contains(event.target)) {
+                walletDropdown.style.display = 'none';
             }
-
-            if (!PAYMENT_ADDRESS || PAYMENT_ADDRESS.includes("tb1p...")) {
-                statusDiv.textContent = "Configuration Error: The creator has not set the payment address in the HTML file.";
-                return;
-            }
-
-            statusDiv.textContent = "Preparing payment transaction...";
-
-            SatsConnect.sendBtcTransaction({
-                payload: {
-                    network: NETWORK,
-                    recipients: [{
-                        address: PAYMENT_ADDRESS,
-                        amountSats: BigInt(PAYMENT_AMOUNT_SATS),
-                    }],
-                    senderAddress: ordinalsAddress, // Specify the sender
-                },
-                onFinish: (txId) => {
-                    statusDiv.innerHTML = `<strong>MINT INITIATED!</strong><br>Payment transaction sent: ${txId}.<br>Please allow a few minutes for the inscription service to process it. Contact the creator with this TXID to receive your Ordinal.`;
-                    mintBtn.textContent = "Mint Initiated!";
-                    mintBtn.disabled = true;
-                },
-                onCancel: () => {
-                    statusDiv.textContent = "Payment was cancelled. You can try again.";
-                }
-            });
         });
+
+        // Mint quantity controls
+        decreaseQtyBtn.addEventListener('click', () => {
+            let qty = parseInt(quantityInput.value);
+            if (qty > 1) {
+                quantityInput.value = qty - 1;
+                updateTotalCost();
+            }
+        });
+
+        increaseQtyBtn.addEventListener('click', () => {
+            let qty = parseInt(quantityInput.value);
+            const max = parseInt(quantityInput.max) || 10;
+            if (qty < max) {
+                quantityInput.value = qty + 1;
+                updateTotalCost();
+            }
+        });
+
+        quantityInput.addEventListener('input', updateTotalCost);
+
+        // --- Placeholder Mint Button Logic ---
+        mintButton.addEventListener('click', () => {
+            if (!connectedAccount) {
+                alert("Please connect your wallet first.");
+                return;
+            }
+            
+            const quantity = quantityInput.value;
+            const totalCost = totalCostDisplay.innerText;
+            
+            // **IMPORTANT**: This is a frontend placeholder.
+            // A real mint would involve creating and broadcasting a Bitcoin transaction here.
+            // This requires a backend or integration with an inscription service API.
+            
+            alert(`
+                --- MINT SIMULATION ---
+                Wallet: ${connectedAccount}
+                Quantity: ${quantity}
+                Total Cost: ${totalCost}
+
+                In a real application, this step would now create a transaction for you to sign in your wallet.
+            `);
+        });
+
+        // Initial UI setup
+        updateTotalCost();
+
     </script>
-
 </body>
-</html>
+</html>```
