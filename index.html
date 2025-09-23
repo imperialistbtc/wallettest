@@ -39,7 +39,7 @@
             padding: 30px 40px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px MINT_PRICE_BTCpx rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .collection-title {
@@ -181,7 +181,6 @@
             font-family: inherit;
             border-radius: 4px;
         }
-        /* Hides the default number input arrows */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
           -webkit-appearance: none; 
@@ -222,11 +221,9 @@
 
     <div class="main-container">
         <div>
-            <!-- Collection Info -->
             <h1 class="collection-title">Ordinal Voyagers</h1>
             <p class="collection-description">A limited collection of unique explorers inscribed forever on the Bitcoin blockchain. Join the voyage.</p>
             
-            <!-- Wallet Area -->
             <div id="walletArea">
                  <div class="wallet-connector" id="walletConnector">
                     <button class="connect-wallet-btn" id="connectWalletBtn">Connect Wallet to Mint</button>
@@ -235,7 +232,6 @@
                         <li data-wallet="unisat">UniSat</li>
                     </ul>
                 </div>
-
                 <div id="connectionDetails" class="hidden">
                     <h3>Connected Wallet</h3>
                     <div id="walletAddressDisplay"></div>
@@ -246,7 +242,6 @@
 
             <hr style="border-color: var(--border-color); margin: 30px 0;">
 
-            <!-- Mint Interface -->
             <div id="mintInterface">
                 <div class="mint-info-row">
                     <span>Supply</span>
@@ -254,12 +249,10 @@
                 </div>
                 <div class="mint-status-bar"><div class="mint-progress" id="mintProgressBar"></div></div>
                 <hr style="border-color: var(--border-color); margin: 20px 0;">
-
                 <div class="mint-info-row">
                     <span>Price</span>
                     <span id="mintPriceDisplay"></span>
                 </div>
-
                 <div class="mint-info-row">
                     <span>Quantity</span>
                     <div class="quantity-control">
@@ -268,12 +261,10 @@
                         <button class="quantity-btn" id="increaseQtyBtn">+</button>
                     </div>
                 </div>
-
                 <div class="mint-info-row" style="font-weight: 700; font-size: 1.2em;">
                     <span>Total</span>
                     <span id="totalCostDisplay"></span>
                 </div>
-
                 <button id="mintButton" disabled>Loading...</button>
             </div>
         </div>
@@ -282,19 +273,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Collection Configuration ---
-            const MINT_PRICE_BTC = 0.000001;
+            const MINT_PRICE_SATS = 1;
             const COLLECTION_SIZE = 1000;
             const MINTED_SO_FAR = 15;
             const MAX_MINT_PER_TX = 10;
-            const MINT_LIVE_DATE = new Date(); // Mint is live now!
-            
-            // --- State Variables ---
+            const MINT_LIVE_DATE = new Date(); // Mint is live now
+
             let connectedAccount = null;
             let connectedWalletName = null;
             let mintIsLive = false;
             let countdownInterval;
 
-            // --- DOM Elements ---
             const connectWalletBtn = document.getElementById('connectWalletBtn');
             const walletConnector = document.getElementById('walletConnector');
             const walletDropdown = document.getElementById('walletDropdown');
@@ -311,25 +300,17 @@
             const mintPriceDisplay = document.getElementById('mintPriceDisplay');
             const mintProgressBar = document.getElementById('mintProgressBar');
 
-            // --- Wallet Connection Logic ---
             async function connectXverse() {
                 try {
-                    if (!window.XverseProviders || !window.XverseProviders.BitcoinProvider) {
-                        throw new Error("Xverse provider not found.");
-                    }
+                    if (!window.XverseProviders || !window.XverseProviders.BitcoinProvider) throw new Error("Xverse provider not found.");
                     const resp = await window.XverseProviders.BitcoinProvider.request('wallet_connect', { addresses: ['ordinals', 'payment'] });
                     if (resp.error) throw new Error(resp.error.message);
-                    
                     const ordAddr = resp.result.addresses.find(a => a.purpose === 'ordinals');
                     if (!ordAddr) throw new Error('Could not find Ordinals address.');
-                    
                     const balResp = await window.XverseProviders.BitcoinProvider.request('get_balance', { address: ordAddr.address });
                     let totalBal = (balResp && balResp.result) ? balResp.result.total : 0;
-                    
                     await handleWalletConnected(ordAddr.address, 'Xverse', totalBal);
-                } catch (e) {
-                    alert(`Failed to connect with Xverse: ${e.message}`);
-                }
+                } catch (e) { alert(`Failed to connect with Xverse: ${e.message}`); }
             }
 
             async function connectUnisat() {
@@ -339,11 +320,9 @@
                     if (accounts && accounts.length > 0) {
                         const balance = await window.unisat.getBalance();
                         await handleWalletConnected(accounts[0], 'UniSat', balance.total);
-                        window.unisat.on('accountsChanged', (newAccounts) => handleWalletDisconnected());
+                        window.unisat.on('accountsChanged', () => handleWalletDisconnected());
                     }
-                } catch (e) {
-                    alert(`Failed to connect with UniSat: ${e.message}`);
-                }
+                } catch (e) { alert(`Failed to connect with UniSat: ${e.message}`); }
             }
 
             async function handleWalletConnected(address, walletName, balanceInSats) {
@@ -360,7 +339,6 @@
                 updateMintButtonState();
             }
 
-            // --- UI & State Management ---
             function updateWalletUI(isConnected, address = '', balanceInSats = 0) {
                 walletConnector.classList.toggle('hidden', isConnected);
                 connectionDetails.classList.toggle('hidden', !isConnected);
@@ -373,18 +351,13 @@
             
             function updateMintButtonState() {
                 const now = new Date();
-                if (now >= MINT_LIVE_DATE) {
-                    mintIsLive = true;
-                    if (countdownInterval) clearInterval(countdownInterval);
-                    if (connectedAccount) {
-                        mintButton.textContent = "Mint Now";
-                        mintButton.disabled = false;
-                    } else {
-                        mintButton.textContent = "Connect Wallet to Mint";
-                        mintButton.disabled = true;
-                    }
+                mintIsLive = now >= MINT_LIVE_DATE;
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                if (mintIsLive) {
+                    mintButton.disabled = !connectedAccount;
+                    mintButton.textContent = connectedAccount ? "Mint Now" : "Connect Wallet to Mint";
                 } else {
-                    mintIsLive = false;
                     mintButton.disabled = true;
                     updateCountdown();
                     if (!countdownInterval) {
@@ -395,10 +368,7 @@
 
             function updateCountdown() {
                 const timeLeft = MINT_LIVE_DATE - new Date();
-                if (timeLeft <= 0) {
-                    updateMintButtonState();
-                    return;
-                }
+                if (timeLeft <= 0) { updateMintButtonState(); return; }
                 const d = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
                 const h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
@@ -408,11 +378,11 @@
 
             function updateTotalCost() {
                 const quantity = parseInt(quantityInput.value) || 0;
-                totalCostDisplay.innerText = `${(quantity * MINT_PRICE_BTC).toFixed(8)} BTC`;
+                totalCostDisplay.innerText = `${(quantity * (MINT_PRICE_SATS / 1e8)).toFixed(8)} BTC`;
             }
 
             function initializeUI() {
-                mintPriceDisplay.innerText = `${MINT_PRICE_BTC} BTC`;
+                mintPriceDisplay.innerText = `${(MINT_PRICE_SATS / 1e8).toFixed(8)} BTC`;
                 supplyDisplay.innerText = `${MINTED_SO_FAR} / ${COLLECTION_SIZE} MINTED`;
                 quantityInput.max = MAX_MINT_PER_TX;
                 mintProgressBar.style.width = `${(MINTED_SO_FAR / COLLECTION_SIZE) * 100}%`;
@@ -429,69 +399,46 @@
             walletDropdown.addEventListener('click', (e) => {
                 if (e.target.tagName === 'LI') {
                     walletDropdown.style.display = 'none';
-                    if (e.target.dataset.wallet === 'unisat') connectUnisat();
-                    else if (e.target.dataset.wallet === 'xverse') connectXverse();
+                    const wallet = e.target.dataset.wallet;
+                    if (wallet === 'unisat') connectUnisat();
+                    else if (wallet === 'xverse') connectXverse();
                 }
             });
 
             decreaseQtyBtn.addEventListener('click', () => {
                 let qty = parseInt(quantityInput.value);
-                if (qty > 1) {
-                    quantityInput.value = qty - 1;
-                    updateTotalCost();
-                }
+                if (qty > 1) quantityInput.value = --qty;
+                updateTotalCost();
             });
 
             increaseQtyBtn.addEventListener('click', () => {
                 let qty = parseInt(quantityInput.value);
-                if (qty < MAX_MINT_PER_TX) {
-                    quantityInput.value = qty + 1;
-                    updateTotalCost();
-                }
+                if (qty < MAX_MINT_PER_TX) quantityInput.value = ++qty;
+                updateTotalCost();
             });
 
             quantityInput.addEventListener('input', updateTotalCost);
-
-            // --- The REAL MINT Logic ---
-            mintButton.addEventListener('click', async () => {
+            
+            // --- NEW MINT LOGIC: Generates a UniSat Link ---
+            mintButton.addEventListener('click', () => {
                 if (!connectedAccount || !mintIsLive) return;
 
-                mintButton.disabled = true;
-                mintButton.textContent = 'Preparing...';
+                const quantity = parseInt(quantityInput.value);
+                if (isNaN(quantity) || quantity < 1) return alert("Please enter a valid quantity.");
 
-                try {
-                    // This is the URL to your backend function.
-                    // If deploying on Netlify, this path is automatically correct.
-                    const backendUrl = `/.netlify/functions/create-mint-order`;
-                    
-                    const response = await fetch(backendUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            recipientAddress: connectedAccount,
-                            quantity: parseInt(quantityInput.value)
-                        })
-                    });
+                // For a PFP collection, you would typically inscribe a JSON file.
+                // For this example, we'll create a simple, unique text inscription.
+                const inscriptionText = `Ordinal Voyager Mint #${Math.floor(Date.now() / 1000)}. Recipient: ${connectedAccount.slice(0, 10)}...`;
 
-                    const orderData = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(orderData.error || 'Failed to create mint order.');
-                    }
-                    
-                    // Open the payment modal with the data from our backend
-                    const paymentUrl = `./payment-modal.html?address=${orderData.paymentAddress}&amount=${orderData.amountInSats}`;
-                    window.open(paymentUrl, 'PaymentWindow', 'width=450,height=600,scrollbars=yes');
-
-                } catch (error) {
-                    alert(`Error: ${error.message}`);
-                } finally {
-                    updateMintButtonState(); // Reset button state
-                }
+                // Base URL for bulk text inscriptions on UniSat
+                let finalUrl = `https://unisat.io/inscribe?repeat=${quantity}&op=create&tick=text&text=${encodeURIComponent(inscriptionText)}&receive=${connectedAccount}`;
+                
+                // Open the prepared UniSat page in a new tab for the user to complete the mint
+                window.open(finalUrl, '_blank');
             });
-
+            
             initializeUI();
         });
     </script>
 </body>
-</html>
+</html>```
